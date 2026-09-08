@@ -117,3 +117,27 @@ Exit code 8 = tests en échec (ne pas relancer aveuglément) ; autre code ≠ 0 
 
 - Branche `main` ; un commit par tâche terminée et vérifiée (tests verts, console propre). Message : `phaseN/<domaine>: <résumé>`.
 - `Library/`, `Temp/`, `Logs/`, `Build/`, `UserSettings/` sont ignorés. Les binaires lourds (`.hdr`, `.fbx`, `.wav`, `.png`) sont suivis par Git LFS (`.gitattributes` du template) : vérifier `git lfs ls-files` après le premier commit.
+
+
+## Outillage ajouté le 2026-09-08 (rendu de la vague, tests headless, personnage)
+
+### Shaders d'eau générés (ne jamais éditer les .shadergraph à la main)
+- `python Tools/make_surfwave_graph.py` → `Assets/_Project/Shaders/SurfWaveOcean.shadergraph` (maillage de vague de surf).
+- `SURF_MODE=ocean python Tools/make_surfwave_graph.py` → `Assets/_Project/Shaders/OceanAmbientClip.shadergraph` (plan océan Storm Breakers avec trous alpha-clip sous les vagues, rectangles `_SurfRectA0..3` / `_SurfRectB0..3` alimentés par `OceanAmbient.SyncHoles`).
+- Les deux sont des copies du graphe `ocean.shadergraph` de Storm Breakers modifiées par script (chirurgie JSON) : même rendu d'eau, même déformation GPU de la houle. Après génération : `unity command run_script --file Tools/CheckShader.cs --entry Biscotte.Tools.CheckShader.Main --timeout_ms 300000 --timeout 400` (import + compilation, messages).
+- Règles apprises : le maillage de la vague est construit sur le plan NON déformé (le GPU ajoute la houle) ; les matrices `_LIDR/_NKVW` ne sont jamais sérialisées (copiées chaque frame depuis les statiques `StormBreakers.Ocean`) ; l'enroulement des triangles doit être horaire vu du dessus (le graphe SB rend les faces arrière avec son look sous-marin) ; couleur de sommet = (translucidité, écume, AO tube, eau blanche).
+- Variables de debug (mode surf) : `SURF_NO_FOAM=1`, `SURF_NO_SSS=1`, `SURF_NO_NORMAL=1`, `SURF_DEBUG=vc` (émission = couleur de sommet).
+
+### Aperçus en mode édition (sans Play, quelques secondes)
+- Vague : `unity command run_script --file Tools/WavePreview.cs --entry Biscotte.Tools.WavePreview.Setup` (variantes `SetupFar`, `SetupTop`, `SetupTube`, `SetupWhitewater`), puis `unity command capture_game_view --save_path Screenshots~/x.png`, puis `...WavePreview.Cleanup`.
+- Poses du rider : `Tools/PoseTest.cs` (`Setup`, `SetupSide`, `SetupClosePaddle/Ride/Air/DK`, `Cleanup`) : une rangée de mannequins posés par `RiderPose` sur des bodyboards.
+
+### Sessions de jeu headless (l'Editor peut être non focalisé)
+- `bash Tools/headless_session.sh <nom> [captures=6] [intervalle_s=8] [airs=false] [steps=6]` : Play, autopilote (`RiderAutoPilot`), `HeadlessPlayTicker`, captures `Assets/Screenshots~/<nom>_<i>.png` + état du rider imprimé à chaque capture, Stop.
+- `bash Tools/recompile_wait.sh` : recompile puis attend la fin de compilation ET le redémarrage du serveur Pipeline (sinon la commande suivante échoue en "Network error").
+- Reconstruction de la scène : `unity command run_script --file Tools/BuildPlayground.cs --entry Biscotte.Tools.BuildPlayground.Main --timeout_ms 600000 --timeout 700` (recrée prefabs, matériaux, scène ; les valeurs par défaut des scripts s'appliquent aux prefabs recréés).
+
+### Gameplay (état)
+- Porté par la vague dès qu'on est sur une face en pente d'une vague en train de lever (`RiderController.CarryFactor`), célérité 6 m/s, ligne de déferlement de pente 2 (peel 3 m/s), take-off si cap vers la plage et phase ≥ 0,3 ; aide au take-off `RiderTuning.takeoffAssist`.
+- Caméra : stick droit / souris orbitent (recentrage après 1,2 s), caméra tube (-1.3, 1.0, -2.8) sous le toit de la lèvre (`WaterSample.HasLipRoof`).
+- Personnage : mannequin Quaternius (Humanoid) posé procéduralement par `RiderAvatar` + `RiderPose` (espace des muscles Mecanim, donc n'importe quel avatar Humanoid convient), palmes procédurales sur les os des pieds, planche = slot `BoardSpec.boardModel`.

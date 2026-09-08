@@ -694,3 +694,15 @@ Questions ouvertes (réponse humaine souhaitée, défauts appliqués sinon) : (1
 
 ## 23. Glossaire (FR/EN)
 - **Lineup** : zone d'attente au large où l'on choisit les vagues. **Peak / pic** : point où la vague commence à casser. **Peel angle** : angle entre la ligne d'écume et la crête ; petit = vague rapide. **Pocket** : zone d'énergie près de la lèvre. **Épaule / shoulder** : partie molle non déferlée. **Lèvre / lip** : crête projetée. **Tube / barrel** : cavité sous la lèvre. **Foam ball** : boule d'écume à l'impact de la lèvre. **Closeout** : section qui casse d'un coup. **Rampe / ramp** : section propice aux airs. **Section** : portion de vague au comportement homogène. **Série / set** : groupe de vagues. **Duck dive** : passer sous la vague. **Take-off** : bascule au départ. **Prone** : allongé. **Drop-knee (DK)** : un genou sur la planche. **El Rollo** : rotation avec la lèvre. **ARS** : Air Roll Spin. **Invert** : rotation jambes au-dessus de la tête. **Kick-out** : sortie volontaire. **Wipeout** : chute. **Trim** : réglage d'assiette avant/arrière. **Pump** : mouvement rythmique pour accélérer. **Stall** : freiner pour se caler dans le tube.
+
+
+## Annexe — état d'implémentation au 2026-09-08 (soir) et écarts avec la spec
+
+Ce qui est en place et vérifié (sessions headless `Tools/headless_session.sh`, captures dans `Assets/Screenshots~`) :
+
+- **Vague de surf (P2/P3)** : crête, ligne de déferlement, lèvre, tube, eau blanche, maillage Burst (Ns 240 × Nxi 60 + rubans de lèvre). Rendu par `SurfWaveOcean.shadergraph`, copie générée du graphe océan Storm Breakers (voir `Docs/AGENT_PLAYBOOK.md`, section outillage) : même eau que l'océan ambiant, houle ajoutée par le GPU, écume éclairée (albédo + 3 octaves de bruit), lueur de translucidité, assombrissement du tube. Le plan océan utilise `OceanAmbientClip.shadergraph` : trou alpha-clip sous chaque vague → aucune couture ni z-fighting. Écart spec : le shader HLSL custom `SurfWaveWater.shader` est conservé mais n'est plus utilisé.
+- **Rider (P3/P4)** : états Paddle/DuckDive/TakeOff/Ride/Air/Wipeout/KickOut ; modèle porté + vitesse relative ; `CarryFactor` (poche, eau blanche, ou face en pente d'une vague qui lève) ; aide au take-off ; célérité 6 m/s, peel 3 m/s ; closeout seulement profond (phase ≥ 2,75, profondeur > 0,8). Personnage : mannequin Quaternius (Humanoid) posé procéduralement (`RiderPose`, espace des muscles) avec palmes ; planche procédurale remplaçable (`BoardSpec.boardModel`).
+- **Caméra (P4)** : Cinemachine 3, caméras ride / tube / lineup, orbite au stick droit / souris avec recentrage, caméra tube dans le tube sous le toit de la lèvre, particules estompées près de la caméra.
+- **Score, VFX, audio, HUD (P5/P6)** : RideScorer, Shuriken (lèvre, boule d'écume, feather, rail, sillage, splash), AudioDirector, HUD IMGUI provisoire.
+
+Reste à faire (ordre proposé) : environnement plage (terrain sable + rochers avec Mesh LOD), UI Toolkit (menus, options, HUD), presets de performance, rejouabilité (sets/spots), lèvre plus texturée et traînée d'eau blanche plus détaillée, animation de rame plus fine, IL2CPP (action humaine), tests automatisés.
