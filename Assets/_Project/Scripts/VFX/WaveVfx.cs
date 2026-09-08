@@ -61,9 +61,9 @@ namespace Biscotte.VFX
                 if (lipAmount < 0.1f) continue;
                 ep.position = p + D * Random.Range(-0.3f, 1.2f) + Random.insideUnitSphere * 0.5f;
                 ep.velocity = D * (P.celerity * Random.Range(0.6f, 0.95f)) + Vector3.up * Random.Range(0.5f, 2.5f) + Random.insideUnitSphere * 1.2f;
-                ep.startSize = Random.Range(1.2f, 2.6f);
-                ep.startLifetime = Random.Range(1.2f, 2.2f);
-                ep.startColor = new Color(1f, 1f, 1f, Random.Range(0.55f, 0.85f));
+                ep.startSize = Random.Range(0.9f, 2.0f);
+                ep.startLifetime = Random.Range(1.0f, 1.9f);
+                ep.startColor = new Color(1f, 1f, 1f, Random.Range(0.45f, 0.75f));
                 foam.Emit(ep, 1);
             }
 

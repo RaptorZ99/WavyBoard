@@ -56,9 +56,9 @@ namespace Biscotte.VFX
                 {
                     ep.position = pos - F * 0.6f + R * Random.Range(-0.3f, 0.3f) + Vector3.up * 0.03f;
                     ep.velocity = rider.Velocity * 0.15f;
-                    ep.startSize = Random.Range(0.5f, 1.1f);
-                    ep.startLifetime = Random.Range(0.8f, 1.6f);
-                    ep.startColor = new Color(1f, 1f, 1f, Random.Range(0.3f, 0.55f));
+                    ep.startSize = Random.Range(0.35f, 0.8f);
+                    ep.startLifetime = Random.Range(0.6f, 1.2f);
+                    ep.startColor = new Color(1f, 1f, 1f, Random.Range(0.18f, 0.35f));
                     wake.Emit(ep, 1);
                 }
             }

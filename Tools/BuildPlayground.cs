@@ -54,8 +54,10 @@ namespace Biscotte.Tools
             EditorUtility.SetDirty(waterMat);
 
             var litShader = Shader.Find("Universal Render Pipeline/Lit");
-            var sprayMat = LoadOrCreate<Material>(kMat + "/Particles_Spray.mat", () => MakeParticleMaterial("Assets/ThirdParty/Kenney/ParticlePack/Textures/circle_05.png", new Color(1f, 1f, 1f, 0.9f)));
-            var foamMat = LoadOrCreate<Material>(kMat + "/Particles_Foam.mat", () => MakeParticleMaterial("Assets/ThirdParty/Kenney/ParticlePack/Textures/smoke_04.png", new Color(0.97f, 0.99f, 1f, 0.85f)));
+            var sprayMat = LoadOrCreate<Material>(kMat + "/Particles_Spray.mat", () => new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit")));
+            ConfigureParticleMaterial(sprayMat, "Assets/ThirdParty/Kenney/ParticlePack/Textures/circle_05.png", new Color(1f, 1f, 1f, 0.85f));
+            var foamMat = LoadOrCreate<Material>(kMat + "/Particles_Foam.mat", () => new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit")));
+            ConfigureParticleMaterial(foamMat, "Assets/ThirdParty/Kenney/ParticlePack/Textures/circle_04.png", new Color(1f, 1f, 1f, 0.7f));
             var boardMat = LoadOrCreate<Material>(kMat + "/Board_Deck.mat", () => new Material(litShader));
             boardMat.SetColor("_BaseColor", new Color(0.95f, 0.82f, 0.18f)); boardMat.SetFloat("_Smoothness", 0.65f); EditorUtility.SetDirty(boardMat);
             var riderMat = LoadOrCreate<Material>(kMat + "/Rider_Placeholder.mat", () => new Material(litShader));
@@ -235,9 +237,8 @@ namespace Biscotte.Tools
             return "Playground built: " + kScene + " | " + log;
         }
 
-        static Material MakeParticleMaterial(string texPath, Color tint)
+        static void ConfigureParticleMaterial(Material m, string texPath, Color tint)
         {
-            var m = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit"));
             var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(texPath);
             if (tex == null) tex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/ThirdParty/Kenney/ParticlePack/Textures/circle_05.png");
             m.SetTexture("_BaseMap", tex);
@@ -252,7 +253,7 @@ namespace Biscotte.Tools
             m.SetFloat("_SoftParticlesEnabled", 1f);
             m.EnableKeyword("_SOFTPARTICLES_ON");
             m.renderQueue = 3000;
-            return m;
+            EditorUtility.SetDirty(m);
         }
 
         static void PlaceRock(string path, Vector3 pos, float yaw)
