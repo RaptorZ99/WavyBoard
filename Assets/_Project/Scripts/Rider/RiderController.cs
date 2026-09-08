@@ -112,7 +112,7 @@ namespace Biscotte.Rider
             if (s == RiderState.Ride)
             {
                 RideTime = 0f; PumpsThisRide = 0;
-                float carryK = Mathf.Clamp01(Mathf.Max(lastSample.Energy * 1.6f, lastSample.WhitewaterAmount * 0.9f));
+                float carryK = CarryFactor(in lastSample);
                 relVel = vel - (Vector3)lastSample.TravelDir * (rideCelerity * carryK);
             }
             if (s == RiderState.Wipeout) { wipeoutSpin = new Vector3(UnityEngine.Random.Range(-240f, 240f), UnityEngine.Random.Range(-120f, 120f), UnityEngine.Random.Range(-300f, 300f)); }
@@ -188,10 +188,26 @@ namespace Biscotte.Rider
             }
         }
 
+        /// <summary>
+        /// How much the wave transports the rider along D (0..1 of the celerity): the formed pocket, the whitewater,
+        /// or simply lying on a sloped face of a shoaling wave (arcade: on the face = carried, the wave never outruns you).
+        /// </summary>
+        static float CarryFactor(in WaterSample s)
+        {
+            float ny = Mathf.Clamp(s.Normal.y, 0.05f, 1f);
+            float slope = Mathf.Sqrt(Mathf.Max(0f, 1f - ny * ny)) / ny;
+            float face = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.04f, 0.14f, slope))
+                       * Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.25f, 0.55f, s.BreakPhase))
+                       * (1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(2.4f, 3f, s.BreakPhase)));
+            return Mathf.Clamp01(Mathf.Max(Mathf.Max(s.Energy * 1.6f, s.WhitewaterAmount * 0.9f), face));
+        }
+
         bool CanTakeOff()
         {
             var s = lastSample;
-            if (s.BreakPhase < 0.2f || s.BreakPhase > tuning.takeoffMaxPhase) return false;
+            if (s.BreakPhase < 0.3f || s.BreakPhase > tuning.takeoffMaxPhase) return false;
+            // must be heading roughly toward the beach: paddling out over the wave is not a take-off
+            if (Vector3.Dot(Heading(), (Vector3)s.TravelDir) < 0.2f) return false;
             if (s.WaveHeight < 0.4f) return false;
             // on the face: between the crest and the bottom of the face (generous: the assist pulls the rider into the pocket)
             if (s.CrestDistance < 0.5f || s.CrestDistance > s.FaceWidth + 6f) return false;
@@ -256,7 +272,7 @@ namespace Biscotte.Rider
             float x = mv.x, trim = mv.y;
             float c = rideCelerity;
 
-            float carryK = Mathf.Clamp01(Mathf.Max(lastSample.Energy * 1.6f, lastSample.WhitewaterAmount * 0.9f));
+            float carryK = CarryFactor(in lastSample);
             Vector3 carry = D * (c * carryK);
 
             float relSpeed = relVel.magnitude;

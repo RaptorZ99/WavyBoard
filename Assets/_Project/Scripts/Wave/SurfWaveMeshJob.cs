@@ -71,11 +71,11 @@ namespace Biscotte.Wave
             float dhx = (hx1 - hx0) / (2f * e);
             float3 nW = math.normalize(new float3(0f, 1f, 0f) - P.crestDir * dhs - P.travelDir * dhx);
 
-            // Flat parts of the grid sink 12 cm under the ambient plane (no z-fighting, hidden by the ocean);
-            // foamy flat water (whitewater trail) floats 3 cm above it instead so the foam stays visible.
-            float foamK = math.saturate((L.foam + L.whitewater) * 3f);
-            float skirt = 0.3f * (1f - math.smoothstep(0f, 0.5f, math.max(0f, L.height))) * (1f - foamK);
-            float y = L.height + 0.08f * foamK - skirt;
+            // The ambient plane has an alpha-clipped hole under this grid (inset 1 m from the grid border, see OceanAmbient),
+            // so the grid IS the water surface inside. Only the outer ring (overlapping the plane) dips a few cm under it.
+            float edgeDist = math.min(math.min(s + P.sPad, P.length + P.sPad - s), math.min(xi - P.xiMin, P.xiMax - xi));
+            float ring = 1f - math.smoothstep(0f, 1.5f, edgeDist);
+            float y = L.height - 0.04f * ring;
 
             SurfVertex v;
             v.pos = World(s, crest + xi, y);

@@ -139,6 +139,10 @@ namespace Biscotte.Tools
             if (rend != null && rend.sharedMaterial != null)
             {
                 var oceanMat = LoadOrCreate<Material>(kMat + "/Ocean_Ambient.mat", () => new Material(rend.sharedMaterial));
+                // ambient plane variant with alpha-clipped holes under the surf waves (Tools/make_surfwave_graph.py, SURF_MODE=ocean)
+                var clipShader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/_Project/Shaders/OceanAmbientClip.shadergraph");
+                if (clipShader != null) { oceanMat.shader = clipShader; EditorUtility.SetDirty(oceanMat); }
+                else log.Append("WARNING: OceanAmbientClip.shadergraph not imported, the ambient plane overlaps the surf waves. ");
                 rend.sharedMaterial = oceanMat;
                 rend.shadowCastingMode = ShadowCastingMode.Off;   // water must not cast hard polygonal shadows on itself
                 rend.receiveShadows = true;
@@ -190,18 +194,43 @@ namespace Biscotte.Tools
             // ---------- rider prefab
             var riderGo = new GameObject("Rider");
             var visual = new GameObject("Visual"); visual.transform.SetParent(riderGo.transform, false);
-            var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            Object.DestroyImmediate(body.GetComponent<Collider>());
-            body.name = "Body"; body.transform.SetParent(visual.transform, false);
-            body.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
-            body.transform.localScale = new Vector3(0.42f, 0.8f, 0.3f);
-            body.transform.localPosition = new Vector3(0f, 0.17f, -0.1f);
-            body.GetComponent<MeshRenderer>().sharedMaterial = riderMat;
-            var head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            Object.DestroyImmediate(head.GetComponent<Collider>());
-            head.name = "Head"; head.transform.SetParent(visual.transform, false);
-            head.transform.localScale = Vector3.one * 0.24f; head.transform.localPosition = new Vector3(0f, 0.3f, 0.78f);
-            head.GetComponent<MeshRenderer>().sharedMaterial = riderMat;
+            // humanoid character (Quaternius mannequin, CC0) posed procedurally by RiderAvatar; any Humanoid avatar can replace it
+            var mannequinAsset = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/ThirdParty/Quaternius/UniversalAnimationLibrary2/Mannequin_F/Mannequin_F.fbx");
+            var mannequinAnim = mannequinAsset != null ? mannequinAsset.GetComponent<Animator>() : null;
+            if (mannequinAnim != null && mannequinAnim.avatar != null && mannequinAnim.avatar.isHuman)
+            {
+                var character = (GameObject)PrefabUtility.InstantiatePrefab(mannequinAsset);
+                character.name = "Character";
+                character.transform.SetParent(visual.transform, false);
+                character.transform.localPosition = new Vector3(0f, 0.06f, 0f);
+                character.transform.localRotation = Quaternion.identity;
+                character.transform.localScale = Vector3.one * 0.93f;
+                var suitMat = LoadOrCreate<Material>(kMat + "/Wetsuit.mat", () => new Material(litShader));
+                suitMat.color = new Color(0.07f, 0.08f, 0.11f); suitMat.SetFloat("_Smoothness", 0.55f); EditorUtility.SetDirty(suitMat);
+                foreach (var smr in character.GetComponentsInChildren<SkinnedMeshRenderer>()) { smr.sharedMaterial = suitMat; smr.updateWhenOffscreen = true; }
+                var avatar = riderGo.AddComponent<RiderAvatar>();
+                avatar.animator = character.GetComponent<Animator>();
+                var finMat = LoadOrCreate<Material>(kMat + "/Fins.mat", () => new Material(litShader));
+                finMat.color = new Color(0.1f, 0.1f, 0.12f); finMat.SetFloat("_Smoothness", 0.4f); EditorUtility.SetDirty(finMat);
+                avatar.finMaterial = finMat;
+                log.Append("Rider character: Mannequin_F. ");
+            }
+            else
+            {
+                log.Append("WARNING: mannequin not humanoid, capsule placeholder used. ");
+                var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                Object.DestroyImmediate(body.GetComponent<Collider>());
+                body.name = "Body"; body.transform.SetParent(visual.transform, false);
+                body.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+                body.transform.localScale = new Vector3(0.42f, 0.8f, 0.3f);
+                body.transform.localPosition = new Vector3(0f, 0.17f, -0.1f);
+                body.GetComponent<MeshRenderer>().sharedMaterial = riderMat;
+                var head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                Object.DestroyImmediate(head.GetComponent<Collider>());
+                head.name = "Head"; head.transform.SetParent(visual.transform, false);
+                head.transform.localScale = Vector3.one * 0.24f; head.transform.localPosition = new Vector3(0f, 0.3f, 0.78f);
+                head.GetComponent<MeshRenderer>().sharedMaterial = riderMat;
+            }
             var boardGo = new GameObject("Board"); boardGo.transform.SetParent(visual.transform, false);
             boardGo.transform.localPosition = new Vector3(0f, 0.03f, 0.12f);
             var bmf = boardGo.AddComponent<MeshFilter>(); bmf.sharedMesh = boardMesh;
@@ -267,6 +296,11 @@ namespace Biscotte.Tools
             m.EnableKeyword("_ALPHABLEND_ON");
             m.SetFloat("_SoftParticlesEnabled", 1f);
             m.EnableKeyword("_SOFTPARTICLES_ON");
+            // fade out particles close to the camera (spray / foam ball must not blind the tube camera)
+            m.SetFloat("_CameraFadingEnabled", 1f);
+            m.SetFloat("_CameraNearFadeDistance", 0.4f);
+            m.SetFloat("_CameraFarFadeDistance", 2.5f);
+            m.EnableKeyword("_FADING_ON");
             m.renderQueue = 3000;
             EditorUtility.SetDirty(m);
         }

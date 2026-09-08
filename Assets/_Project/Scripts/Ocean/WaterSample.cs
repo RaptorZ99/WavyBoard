@@ -24,6 +24,8 @@ namespace Biscotte.Ocean
         public float LipHeight;       // hv
         public float FaceWidth;       // Lf (front half-width)
         public float WaveHeight;      // H(s)
+        public bool HasLipRoof;       // a thrown lip hangs above this point (barrel roof)
+        public float LipRoofY;        // world height of the lip underside above this point (valid when HasLipRoof)
     }
 
     public interface IWaterSurface

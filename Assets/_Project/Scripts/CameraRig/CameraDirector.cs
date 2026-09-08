@@ -49,8 +49,9 @@ namespace Biscotte.CameraRig
             rc.Composition.ScreenPosition = new Vector2(0f, -0.06f);
             rideCam.gameObject.AddComponent<CameraAboveWater>();
 
-            tubeCam = MakeCam("CM_Tube", 5, 70f);
-            tubeFollow = AddFollow(tubeCam, new Vector3(-2.0f, 1.2f, -4.6f), new Vector3(0.15f, 0.15f, 0.15f));
+            tubeCam = MakeCam("CM_Tube", 5, 76f);
+            // close behind the rider, inside the barrel (beach side of the face, under the lip roof), so the rider stays in view
+            tubeFollow = AddFollow(tubeCam, new Vector3(-1.3f, 1.0f, -2.8f), new Vector3(0.12f, 0.12f, 0.12f));
             tubeBaseOffset = tubeFollow.FollowOffset;
             var tc = tubeCam.gameObject.AddComponent<CinemachineRotationComposer>();
             tc.Damping = new Vector2(0.15f, 0.15f);
@@ -137,10 +138,11 @@ namespace Biscotte.CameraRig
         }
     }
 
-    /// <summary>Keeps any Cinemachine camera above the water surface.</summary>
+    /// <summary>Keeps any Cinemachine camera above the water surface, and below the lip roof when it is inside a barrel.</summary>
     public class CameraAboveWater : CinemachineExtension
     {
         public float minHeightAboveWater = 0.45f;
+        public float minHeightBelowRoof = 0.35f;
 
         protected override void PostPipelineStageCallback(CinemachineVirtualCameraBase vcam, CinemachineCore.Stage stage, ref CameraState state, float deltaTime)
         {
@@ -148,9 +150,17 @@ namespace Biscotte.CameraRig
             var water = WaterSurfaceComposite.Instance;
             if (water == null) return;
             Vector3 p = state.RawPosition + state.PositionCorrection;
-            float h = water.Sample(p, (float)Time.timeAsDouble).Height;
-            float minY = h + minHeightAboveWater;
-            if (p.y < minY) state.PositionCorrection += Vector3.up * (minY - p.y);
+            var s = water.Sample(p, (float)Time.timeAsDouble);
+            float minY = s.Height + minHeightAboveWater;
+            float y = p.y;
+            if (s.HasLipRoof)
+            {
+                // inside the barrel: never let the camera rise into the thrown lip
+                float maxY = s.LipRoofY - minHeightBelowRoof;
+                if (maxY > minY && y > maxY) y = maxY;
+            }
+            if (y < minY) y = minY;
+            if (y != p.y) state.PositionCorrection += Vector3.up * (y - p.y);
         }
     }
 }

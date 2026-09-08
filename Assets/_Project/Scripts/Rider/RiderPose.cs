@@ -52,11 +52,11 @@ namespace Biscotte.Rider
 
             // ---- base prone position: chest lifted on the elbows, head up, legs trailing with fins, hands on the nose
             m[SpineFB] = 0.45f + breath; m[ChestFB] = 0.3f; m[UChestFB] = 0.15f;
-            m[NeckNod] = 0.45f; m[HeadNod] = 0.35f;
-            SetArm(m, true, du: 0.62f, fb: -0.42f, forearm: -0.55f, twist: -0.2f, handDU: 0.1f);
-            SetArm(m, false, du: 0.62f, fb: -0.42f, forearm: -0.55f, twist: -0.2f, handDU: 0.1f);
-            SetLeg(m, true, fb: 0.12f, io: 0.1f, low: -0.35f, foot: -0.7f);
-            SetLeg(m, false, fb: 0.12f, io: 0.1f, low: -0.35f, foot: -0.7f);
+            m[NeckNod] = 0.65f; m[HeadNod] = 0.55f;
+            SetArm(m, true, du: 0.72f, fb: -0.5f, forearm: -0.55f, twist: -0.2f, handDU: 0.1f);
+            SetArm(m, false, du: 0.72f, fb: -0.5f, forearm: -0.55f, twist: -0.2f, handDU: 0.1f);
+            SetLeg(m, true, fb: 0.12f, io: 0.1f, low: -0.15f, foot: -0.6f);
+            SetLeg(m, false, fb: 0.12f, io: 0.1f, low: -0.15f, foot: -0.6f);
             Grip(m, 0.55f);
 
             switch (i.state)
@@ -71,12 +71,12 @@ namespace Biscotte.Rider
                     // flutter kick with fins
                     float kick = amp * (i.sprint ? 0.28f : 0.18f);
                     float kp = p * 1.5f;
-                    SetLeg(m, true, fb: 0.05f + kick * Mathf.Sin(kp), io: 0.08f, low: -0.3f - 0.25f * Mathf.Max(0f, Mathf.Sin(kp + 1.2f)) * amp, foot: -0.8f);
-                    SetLeg(m, false, fb: 0.05f - kick * Mathf.Sin(kp), io: 0.08f, low: -0.3f - 0.25f * Mathf.Max(0f, -Mathf.Sin(kp + 1.2f)) * amp, foot: -0.8f);
+                    SetLeg(m, true, fb: 0.05f + kick * Mathf.Sin(kp), io: 0.08f, low: -0.12f - 0.15f * Mathf.Max(0f, Mathf.Sin(kp + 1.2f)) * amp, foot: -0.7f);
+                    SetLeg(m, false, fb: 0.05f - kick * Mathf.Sin(kp), io: 0.08f, low: -0.12f - 0.15f * Mathf.Max(0f, -Mathf.Sin(kp + 1.2f)) * amp, foot: -0.7f);
                     // body roll with the stroke, lower chest when resting
                     m[SpineTw] = 0.18f * amp * Mathf.Sin(p);
                     m[SpineFB] = Mathf.Lerp(0.2f, 0.4f, amp) + breath; m[ChestFB] = Mathf.Lerp(0.15f, 0.25f, amp);
-                    m[NeckNod] = 0.5f; m[HeadNod] = 0.4f;
+                    m[NeckNod] = 0.7f; m[HeadNod] = 0.55f;
                     bodyPos.y = 0.17f; bodyPos.z = -0.2f;
                     break;
                 }
@@ -122,8 +122,8 @@ namespace Biscotte.Rider
                     m[HeadNod] = 0.35f + Mathf.Clamp(i.lookPitch / 45f, -1f, 1f) * 0.4f;
                     // legs: fins lifted clear of the water at speed, the inside leg drops in to trim on a hard turn
                     float inFb = 0.1f - 0.25f * al, outFb = 0.15f;
-                    SetLeg(m, right, fb: inFb, io: 0.25f * al + 0.1f, low: -0.45f - 0.3f * al, foot: -0.75f);
-                    SetLeg(m, !right, fb: outFb, io: 0.1f, low: -0.35f - 0.25f * speedK, foot: -0.8f);
+                    SetLeg(m, right, fb: inFb, io: 0.25f * al + 0.1f, low: -0.25f - 0.2f * al, foot: -0.7f);
+                    SetLeg(m, !right, fb: outFb, io: 0.1f, low: -0.2f - 0.15f * speedK, foot: -0.7f);
                     // pump: chest drives down into the board, arms straighten for a beat
                     float pump = Mathf.Clamp01(i.pump);
                     m[SpineFB] += -0.35f * pump; m[ChestFB] += -0.15f * pump;
@@ -137,8 +137,8 @@ namespace Biscotte.Rider
                 {
                     float tuck = Mathf.Clamp01(i.airTuck);
                     // knees to the chest (board comes up with the body), hands lock on the nose
-                    SetLeg(m, true, fb: -0.45f * tuck + 0.1f, io: 0.15f, low: -0.75f, foot: -0.7f);
-                    SetLeg(m, false, fb: -0.45f * tuck + 0.1f, io: 0.15f, low: -0.75f, foot: -0.7f);
+                    SetLeg(m, true, fb: -0.45f * tuck + 0.1f, io: 0.15f, low: -0.55f, foot: -0.7f);
+                    SetLeg(m, false, fb: -0.45f * tuck + 0.1f, io: 0.15f, low: -0.55f, foot: -0.7f);
                     SetArm(m, true, du: 0.6f, fb: -0.5f, forearm: -0.7f, twist: -0.3f, handDU: 0.1f);
                     if (i.grab) SetArm(m, false, du: -0.15f, fb: -0.45f, forearm: -0.35f, twist: 0.2f, handDU: 0.3f); // right hand reaches the tail (grab)
                     else SetArm(m, false, du: 0.6f, fb: -0.5f, forearm: -0.7f, twist: -0.3f, handDU: 0.1f);

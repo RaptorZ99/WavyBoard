@@ -13,7 +13,7 @@ namespace Biscotte.Wave
     public class SurfWave : MonoBehaviour
     {
         [Header("Mesh resolution")]
-        public int Ns = 160;
+        public int Ns = 240;
         public int Nxi = 60;
         public int Nv = 12;
 
@@ -272,6 +272,8 @@ namespace Biscotte.Wave
             float x = xi - L.crestShift;
             if (SurfWaveMath.LipUndersideY(L, x, out float yLip))
             {
+                r.HasLipRoof = true;
+                r.LipRoofY = hA + yLip;
                 float yRel = worldPos.y - hA;
                 float headroom = yLip - L.height;
                 bool onFace = math.abs(yRel - L.height) < 0.8f;

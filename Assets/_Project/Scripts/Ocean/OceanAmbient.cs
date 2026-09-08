@@ -1,3 +1,4 @@
+using Biscotte.Wave;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -80,7 +81,39 @@ namespace Biscotte.Ocean
         static readonly int[] kVectorIds = { Shader.PropertyToID("_terrainPosition"), Shader.PropertyToID("_terrainScale") };
         static readonly int kTerrainTex = Shader.PropertyToID("_terrainHeightmap");
 
-        void LateUpdate() { SyncMaterials(); }
+        void LateUpdate() { SyncMaterials(); SyncHoles(); }
+
+        // ---------------------------------------------------------------- holes in the ambient plane under the surf waves
+        [Tooltip("Inset (m) of the alpha-clipped hole relative to the surf mesh border; the mesh ring overlapping the plane dips under it")]
+        public float holeInset = 1f;
+        const int kMaxHoles = 4;
+        static readonly int[] kRectA = { Shader.PropertyToID("_SurfRectA0"), Shader.PropertyToID("_SurfRectA1"), Shader.PropertyToID("_SurfRectA2"), Shader.PropertyToID("_SurfRectA3") };
+        static readonly int[] kRectB = { Shader.PropertyToID("_SurfRectB0"), Shader.PropertyToID("_SurfRectB1"), Shader.PropertyToID("_SurfRectB2"), Shader.PropertyToID("_SurfRectB3") };
+        static readonly Vector4 kFar = new Vector4(1e9f, 1e9f, 1e9f, 1e9f);
+
+        /// <summary>Feeds the OceanAmbientClip graph with the footprint rectangles of the active surf waves (wave-local s / d coordinates).</summary>
+        public void SyncHoles()
+        {
+            var mat = StormBreakers.Ocean.sharedMaterial;
+            if (mat == null) return;
+            int n = 0;
+            var water = WaterSurfaceComposite.Instance;
+            var waves = water != null ? water.ActiveSurfWaves : null;
+            if (waves != null)
+            {
+                for (int i = 0; i < waves.Count && n < kMaxHoles; i++)
+                {
+                    var w = waves[i];
+                    if (w == null || !w.IsAlive) continue;
+                    var P = w.Params;
+                    float crest = w.CrestPositionAlongD;
+                    mat.SetVector(kRectA[n], new Vector4(P.origin.x, P.origin.z, P.crestDir.x, P.crestDir.z));
+                    mat.SetVector(kRectB[n], new Vector4(-P.sPad + holeInset, P.length + P.sPad - holeInset, crest + P.xiMin + holeInset, crest + P.xiMax - holeInset));
+                    n++;
+                }
+            }
+            for (; n < kMaxHoles; n++) mat.SetVector(kRectB[n], kFar);
+        }
 
         /// <summary>
         /// Copies the per-frame Storm Breakers material state (wave matrices, light, terrain) to the surf wave material(s).
