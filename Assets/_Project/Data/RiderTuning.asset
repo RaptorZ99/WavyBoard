@@ -1,0 +1,61 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94d3a61c88b19d249966d28305099ba9, type: 3}
+  m_Name: RiderTuning
+  m_EditorClassIdentifier: Biscotte.Runtime::Biscotte.Rider.RiderTuning
+  paddleSpeed: 2
+  paddleSprintSpeed: 2.9
+  paddleTurnRate: 100
+  paddleDraft: 0.12
+  whitewaterPush: 0.45
+  duckDiveDepth: 1.3
+  duckDiveDuration: 1.3
+  takeoffMinPhase: 0.5
+  takeoffMaxPhase: 1.9
+  takeoffMinSlope: 0.22
+  takeoffMinEnergy: 0.3
+  takeoffMinForwardSpeed: 1.2
+  takeoffInitialCelerityFactor: 0.55
+  takeoffDuration: 0.45
+  gravity: 9.81
+  rideDraft: 0.05
+  pushGain: 0.8
+  pushTau: 0.9
+  dragCoefficient: 0.012
+  stallDragMultiplier: 3.2
+  yawRateMax: 140
+  leanMax: 55
+  gripTau: 0.22
+  alignTau: 0.35
+  maxSpeed: 16
+  minRideSpeedBeforeStall: 1.5
+  stallWipeoutTime: 1.6
+  pumpWindowMin: 0.3
+  pumpWindowMax: 1.3
+  pumpGainFactor: 0.08
+  pumpGainFlat: 0.4
+  pumpPenalty: 0.97
+  pumpMaxPerDescent: 3
+  popVerticalSpeed: 2.5
+  popWindowCrestDistance: 8
+  ejectVerticalSpeed: 1.8
+  airDrag: 0.02
+  spinRate: 360
+  flipRate: 300
+  grabRateMultiplier: 0.8
+  rolloDuration: 0.7
+  landAlignMin: 0.82
+  landSketchyMin: 0.7
+  maxAirTime: 3.5
+  wipeoutDuration: 2.6
+  wipeoutDrift: 0.7
+  tubeCloseoutWipeoutPhase: 2.25

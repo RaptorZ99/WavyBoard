@@ -1,0 +1,5 @@
+Storm Breakers - "An epic ocean simulation (Unity 2021+ URP)" by Lysandre (The Storm Rider)
+Source: https://github.com/Stormrider31/Storm-Breakers  (cloned 2026-09-08, last upstream commit 2024-04-10)
+License: CC0 1.0 Universal (see LICENSE). The 100 MB manual PDF was left out of the project: read it from the repo
+or from the extracted text in Docs/research/ (see Docs/ASSETS_MANIFEST.md).
+Requires: URP + Visual Effect Graph. Original target Unity 2021.3 / URP 12 -> ported/validated on Unity 6000.6 by this project.

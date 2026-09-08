@@ -1,0 +1,964 @@
+UC San Diego
+Scripps Institution of Oceanography Technical Report
+Title
+The Science of Surfing Waves and Surfing Breaks - A Review
+Permalink
+https://escholarship.org/uc/item/6h72j1fz
+Authors
+Scarfe, B. E.
+Elwany, M. H.S.
+Mead, S. T.
+et al.
+Publication Date
+2003-03-07
+eScholarship.org Powered by the California Digital Library
+University of California
+ 
+Integrative Oceanography Division 1 Abstract 
+eScholarship Repository, 2003 
+7 March 2003 
+The Science of Surfing Waves and Surfing Breaks - A Review 
+ 
+B. E. Scarfe†, M. H. S. Elwany‡, S. T. Mead† and K. P. Black†
+†ASR Ltd. 
+PO Box 13048 
+Hamilton, New Zealand 
+b.scarfe@asrltd.co.nz 
+s.mead@asrltd.co.nz 
+k.black@asrltd.co.nz 
+ 
+‡Coastal Environments 
+2166 Avenida De La Playa 
+La Jolla, CA 92037, USA 
+hany@coastalenvironments.com 
+ 
+ABSTRACT 
+Surfing breaks have great social and economic value for coastal communities. In order to preserve and enhance these resources, 
+a common language is needed that will bri dge the gap between the colloquial slang of surfers and the technical language of 
+scientists and policy makers. This language is the science of surfing waves and surfing breaks, and the more it is developed an d 
+used, the easier relations will be between th e interested parties. This paper will creat e the basis for such a language to be u sed in 
+future studies of surfing waves and surfing breaks. 
+Surfing waves and surfing breaks are currently understood well enough to predict the effects of coastal modifications on surfing 
+locations and to design artificial surfing reefs. However, the use of this knowledge for more practical applications has been limited. 
+This paper consolidates the literature on the science of surfing waves and surfing breaks in an effort to communicate the basic s of 
+this science to coastal planners, engineers and policy makers. Fi rst, the types of surfing waves that are preferred by surfers are 
+discussed, including a description of the main surfing wave parame ters. Second, it is shown that the wave type determines the 
+surfing skill level required and types of maneuvers that can be performed. Third, the seabed features that cause waves to trans form 
+well for surfing are presented. 
+ADDITIONAL KEY WORDS: Surfing break components, surfing reef components, peel angle, breaking intensity, wave 
+sections, section length, surfing maneuvers, surfer’s skill level. 
+ 
+INTRODUCTION 
+Every year more and more people decide to take up surfing 
+as a leisure activity. The enormous social and economic 
+benefits of having a quality surfing break in a coastal 
+community are only now being fully realized by planners and 
+policy makers. Increasingly, the preservation and enhancement 
+of surfing breaks is being practiced because of its value to the 
+community (e.g., BLACK, 2001a and 2001b; BLACK and 
+MEAD, 2001; BLACK et al ., 1998, 1999, 2000 and 2001; 
+BORRERO, 2002; COURIEL, 1996; MEAD, 2001; MEAD 
+and BLACK, 1999a and 2002; MEAD et al ., 1998 and 2001; 
+MOFFATT & NICHOL ENGINEERS, 1989; 
+PATTIARATCHI, 1999a and 2000). 
+Surfers are traditionally defensive about any activity in the 
+vicinity of their favorite surfing breaks. This behavior may be 
+justified because history shows th at their rights have at times 
+been ignored and many surfing breaks have been destroyed by 
+coastal modification. When enhancements have been made, 
+they have been unintentional rath er than an orig inal objective. 
+Now, with the emergence of more progressive attitudes by 
+councils and coastal engineers toward surfers, there is a need 
+for a common language between the parties. This language 
+needs to bridge the gap between the colloquial slang of surfers 
+and the technical language of scientists and policy makers. 
+Development of such a common language will help in the 
+preservation of surfing breaks and construction of artificial 
+surfing reefs. This language is the science of surfing waves 
+and surfing breaks. The more it is developed and used, the 
+easier relations will be between the interested parties. This 
+paper creates the basis for such a language to be used in future 
+studies of surfing waves and surfing breaks. It compiles and 
+summarizes the literature on the science of surfing waves and 
+surfing breaks from numerous journal and conference papers, 
+theses, dissertations and technical reports. A concise 
+background is provided on surfing waves and surfing breaks 
+with references to more detailed information. First, the types 
+of waves that surfers prefer are discussed, including a 
+description of the main surfing wave parameters. Second, it is 
+shown that wave type determines required surfing skill level 
+and maneuver types that can be performed. Third, the seabed 
+features that cause waves to transform well for surfing are 
+presented. Finally, the way the configuration of these features 
+creates good surfing waves is discussed. 
+THE HISTORY OF SURFING WAVE AND 
+SURFING BREAK RESEARCH 
+The study of the physical processes behind surfing waves 
+and surfing breaks has come a long way since the initial 
+investigations of Hawaiian surf breaks in the early 1970s 
+(WALKER and PALMER , 1971; WALKER et al. , 1972; 
+WALKER, 1974a and 1974b). Significant advances began in 
+the 1990s with the development of the Artificial Reefs 
+Program at Waikato University in New Zealand (ANDREWS, 
+1997; HUTT, 1997; MEAD, 2001; MOORES, 2001; SAYCE, 
+1997; SCARFE, 2002) and the Cable Stations Artificial Reef 
+Surfing Science Review 2 
+ 
+Integrative Oceanography Division 2 Abstract 
+eScholarship Repository, 2003 
+Project at the University of Western Australia 
+(PATTIARATCHI, 1997, 1999 and 2000; PATTIARATCHI et 
+al., 1999; BANCROFT, 1999). The First Artificial Surfing 
+Reefs Symposium in Sydney, Australia (1997), and the Second 
+in San Diego, California (1998) further spurred interest. They 
+brought together surfing enthusiasts from a wide range of 
+disciplines and localities. Mo re recently, the Second Surfing 
+Art, Science, and Issues Conference (SASIC2) put on by the 
+Groundswell Society in Ventura, California (2002) encouraged 
+discussion. 
+A summary of surfing science and artificial surfing reef 
+construction knowledge was presented in Journal of Coastal 
+Research, Special Issue No. 29. Subsequently various areas of 
+surfing research have defined themselves. They are as follows: 
+• The effects of submerged reefs on sediment transport 
+and salient formation (ANDREWS, 1997; BLACK 
+and ANDREWS, 2001a and 2001b; BLACK and 
+MEAD, 2001); 
+• The relationship of surfers to surfing waves (DALLY, 
+1990, 2001a and 2001b; HUTT, 1997; HUTT et al., 
+2001; MOORES, 2001; SCARFE, 1999, 2002; 
+SCARFE et al., 2002); 
+• The bathymetric shape of surfing breaks 
+(ACHENBACH, 1998; MEAD, 2001; MEAD and 
+BLACK, 1999b, 2001a and 2001b; RAICHLE, 1998; 
+SCARFE, 1999 and 2002; SCARFE et al. 2003a, 
+2003b and in press; WEST et al., 2002); 
+• The prediction of wave-driven currents (SYMONDS 
+and BLACK, 2001); 
+• The prediction of breaker intensity of surfing waves 
+(SAYCE, 1997; SAYCE et al., 1999; MEAD and 
+BLACK, 2001c); and 
+• The prediction of beach surfability (DALLY, 1989; 
+PATTIARATCHI et al., 1999; SCARFE, 2002). 
+ 
+The study of surfing waves and surfing breaks can be 
+thought of as two separate but related subjects. The study of 
+surfing waves investigates the different characteristics of 
+waves and how they relate to surfing rides and surfers. The 
+study of surfing breaks examines how seafloor bathymetry 
+transforms ordinary waves into surfing waves. Figure 1 
+diagrammatically shows how surfing break bathymetry 
+transforms ordinary waves into surfable waves. 
+CHARACTERISTICS OF SURFING WAVES 
+Surfers desire waves where the break point “peels” along 
+the wave crest. They surf just ahead of the advancing wave 
+crest within the “wave pocket” where most of the wave’s 
+power is located. Unless they are beginners, surfers are not 
+satisfied with riding waves that do not peel. If the wave peels 
+to the right from the surfer’s pe rspective (to the left when 
+looking from the beach), the wave is said to be a “righthand” 
+wave, or a “righthander.” If the wave peels to the left from the 
+surfer’s perspective (to the right when looking from the 
+beach), the wave is said to be a “lefthand” wave, or a 
+“lefthander.” 
+ 
+Figure 1. Ordinary waves are transformed by surfing break 
+bathymetry into surfing waves, which create surfing rides. 
+Together, the speed at which the wave peels and the breaker 
+type determine the skill level required to surf a wave (HUTT, 
+1997; HUTT et al., 2001, MOORES, 2001) as well as the 
+types of maneuvers that can be performed (SCARFE, 2002; 
+SCARFE et al., 2002). Not all waves are suitable for surfing, 
+and among those that are, not all can be surfed by surfers at all 
+levels. The character of surfing waves varies not only from 
+location to location, but also from day to day with tide level 
+and swell. In fact, even su ccessive waves can break with 
+considerably different characteristics. 
+There are various different types of surfing (Figure 2), 
+which include short boarding, long boarding, body boarding, 
+and body surfing. Surfboards for short boarding are generally 
+between six and seven feet long, and the surfing style is 
+aggressive. Surfers who ride s hort boards, or short boarders, 
+perform fast and powerful su rfing maneuvers. Surfboards for 
+long boarding range from seven to eleven feet long. Long 
+boards are also called Malibu’s (or Mal’s), because they suit 
+the slow and gentle waves found at places like Malibu, 
+California. Riding long boards, or long boarding, is a much 
+slower and more relaxed styl e of surfing, because waves 
+suitable for long boarding break more slowly and softly than 
+those for short boarding. Shorter Mal’s are called mini-Mal’s 
+and cross over between the two styles of standup surfing. 
+Surfing Science Review 3 
+ 
+Integrative Oceanography Division 3 Abstract 
+eScholarship Repository, 2003 
+ 
+Figure 2. Types of surfing from top to bottom – Short board 
+surfer (www.aspworldtour .com), long board surfer 
+(www.kahunavideo.com), prone body boarder 
+(www.bodyboarderweb.com), body surfer 
+(www.worldbodysurfing.com) and drop knee body boarder 
+(www.bodyboarderweb.com). 
+Body boarding, also called boogie boarding, uses a small 
+foam board rather than a fiberglass board. The board is about 
+three feet long, and the surfer generally does not stand up on it. 
+When riding a body board lying down, the style is called 
+“prone.” There is a style of body boarding where the body 
+boarder almost stands that is called “drop knee.” Fins or 
+flippers are used to catch wave s rather than paddling as in 
+standup surfing. The combination of fins and a small board 
+makes it difficult to stand up. When riding “drop knee,” the 
+surfer kneels on one knee and stands on the other. Body surfers 
+do not use a board at all; they surf the wave using their body as 
+a board. Fins are often used to help the swimmer catch the 
+wave. 
+Although there are four main types of surfing, most of the 
+scientific surfing research has focused on short boarding. 
+Therefore, this review also focuses on short boarding waves, 
+but the concepts are applicable to all types of surfing waves 
+and can be extrapolated to ot her surfing styles. For example, 
+long boarders desire waves with higher peel angles and lower 
+breaking intensities than short boarders. Body boarders desire 
+waves with more extreme breaker intensities. 
+Surfing Wave Parameters 
+The four most important wave parameters for analysis of 
+surfing waves are breaking wave height (H B), wave peel angle 
+(α), wave breaking intensity (BI), and wave section length (S L) 
+(SCARFE et al. 2002 and 2003a). Other surfing wave 
+parameters exist (see DALLY, 1990, 2001a and 2001b; 
+MEAD, 2001; MOORES, 2001; SAYCE, 1997; SAYCE et al., 
+1999; SCARFE, 2002; WALKER, 1974), but they are only 
+derivatives of these four main variables. Any surfing wave can 
+be described using only these four variables. SCARFE et al. 
+(2002 and 2003a) recommend the sole use of these four to 
+maintain consistency within the scientific surfing literature. 
+Wave Height (Hb) 
+Surfing wave height is often considered the most important 
+variable at a surfing break (RAICHLE, 1998). Oceanographers 
+measure wave height from the crest to the trough of the wave. 
+Groups of surfers develop thei r own definitions of wave 
+heights, which can be slightly larger or smaller than the 
+distance from crest to trough. In the scientific study of surfing 
+waves, the oceanographic method of measuring from crest to 
+trough is used. Waves come in sets, and surfers ride the largest 
+waves in a set. HUTT (1997) recommends the use of an 
+average of the top 10 % of waves (H1/10) when measuring wave 
+statistics for surfing rather than significant wave height (H1/3). 
+Wave Peel Angle (α) 
+Peel angle is defined as the angle between the trail of the 
+broken whitewater and the crest of the unbroken wave as it 
+propagates shoreward (Figure 3; WALKER, 1974; HUTT, 
+1997; HUTT, et al. , 2001; MEAD, 2001b; SCARFE, 2002). 
+Peel angles range between 0° and 90°, with low angles 
+creating fast surfing waves and high angles creating slow 
+Surfing Science Review 4 
+ 
+Integrative Oceanography Division 4 Abstract 
+eScholarship Repository, 2003 
+waves. An angle of 0° is desc ribed as a closeout (MEAD and 
+BLACK, 2001b). 
+ 
+Figure 3. The peel angle, α, is defined as the angle between the 
+trail of the broken white water and the crest of the unbroken 
+part of the wave as it propagates shoreward (from Mead, 
+2001). 
+The wave peel rate describes how fast the wave breakpoint 
+advances laterally along the wave crest. Surfers must surf at 
+least as fast as the wave peel rate in order to stay in front of the 
+wave break point. Peel angle is closely related to wave peel 
+rate because they both relate to how fast a wave is breaking. 
+Although theoretical models designed to relate peel angle with 
+peel rate have been developed (DALLY, 1990 and 2001a), 
+SCARFE (2002) and SCARFE et al. (2002) recommend using 
+peel angle because it can be more accurately numerically 
+modeled and is more sensitive to maneuver type. Using 
+complex field experiments, SCARFE (2002) measured peel 
+angles and peel rates for different maneuver types. Peel angle 
+was found to control maneuver type, while no relationship 
+could be found with peel rate. DALLY (2001b) and MOORES 
+(2001) have both looked at maximum surfer speeds that give 
+approximations of the maximum surfable peel rate. 
+Wave Breaking Intensity (BI) 
+Orthogonal seabed gradient is the dominant variable 
+controlling wave breaker intensity (MEAD and BLACK, 
+2001c). Waves will break either as spilling, plunging, surging, 
+or collapsing breakers, depending on the orthogonal seabed 
+gradient. Waves break on a continuum between these main 
+types of breakers (KOMAR, 1998). Surfers generally prefer 
+waves with steep or plungi ng faces (MEAD and BLACK, 
+2001c). These waves provide greater power to propel surfers 
+and the opportunity for more advanced surfers to experience 
+barrel rides. Traditional methods of describing wave type, such 
+as the Irribarren number, the surf scaling parameter, or the surf 
+similarity parameter have not been found to be appropriate for 
+surfing rides (MEAD and BLACK, 2001c; SAYCE, 1997; 
+SAYCE et al., 1999). These methods are used to describe all 
+forms of wave breaking from spilling to collapsing and are too 
+general for surfing waves (MEAD and BLACK, 2001c). 
+The types of plunging waves that surfers ride vary greatly. 
+MEAD and BLACK (2001c) investigated the shapes of 
+plunging waves at 28 “world-class” surfing breaks. The term 
+“world-class” has been used in literature to describe surfing 
+breaks that are representative of the best surfing locations in 
+the world. A cubic curve was fitted to the barrel shape, also 
+termed the wave vortex. The ratio between the height and 
+width of the vortex is called the vortex ratio and is a good 
+indicator of breaker intensity (MEAD and BLACK, 2001c). A 
+linear relationship was seen when the vortex ratio was plotted 
+against the orthogonal seabed gr adient for each surfing site. 
+Regression analysis by MEAD and BLACK (2001c) showed 
+that Equation 1 can be used to quantify the wave breaker 
+intensity (R² = 0.71), where X is the orthogonal seabed 
+gradient and Y is the breaker intensity. 
+Y = 0.065 X + 0.821 (1) 
+MEAD and BLACK (2001c) note that Equation 1 is the 
+first attempt at quantifying the breaker intensity of plunging 
+surfing waves and is simplistic. They suggest that the method 
+might be improved by incorpora ting wave height and period. 
+In reality orthogonal seabed pr ofiles are made up of varying 
+gradients, with the deeper water gradient generally lower than 
+the shallow water gradient. The shallower water gradient has 
+more of an effect than the d eepwater gradient. The effect of 
+steps in the profile, or multiple gradient profiles, on breaker 
+intensity is still relatively unknown. However, MEAD and 
+BLACK’s (2001c) simple relationship can still be used to 
+quantify the design characteristics of artificial surfing reefs and 
+to differentiate between breaker intensity at surfing breaks. 
+Breaker intensity has been cl assified by MEAD and BLACK 
+(2001c) as medium, medium/high, high, very high, and 
+extreme. Each classification was defined by the breaking 
+intensity range based on Equation 1. 
+Wind strength and direction affect breaking intensity. 
+Offshore winds increase breaking intensity, and onshore or 
+cross-shore winds lower it. The perfect wind conditions for 
+surfing are light offshore. These wind conditions delay wave 
+breaking, causing the wave to break in shallower water and 
+increasing the breaker intensity. Strong offshore winds make 
+waves hard to catch. 
+Wave Section Length (SL) 
+It is rare to find surfing waves peeling with a regular and 
+consistent character. Peaks in wave crests from unorganized 
+swells and wave focusing as well as from undulating 
+bathymetry cause waves to break in sections. Waves breaking 
+in sections create interesting and challenging surfing rides 
+because surfers can perform different maneuvers on the 
+various sections. However, the section must not be so long or 
+fast that the surfer is trapped behind the wave pocket. A new 
+section begins when there is a change in wave height (Hb), peel 
+angle ( α), or breaking intensity (B I), and is said to have a 
+section length of S L. Wave sections have been investigated by 
+MOORES (2001), SCARFE, 2002 and SCARFE et al. (2002). 
+Surfing Science Review 5 
+ 
+Integrative Oceanography Division 5 Abstract 
+eScholarship Repository, 2003 
+Relating Surfing Waves To Surfers 
+Studies have related surfers to surfing waves in order to 
+determine design criteria for artificial surfing reefs. This 
+research falls into two categories. The first relates a surfer’s 
+skill level to surfing wave parameters. The second relates 
+surfing maneuvers to surfing wave parameters. 
+Surfer Skill Level 
+Different surfing waves suit diffe rent types of surfers, and 
+surfers prefer to ride waves that match or challenge their 
+abilities. The range of wave heights, peel angles, breaking 
+intensities, and section lengths that a surfer can successfully 
+negotiate depends on skill leve l. WALKER (1974) developed 
+a classification scheme to describe the surfable limits of 
+beginner, intermediate, and expert surfers based on peel angles 
+and wave height. Subsequently, the scheme was revalidated for 
+modern surfing standards by HUTT et al. (2001). The 
+delineations between the surfer skill level categories were 
+made with a more quantitative 1-to-10 ranking system by 
+HUTT et al. (2001). 
+The higher the surfing skill level, the greater the ability to 
+negotiate difficult sections and link sections together for long 
+surfing rides. MOORES (2001) looked at how skill level 
+related to a surfer’s ability to surf through wave sections with 
+decreases in peel angles. His general findings were: 
+• The higher the skill level, the longer the sections that 
+can be made. 
+• Surfers with high skill levels do not require as much 
+speed coming into a section because they have more 
+ability to generate speed. 
+• Surfers with a skill level of 3 or less (beginner) cannot 
+make sections. 
+MOORES (2001) used his findings to develop maximum 
+section length, duration, and speed values for artificial surfing 
+reef design. The relationship between surfer skill and breaking 
+intensity has not yet been quantified. 
+Surfing Maneuvers 
+Surfing is a recreational activity and performing maneuvers 
+is the goal of most surfers. The types of maneuvers a surfer 
+performs are dependent on ability, style of surfing, and wave 
+type. For any given wave type, most surfers will perform 
+similar types of maneuvers (SCARFE, 2002; SCARFE et al., 
+2002). The first investigations into surfing maneuvers were 
+undertaken by SCARFE (2002) and SCARFE et al. (2002). 
+Definitions of each maneuver can be found in SCARFE (2002) 
+and SCARFE et al. (2002 and 2003b). 
+SCARFE (2002) found three types of maneuvers: 
+functional, expressive, and tran sitional (Figure 4). Functional 
+maneuvers are required for anyone to surf. A functional 
+maneuver such as speed weaving is required simply to keep up 
+with a breaking wave. It performs the function of staying in the 
+powerful section of the wave. A more expressive maneuver 
+such as an aerial is performed solely to fulfill the surfer’s need 
+to perform a difficult feat. Maneuvers such as top turns and 
+bottom turns can be considered as transitional moves that are 
+used to link together functiona l maneuvers with expressive 
+maneuvers. Each maneuver can be categorized as functional, 
+transitional, or expressive, depending on when it is being done. 
+A bottom turn may be functional when dropping into a wave, 
+transitional when preparing for an aerial, or expressive when 
+executed under certain conditions. 
+ 
+Figure 4. Relationship between the percentage of each surfing 
+maneuver type and skill level (from Scarfe, 2002). 
+The category of a maneuver also changes depending on the 
+surfer’s skill level. Surfers with low skill levels perform more 
+functional maneuvers, while those at higher skill levels 
+perform more expressive ma neuvers. A basic, functional 
+maneuver to an expert surfer will be an expressive maneuver 
+to a beginner. The ability of surfers of different abilities to 
+perform each maneuver type is tabulated in SCARFE (2002). 
+Analysis of peel angles during certain maneuvers by 
+SCARFE (2002) and presented in SCARFE et al. (2002) 
+yielded design criteria to incorporate maneuver type into wave 
+sections of artificial surfing reefs (Figure 5). These maneuvers 
+represent the division in peel angles where a maneuver can be 
+performed. For example, although the word cutback is used 
+here, in the analysis it is just as likely that a surfer will perform 
+a roundhouse for the given wave scenario. When surfing 
+through a speed section, a surfer can speed weave, perform a 
+floater or foam bounce, or experience a barrel ride if the 
+breaker intensity is high enough. 
+ 
+Figure 5. Range of peel angles that are suitable for different 
+surfing maneuvers (from Scarfe, 2002; Scarfe et al., 2002). 
+Maneuver type is also related to breaking intensity. For a 
+given peel angle, a surfer may perform a top turn on a wave 
+with a medium breaking intensity, a reo or vertical re-entry if 
+the breaking is higher, or a barrel if the breaking intensity is 
+extreme. SCARFE (2002) investigated how breaking intensity 
+Surfing Science Review 6 
+ 
+Integrative Oceanography Division 6 Abstract 
+eScholarship Repository, 2003 
+from orthogonal seabed gradients relates to maneuvers; 
+however, findings were inconclusive. The measurement of 
+breaking intensity on a section-by-section scale is difficult, and 
+it would have been preferable to use more descriptive 
+terminology. 
+Configuration of Wave Sections 
+Variation in any of the four surfing wave parameters creates 
+a new section. Different maneuvers can be performed 
+depending on the configuration of wave sections. Figure 6 
+illustrates how section length, peel angle, and breaker intensity 
+can affect maneuver type. Surfers are likely to perform the 
+maneuvers shown in Figure 6 for the corresponding wave 
+sections. Incorporating interes ting and varying sections into 
+artificial surfing reefs will challenge surfers and keep rides 
+interesting. Maneuver type for a section is also dependent on 
+the previous section (SCARFE et al. , 2002). For example, a 
+surfer riding a section with a low peel angle will be traveling 
+fast to keep up with the wave break point. If the next section 
+dramatically increases in peel angle, then the surfer will 
+perform a move such as a cutback to lose speed and stay in the 
+powerful pocket of the wave. 
+CHARACTERISTICS OF SURFING BREAKS 
+Planar beaches with parallel contours do not produce good 
+surfing breaks (SCARFE et al., 2003b). The peel angle is too 
+low for surfing. Waves simply “closeout” as the wave crest 
+breaks all at once rather than peeling. More interesting 
+bathymetric features are needed to cause waves to break along 
+the wave crest rather than all at once. All good surfing breaks 
+have preconditioning components and/or shallow water 
+features that cause waves to peel. This is why most surfing 
+spots are near prominent morphological features, such as river 
+mouths with ebb deltas, coral/rock reefs, points, rock ledges, 
+piers, jetties, or beaches where large scale bar/rip features are 
+created by edge waves. 
+The majority of waves that break on shorelines are not 
+suitable for surfing. In order for waves to break well for 
+surfing, wave height, peel angle and breaking intensity must be 
+within the surfable range (HUTT et al. , 2001; MOORES, 
+2001; SCARFE 2001; SCARFE et al., 2002). Top surfers can 
+ride waves ranging from a very low to an extremely high, 
+dangerous breaker intensity within a range of wave heights 
+from 1-50 feet. In fact, it is becoming apparent that top surfers 
+are now able to surf waves of almost any size and any breaking 
+intensity. The major surfing wave parameter that differentiates 
+a surfable from a non-surfable wave is peel angle. Therefore, 
+the role of a surfing break is to increase peel angle to within 
+surfable limits. Although peel angles can be too high to 
+challenge more advanced surfers, high peel angles do not 
+necessarily prevent surfers fro m riding waves, whereas low 
+peel angles do. 
+Surfing Reef/Break Components 
+MEAD and BLACK (2001a) identified the major 
+bathymetric features that cause surfing breaks to form good 
+surfing waves. Surfing reef or surfing break components were 
+classified based on surveys and numerical modeling of world-
+class surfing breaks in New Zealand, Australia, Indonesia, 
+Hawaii, California and Brazil. Each component was 
+distinguished by its shape and function. MEAD and BLACK 
+(2001a) refer to these features as surfing reef components, but 
+this term also includes surfing break features made of material 
+other than reef. The identified components are ramp, platform, 
+wedge, focus, ledge, ridge and pinnacle. Schematic diagrams 
+of each component are shown in Figure 7. 
+Depending on the configuration, orientation and size of 
+these components, MEAD and BLACK (1999b and 2001b) 
+found that different wave types are produced. Any alteration of 
+these components by natural processes or human actions will 
+change the surfing wave parameters at the surfing break. 
+The “favored orthogonal direction” is the wave alignment 
+that produces the best quality surfing waves over a reef 
+component (MEAD and BLACK, 2001a). Any deviation from 
+the optimum alignment will cause an increase or decrease in 
+ideal peel angle. This leads to waves breaking more quickly or 
+slowly than desired for high-performance surfing. 
+Definition of Components 
+MEAD and BLACK’s (2001a) definitions of functional reef 
+components are as follows: 
+Ramp 
+A ramp causes waves to refract and organize themselves. 
+The directional spread of offshore waves is aligned 
+orthogonally to ramp contours prior to breaking on another 
+morphological component. Good quality surfing waves do not 
+break on a ramp. 
+Focus 
+A focus is a seabed ridge that causes a peak in wave height 
+and lowers the effective seabed gradient, making it easier for a 
+surfer to take off. Focuses can also occur at any section of a 
+surfing ride. Depending on water depth relative to swell and 
+extent of focusing, peaks will cause wave breaking or increase 
+the wave height of an advancing wave prior to its breaking 
+over another reef component. 
+Platform 
+A platform is a flat, horizontal plane, and therefore has little 
+effect on advancing waves. Platforms join different 
+components without altering wave orientation or causing 
+excessive shoaling. A platform’s two main functions are to 
+maintain wave orthogonals established by a ramp or focus and 
+to allow sufficient depth of water for waves to break above a 
+ledge. In the first situation, an optimal platform is just deeper 
+than the depth where waves will break at a particular site. 
+Wedge 
+A wedge is a planar component, tilted downward in the 
+offshore direction, similar to a ra mp. It differs because it is at 
+an angle to the favored orthogonal direction and in shallow 
+enough water to cause wave breaking. This is the main wave-
+breaking component of most surf breaks. The orientation of the 
+wedge determines the amount of refraction and therefore the 
+wave peel angle. 
+Surfing Science Review 7 
+ 
+Integrative Oceanography Division 7 Abstract 
+eScholarship Repository, 2003 
+ 
+Figure 6. Configuration of wave sections suitable for different types of maneuvers. Adapted from Scarfe et al. (2002).
+Surfing Science Review 8 
+ 
+Integrative Oceanography Division 8 Abstract 
+eScholarship Repository, 2003 
+Ledge 
+A ledge is a very steep wedge with a platform extending 
+shoreward from its top edge. Little or no refraction can occur, 
+and therefore the orientation of the ledge is critical. A ledge 
+must have a gradient >1:4, or waves are likely to surge and 
+collapse. Plunging waves are common on ledges. 
+Ridge 
+A ridge is similar in shape to a focus, but oriented so that it 
+does not cause wave convergence. The ridge provides a section 
+of steeper seabed gradient, cau sing a decrease in peel angle 
+and increase in breaker intensity. Ridges do not refract waves 
+significantly compared with we dges. A focus can become a 
+ridge when the wave angle changes significantly and water 
+depth is low enough to cause wave breaking. 
+Pinnacle 
+A pinnacle increases breaker inte nsity in a way similar to a 
+ridge, except it is more abrupt and affects a smaller area. 
+Pinnacles as well as focuses often define the takeoff zone and 
+help surfers to catch waves. 
+MEAD and BLACK (2001a) subcategorized components 
+by their functions. Ramps, focuses, and platforms precondition 
+the wave prior to breaking by aligning and shoaling. Wedges, 
+ledges, ridges and pinnacles cause the wave to break. The 
+breaking components are often small-scale features that are 
+nestled on larger, preconditioning components. 
+ 
+Figure 7. Reef components that make up the bathymetry of world-class surfing breaks (from Mead and Black, 2001a). The large 
+arrows represent the “favored orthogonal direction,” and the sm all arrows represent transformations to the wave orthogonals. 
+Note that the platform has not been included here because it is essentially a flat component that does not refract waves that p ass 
+over it. 
+ 
+Configuration of Components 
+Different types of waves can be produced depending on the 
+configuration of reef components. The components combine 
+holistically to produce quality surfing waves, and depending 
+on size, orientation, and confi guration, produce different wave 
+types (MEAD and BLACK, 1999b). Analysis of the reef 
+component configuration by MEAD and BLACK (2001b) 
+showed four common setups of surfing breaks. They are: 
+• Ramp/Wedge 
+• Ramp/Platform/Wedge 
+• Ramp/Focus/Wedge 
+• Ramp/Ledge/Platform 
+Surfing Science Review 9 
+ 
+Integrative Oceanography Division 9 Abstract 
+eScholarship Repository, 2003 
+In a case study of Bingin Reef, Bali, Indonesia by MEAD 
+and BLACK (1999b), the role of different reef components 
+was investigated using numerical modeling. Bingin was found 
+to produce consistent and surfable peel angles over a range of 
+wave heights because of the configuration of five main 
+components (Figure 8). Bingin is a Ramp/Focus/Wedge 
+configuration with a ridge superimposed on the wedge and a 
+platform abutting the wedge. 
+Most surfing breaks do not produce perfect surfing waves 
+throughout the entire tide cycle, especially when tidal ranges 
+are large. As the water depth changes, the components that 
+comprise the break also change, e ither in function or in impact 
+on wave propagation. SCARFE (2002) showed that the 3.5-4.0 
+m tide range at Manu Bay, Raglan, New Zealand can behave 
+as two different surfing break s depending on the tide because 
+the component configuration changes. 
+Scale of Components 
+The seven components identified by MEAD and BLACK 
+(2001a) occur at macro, meso and micro-scales (SCARFE, 
+2002). At the largest scale, offshore components refract and 
+organize waves before they break. For example, a ramp can 
+align waves along the whole coast or be a smaller component 
+of a surfing break, aligning a section of the wave prior to its 
+breaking on another component (MEAD and BLACK, 2001a). 
+Macro-scale components influence wave direction and 
+shoaling but do not cause waves to break. Meso-scale 
+components focus and orient waves prior to breaking and can 
+cause wave breaking. Micro-scale components are 
+superimposed on meso-scale features and create wave sections 
+between 5 and 40 m (SCARFE, 2002). 
+ 
+ 
+Figure 8. Ramp/Focus/Wedge configuration of reef components at Bingin Reef, Bali, Indonesia (from Mead and Black, 2001b). 
+From left to right – measured bathymetry, numerical model output of refraction over the surfing reef, idealized schematic of th e 
+component configuration. The configuration of the components was manipulated by Mead and Black (1999b) to see the role each 
+component played in the creation of the world-class surfing waves at Bingin Reef. 
+ 
+Example of Scale - Manu Bay Surfing Reef, Raglan, 
+New Zealand 
+The surfing reefs at Raglan are part of a large boulder 
+headland with a gently sloping sandy continental shelf starting 
+about 6 m below mean low water (see HUTT, 1997; HUTT et 
+al., 2001; MEAD, 2001; MOORES, 2001; SAYCE, 1997; 
+SCARFE, 2002). At a macro-scale, the continental shelf acts 
+as a wedge, organizing and refracting swell toward the favored 
+orthogonal direction for each su rfing spot. Often even very 
+messy swells produce clean surfi ng waves at Raglan because 
+of the headland effect (MEAD and BLACK, 2001b). This 
+effect occurs where shorter period local swells are filtered out 
+as waves refract on the wedge of the headland, resulting in 
+clean, organized, long-period waves at surfing breaks relative 
+to the offshore wave spectrum. 
+The reef meso-scale components of Manu Bay and The 
+Ledge are defined by MEAD and BLACK (2001b) as a 
+wedge/ridge configuration. The Ledge is a section of Manu 
+Bay that only breaks under certain conditions. It is the heaviest 
+and most spectacular of all th e Raglan surfing breaks because 
+of the hollow barrels that can be surfed. A ridge feature creates 
+The Ledge by increasing breaker intensity and lowering peel 
+angle for the section. 
+Micro-scale reef components (Figure 9) were identified by 
+SCARFE (2002) at Manu Bay in addition to the meso-scale 
+features identified by MEAD and BLACK (2001b). Refraction 
+modeling and measurements of wave breaking location from 
+video (SCARFE et al. , 2003a) by SCARFE (2002) showed 
+how these features refract a nd focus waves to create the 
+surfing break. It is these micr o-scale features that create 
+sections with different peel angles and breaker intensities. In 
+fact, SCARFE et al. (2003b) showed that meso-scale features 
+are actually made up of many micro-scale components. For 
+example, SCARFE et al. (2003b) used “The Poles” at Atlantic 
+Beach, Florida to show that, at a meso-scale, an ebb tidal delta 
+acts as a focus. The delta is comprised of many smaller 
+features that act together holistically under different conditions 
+to determine the location and degree of wave focusing. 
+Surfing Science Review 10 
+ 
+Integrative Oceanography Division 10 Abstract 
+eScholarship Repository, 2003 
+ 
+Figure 9. Micro-scale reef components at M anu Bay and The Ledge. Under different wave conditions and tide heights these 
+components have different effects on wave breaking (from Scarfe, 2002; Scarfe et al., 2002 and 2003a). 
+DISCUSSION 
+The body of knowledge about the ways surfing breaks 
+create surfing waves is large enough to be used to predict the 
+possible effects of coastal activities on surfing breaks and to 
+design artificial surfing reefs (ASRs) (for information on 
+ASRs, see BLACK, 2001a and 2001b; BLACK and MEAD, 
+2001; BORRERO, 2002; EVANS and RANASIGNHE, 2001; 
+MEAD, 2001; MEAD and BLACK, 2002; PATTIARATCHI, 
+1999 and 2000; RANASIGNHE et al., 2001). However, at this 
+time practical applications of this information are limited. 
+Coastal engineering projects are still undertaken without 
+considering their effects on the surfing environment. This is 
+not simply caused by coastal engineers who ignore the impacts 
+of their activities on surfing. Rather, a lack of education exists 
+among those who manage our coasts about the mechanics of 
+surfing breaks and the ways co astal modifications affect 
+surfing conditions. The rise in profile and political power of 
+environmental surfing organiza tions, such as the Surfrider 
+Foundation and Groundswell Society, as well as the volume of 
+scientific surfing information, can help to preserve and 
+enhance surfing breaks. 
+This paper hopes to communicate to surfing and non-
+surfing coastal planners, scientists and engineers the basics of 
+surfing science. Although there are still gaps in the knowledge 
+about the ways in which surfing waves are created, this paper 
+shows that there is sufficient understanding to incorporate 
+surfing amenity into coastal projects. 
+LITERATURE CITED 
+ACHENBACH, J., 1998. In the Teeth of Jaws. Photographs by 
+Patrick McFeeley. National Geographic November 1998: 
+pp. 58-71. 
+ANDREWS, C.J., 1997. Sandy shoreline response to offshore 
+reefs. Hamilton, New Zealand: Department of Earth 
+Science, The University of Waikato. Master’s thesis. 
+BANCROFT, S., 1999. Performance monitoring of the Cable 
+Stations artificial surfing reef. Department of 
+Environmental Engineering, University of Western 
+Australia. Honor’s thesis. 
+BATTJES, J.A., 1974. Surf similarity. Proc. 14 th International 
+Conference on Coastal Engineering (Copenhagen, 
+Denmark). ASCE, New York. pp. 466-479. 
+BLACK, K.P., 2001. Foreword – Natural and artificial reefs 
+for surfing and coastal protection. In: BLACK, K. P. (ed.), 
+Natural and Artificial Reefs for Surfing and Coastal 
+Protection. Journal of Coasta l Research, Special Issue No. 
+29, pp. 1. 
+BLACK, K.P., 2001b. Artificial surfing reefs for erosion 
+control and amenity: theory and application. In: Healy, T.R. 
+(ed.), International Coastal Symposium (ICS2000). Journal 
+of Coastal Research, Special Issue No. 34. pp. 1–14. 
+BLACK, K.P. and ANDREWS, C.J., 2001a. Sandy shoreline 
+response to offshore obstacles, Part 1: Salient and tombolo 
+geometry and shape. In: BLACK, K. P. (ed.), Natural and 
+Artificial Reefs for Surfing and Coastal Protection. Journal 
+of Coastal Research, Special Issue No. 29, pp. 82-93. 
+BLACK, K.P. and ANDREWS, C.J., 2001b. Sandy shoreline 
+response to offshore obstacles, Part 2: Discussion of 
+formative mechanisms. In: BLACK, K. P. (ed.), Natural and 
+Artificial Reefs for Surfing and Coastal Protection. Journal 
+of Coastal Research, Special Issue No. 29, pp. 94-101. 
+BLACK, K.P. and MEAD, S.T., 2001. Wave rotation for 
+coastal protection. Proceedings for Coasts and Ports 2001 – 
+Surfing Science Review 11 
+ 
+Integrative Oceanography Division 11 Abstract 
+eScholarship Repository, 2003 
+the 15 th Australasian Coastal Conference and Ocean 
+Engineering Conference. pp. 120-127. 
+BLACK, K.P., HUTT, J.A. and MEAD, S.T., 1998. 
+Narrowneck reef report 2: Surfing aspects, Technical Report 
+prepared for the Gold Coast City Council, June, 1998. Joint 
+Center of Excellence in Coastal Oceanography and 
+University of Waikato. 120p. 
+BLACK, K.P., MEAD, S.T. McCOMB, P. and HEALY, T.R., 
+1999. Numerical modeling to incorporate recreational 
+amenity in coastal structures on sandy and rocky coasts. 
+Coastal Structures ’99 Conference (Spain), 6 June 1999. 
+BLACK, K. P., MEAD, S.T. and JACKSON, A.J., 2000. 
+Beach amenity options and coastal protection at 
+Bournemouth. For Leisure & Tourism Services, 
+Bournemouth Borough Council, by ASR Ltd. May 2000. 
+116p. 
+BLACK, K. P., MEAD, S.T. and MATHEW, J., 2001. Design 
+and approvals for an artificial reef for protection of Noosa 
+Main Beach: Detailed inves tigations and modeling and 
+appendices. Report for Noosa Council and ICM Ltd, by 
+ASR Ltd June 2001. 207p. 
+BORRERO, J.C., 2003. 2 Years of Pratte’s Reef: Performance 
+and considerations for future artificial reef endeavors in 
+Santa Monica Bay. Proceedi ngs for the Second Surfing 
+Arts, Science and Issues Conference (SASIC 2, Ventura, 
+California, USA). 9 November. The Groundswell Society, 
+pp. 19-29. 
+COURIEL, E.D. and COX, R.J ., 1996. International literature 
+review – Artificial Surfing. Report No. 95/39, Australia 
+Water and Coastal Studies Pty. Ltd. 
+DALLY, W.R., 1989. Quantifying beach surfability. Proc. 
+Beach Technology Conference (T ampa, Florida) February 
+1989. 
+DALLY, W.R., 1990. Stochastic modeling of surfing climate. 
+Proc. 22nd International Conference on Coastal Engineering, 
+Delft, The Netherlands. ASCE, New York. pp 516-529. 
+DALLY, W.R., 2001a. Improved stochastic models for 
+surfing climate. In: BLACK, K. P. (ed.), Natural and 
+Artificial Reefs for Surfing and Coastal Protection. Journal 
+of Coastal Research, Special Issue No. 29, pp. 41-50. 
+DALLY, W.R., 2001b. The maximum speed of surfers. In: 
+BLACK, K. P. (ed.), Natural and Artificial Reefs for 
+Surfing and Coastal Protection. Journal of Coastal 
+Research, Special Issue No. 29, pp. 33-40. 
+EVANS, P. and R. RANASIGNHE. 2001. Artificial Surfing 
+Reefs: A Paradigm in Coastal Protection. Proceedings for 
+Coasts and Ports 2001 – the 15 th Australasian Coastal 
+Conference and Ocean Engineering Conference. 128-133. 
+HUTT, J.A., 1997. Bathymetry and wave parameters defining 
+the surfing quality of five adjacent reefs, Hamilton, New 
+Zealand: Department of Earth Science, The University of 
+Waikato. Master’s thesis. 
+HUTT, J.A., BLACK, K.P. and MEAD, S.T., 2001. 
+Classification of surf breaks in relation to surfing skill. In: 
+BLACK, K. P. (ed.), Natural and Artificial Reefs for 
+Surfing and Coastal Protection. Journal of Coastal 
+Research, Special Issue No. 29, pp. 66-81. 
+KOMAR, P.D., 1998. Beach proce sses and sedimentation. 2 nd 
+Edition. Upper Saddle River, New Jersey: Prentice Hall, 
+544p. 
+MEAD, S.T., 2001. Incorpora ting high-quality surfing breaks 
+into multi-purpose reefs. Hamilton, New Zealand: 
+Department of Earth Science, University of Waikato, Ph.D. 
+thesis. 
+MEAD, S.T. and BLACK, K.P., 1999a A multi-purpose, 
+artificial reef at Mount Ma unganui Beach, New Zealand. 
+Coastal Management Journal. 27(4). pp. 355-365. 
+MEAD, S.T. and BLACK, K.P., 1999b. Configuration of 
+large-scale reef components at a world-class surfing break: 
+Bingin Reef, Bali, Indonesia. Proceedings for Coasts and 
+Ports Conference ’99, Vol. 2, pp. 438-443. 
+MEAD, S.T. and BLACK, K.P., 2001a. Field studies leading 
+to the bathymetric classifi cation of world-class surfing 
+breaks. In: BLACK, K. P. (ed.), Natural and Artificial Reefs 
+for Surfing and Coastal Protection. Journal of Coastal 
+Research, Special Issue No. 29, pp. 5-20. 
+MEAD, S.T. and BLACK, K.P., 2001b. Functional component 
+combinations controlling surfing quality at world-class 
+surfing breaks. In: BLACK, K. P. (ed.), Natural and 
+Artificial Reefs for Surfing and Coastal Protection. Journal 
+of Coastal Research, Special Issue No. 29, pp. 21-32. 
+MEAD, S.T. and BLACK, K.P., 2001c. Predicting the breaker 
+intensity of surfing waves. In: BLACK, K. P. (ed.), Natural 
+and Artificial Reefs for Surfing and Coastal Protection. 
+Journal of Coastal Research, Special Issue No. 29, pp. 51-
+65. 
+MEAD, S.T. and BLACK, K.P., 2002. Multi-purpose reefs 
+provide multiple benefits - Amalgamating coastal 
+protection, high quality surfing breaks and ecological 
+enhancement to maximize user benefits and development 
+opportunities. Proceedings for the Second Surfing Arts, 
+Science and Issues Conference (SASIC 2, Ventura, 
+California, USA). 9 November. The Groundswell Society, 
+pp. 47-63. 
+MEAD, S.T., BLACK, K.P., GREEN, M., HUME, T.M., 
+HUTT, J.A. and SAYCE, A., 1997. High seabed gradients 
+and low peel angles produce world-class surfing breaks. 
+New Zealand Marine Science Society Annual Conference. 
+University of Auckland, 8-11 July, 1997. 
+MEAD, S.T., BLACK, K.P. and HUTT, J.A., 1998. An 
+artificial offshore reef at Tay Street – Mount Maunganui 
+Beach: Report 1 – Reef design and physical a nd biological 
+processes. Joint report, Department of Earth Science, 
+University of Waikato and NIWA, July 1998. 
+MEAD, S.T., BLACK, K.P. and McCOMB, P., 2001. Lyall 
+Bay Surfing Reef Feasibility Study. For the Lyall Bay 
+Surfing Reef Charitable Trust, Wellington, January 2001. 
+77p. 
+Surfing Science Review 12 
+ 
+Integrative Oceanography Division 12 Abstract 
+eScholarship Repository, 2003 
+MOFFATT & NICHOL ENGINEERS, 1989. The Patagonia 
+surfing reef feasibility study – Report prepared for The 
+Surfrider Foundation, Hunti ngton Beach, California by 
+Moffatt & Nichol Engineers, Long Beach, California, 
+September, 1989. Report No. 2521. 
+MOORES, A.E., 2001. Using video images to quantify wave 
+sections and surfer paramete rs. Hamilton, New Zealand: 
+Department of Earth Science, The University of Waikato. 
+Master’s thesis. 
+PATTIARATCHI, C. 1997. Design studies for an artificial 
+surfing reef at Cable Sta tion, Western Australia, 
+Proceedings for the 1 st International Surfing Reef 
+Symposium (Sydney, Australia), University of Sydney, pp. 
+87-90. 
+PATTIARATCHI, C. 1999. Design studies for an artificial 
+surfing reef at Cable Sta tion, Western Australia, 
+Proceedings for Coasts and Ports ’99 (Perth, WA, 
+Australia), vol. 2, pp.490-495. 
+PATTIARATCHI, C. 2000. Design studies and performance 
+monitoring of an artificial surfing reef: Cable Station, 
+Western Australia. Proc. 27 th International Conference on 
+Coastal Engineering, Sydney, Australia. ASCE, New York. 
+PATTIARATCHI, C., MASSELINK, G. and HURST, P., 
+1999. Surfability of the Pert h metropolitan coastline: An 
+assessment. Proceedings for Coasts and Ports ’99 (Perth, 
+WA, Australia), vol. 2, pp. 490-495. 
+RAICHLE, A.W., 1998. Numerical predictions of surfing 
+conditions at Mavericks, Ca lifornia. Shore and Beach, 
+April, vol. 66, no. 2, pp.26-30. 
+RANASIGNHE, R., HACKING, N. and EVANS, P., 2001. 
+Multi-functional artificial surf breaks: A review. Report 
+published by NSW Department of Land and Water 
+Conservation, Centre for Natural Resources. Parramatta, 
+Australia. 53p. 
+SAYCE, A., 1997. Transformation of surfing waves on steep 
+and complex reefs. Hamilton, New Zealand: Department of 
+Earth Science, The University of Waikato. Master’s thesis. 
+SAYCE, A., BLACK, K.P. and GORMAN, R., 1999. 
+Breaking Wave Shape on Surfing Reefs. Proceedings for 
+Coasts and Ports Conference ’99, Vol. 2, pp. 596-603. 
+SCARFE, B.E., 1999. Hydrographic surveying and 
+photogrammetry: Application to artificial surfing reef 
+studies, Dunedin, New Zealand: School of Surveying, The 
+University of Otago. Honor’s Dissertation 
+SCARFE, B.E., 2002. Categorising surfing manoeuvres using 
+wave and reef characteristics. Hamilton, New Zealand: 
+Department of Earth Science, The University of Waikato. 
+Master’s thesis. 
+SCARFE, B.E., de LANGE, W.P., BLACK, K.P. and MEAD, 
+S.T., 2002. The influence of surfing wave parameters on 
+manoeuvre type from field investigations at Raglan, New 
+Zealand. Proceedings for the Second Surfing Arts, Science 
+and Issues Conference (SASIC 2, Ventura, California, 
+USA). 9 November. The Groundswell Society, pp. 74-89. 
+SCARFE, B.E., BLACK, K.P ., CHONG, A.K., de LANGE, 
+W.L., PHILLIPS, D. and MEAD, S.T., 2003a. The 
+application of surveying techniques to artificial surfing reef 
+studies. Trans Tasman Surveyor, April 2003, in press. 
+SCARFE, B.E., ELWANY, M.H.S., BLACK, K.P. and 
+MEAD, S.T., 2003b. Surfing conditions around jetties . 
+Center for Coastal Studies, Scripps Institute of 
+Oceanography, La Jolla, CA. SIO Ref. No.03-XX 
+SCARFE, B.E., ELWANY, M.H.S., BLACK, K.P. and 
+MEAD, S.T., 2003c. Surfing breaks around jetty structures. 
+Journal of Coastal Research; This Issue. ppXX 
+SYMONDS, G. and BLACK, K.P., 2001. Predicting wave-
+driven currents on surfing reefs. In: BLACK, K. P. (ed.), 
+Natural and Artificial Reefs for Surfing and Coastal 
+Protection. Journal of Coasta l Research, Special Issue No. 
+29, pp. 102-114. 
+WALKER, J.R. and PALMER, R.Q., 1971. The general surf 
+site concept. LOOK Laboratory TR-18, University of 
+Hawaii, Department of Ocean Engineering, Honolulu, 
+Hawaii. 
+WALKER, J.R., PALMER, R.Q. and KUKEA, J.K., 1972. 
+Recreational surfing on Hawaiian reefs. Proceedings for the 
+13th Coastal Engineering Conference. 
+WALKER, J.R., 1974a. Recreational surfing parameters. 
+LOOK Laboratory TR-30, University of Hawaii, 
+Department of Ocean Engineering, Honolulu, Hawaii. 
+WALKER, J.R., 1974b. Wave transformations over a sloping 
+bottom and over a three-dimensional shoal. Honolulu, 
+Hawaii, USA: Department of Ocean Engineering, 
+University of Hawaii, Ph.D. thesis. 
+WEST, A.S., COWELL, P., BATTJES, J. A., STIVE, M. J. F., 
+DOORN, N. and ROELVINK, J. A., 2002. Wave-focusing 
+surfing reefs – A new concept. Proceedings for the Second 
+Surfing Arts, Science and Issues Conference (SASIC 2, 
+Ventura, California, USA). 9 November. The Groundswell 
+Society, pp. 31-41. 
+ 
+ 

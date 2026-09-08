@@ -1,0 +1,8 @@
+Third-party content used by Biscotte (all free; licenses verified 2026-09-08):
+- StormBreakers/        CC0 1.0        https://github.com/Stormrider31/Storm-Breakers
+- Kenney/               CC0 1.0        https://kenney.nl (Input Prompts 1.5, Particle Pack, Smoke Particles, UI Pack, Impact/Interface/UI Audio)
+- Quaternius/           CC0 1.0        https://quaternius.com (Universal Animation Library 1 & 2 Standard, Female Mannequin) via https://opengameart.org/users/quaternius
+- PolyHaven/            CC0 1.0        https://polyhaven.com (HDRIs, textures, models listed in Docs/ASSETS_MANIFEST.md)
+- OpenGameArt/Audio/    CC0 1.0        https://opengameart.org/content/beach-ocean-waves
+- Fonts/                SIL OFL 1.1    Google Fonts: Bebas Neue, Righteous, Nunito, Inter (OFL texts included)
+Attribution is not legally required for CC0 content but is given here as a courtesy. OFL fonts must keep their OFL.txt.

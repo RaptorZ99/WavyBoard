@@ -1,0 +1,2 @@
+All assets in this folder come from https://polyhaven.com and are released under CC0 1.0 Universal (public domain). https://polyhaven.com/license
+Downloaded 2026-09-08 via the public API (api.polyhaven.com).

@@ -1,0 +1,2 @@
+Beach Ocean Waves - CC0 - https://opengameart.org/content/beach-ocean-waves (source recordings by 'jasinski' on Freesound, Alki Beach). Converted FLAC->WAV 16-bit.
+ocean_ambience_loop_57s_generated.wav: procedurally generated placeholder loop (filtered noise bed + the CC0 wave samples above). CC0.
