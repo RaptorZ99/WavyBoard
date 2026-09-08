@@ -1,3 +1,4 @@
+using Biscotte.InputSys;
 using Biscotte.Ocean;
 using Biscotte.Rider;
 using Unity.Cinemachine;
@@ -14,7 +15,12 @@ namespace Biscotte.CameraRig
 
         CinemachineBrain brain;
         CinemachineCamera rideCam, tubeCam, lineupCam;
-        CinemachineFollow rideFollow;
+        CinemachineFollow rideFollow, tubeFollow;
+        Vector3 rideBaseOffset, tubeBaseOffset;
+        Vector2 orbit;            // player camera nudge (yaw, pitch) in degrees, recenters when idle
+        float orbitIdle;
+        bool tubeActive;
+        float tubeExitTimer;
         float fovVel;
 
         void Start()
@@ -24,11 +30,19 @@ namespace Biscotte.CameraRig
             brain = cam.GetComponent<CinemachineBrain>();
             if (brain == null) brain = cam.gameObject.AddComponent<CinemachineBrain>();
             brain.DefaultBlend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Styles.EaseInOut, 0.6f);
+            var blends = ScriptableObject.CreateInstance<CinemachineBlenderSettings>();
+            blends.CustomBlends = new[]
+            {
+                new CinemachineBlenderSettings.CustomBlend { From = "CM_Ride", To = "CM_Tube", Blend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Styles.EaseInOut, 0.9f) },
+                new CinemachineBlenderSettings.CustomBlend { From = "CM_Tube", To = "CM_Ride", Blend = new CinemachineBlendDefinition(CinemachineBlendDefinition.Styles.EaseInOut, 1.0f) },
+            };
+            brain.CustomBlends = blends;
 
             // Offsets are in the pivot's local frame: forward = along the crest (peel side), right = toward the open sea,
             // so a negative x puts the camera on the beach side of the rider, looking back at the face.
             rideCam = MakeCam("CM_Ride", 10, 58f);
             rideFollow = AddFollow(rideCam, new Vector3(-4.2f, 2.4f, -6.0f), new Vector3(0.35f, 0.35f, 0.35f));
+            rideBaseOffset = rideFollow.FollowOffset;
             var rc = rideCam.gameObject.AddComponent<CinemachineRotationComposer>();
             rc.Lookahead.Enabled = true; rc.Lookahead.Time = 0.3f; rc.Lookahead.Smoothing = 8f; rc.Lookahead.IgnoreY = true;
             rc.Damping = new Vector2(0.35f, 0.3f);
@@ -36,10 +50,12 @@ namespace Biscotte.CameraRig
             rideCam.gameObject.AddComponent<CameraAboveWater>();
 
             tubeCam = MakeCam("CM_Tube", 5, 70f);
-            AddFollow(tubeCam, new Vector3(-2.2f, 1.1f, -4.2f), new Vector3(0.2f, 0.2f, 0.2f));
+            tubeFollow = AddFollow(tubeCam, new Vector3(-2.0f, 1.2f, -4.6f), new Vector3(0.15f, 0.15f, 0.15f));
+            tubeBaseOffset = tubeFollow.FollowOffset;
             var tc = tubeCam.gameObject.AddComponent<CinemachineRotationComposer>();
-            tc.Damping = new Vector2(0.2f, 0.2f);
-            tc.Lookahead.Enabled = true; tc.Lookahead.Time = 0.2f; tc.Lookahead.Smoothing = 6f;
+            tc.Damping = new Vector2(0.15f, 0.15f);
+            tc.Lookahead.Enabled = true; tc.Lookahead.Time = 0.15f; tc.Lookahead.Smoothing = 6f; tc.Lookahead.IgnoreY = true;
+            tc.Composition.ScreenPosition = new Vector2(0f, 0.08f);   // rider low in the frame so the exit stays visible
             tubeCam.gameObject.AddComponent<CameraAboveWater>();
 
             lineupCam = MakeCam("CM_Lineup", 5, 60f);
@@ -86,8 +102,36 @@ namespace Biscotte.CameraRig
             lens.Dutch = Mathf.Lerp(lens.Dutch, -rider.Lean * 6f, 1f - Mathf.Exp(-Time.deltaTime * 6f));
             rideCam.Lens = lens;
 
-            bool tube = rider.InTube && rider.TubeTime > 0.25f;
-            tubeCam.Priority = tube ? 20 : 5;
+            float dt = Time.deltaTime;
+
+            // player camera nudge: right stick (rate) or mouse delta (pre-scaled), recenters after a short idle; the stick
+            // rotates the board in the air instead (AirRotate), so no nudge there
+            var input = InputRouter.Instance;
+            Vector2 raw = (input != null && rider.State != RiderState.Air) ? input.CameraNudge : Vector2.zero;
+            if (raw.sqrMagnitude > 0.0004f)
+            {
+                orbit += input.UsingGamepad ? raw * (150f * dt) : raw * 2.5f;
+                orbit.x = Mathf.Clamp(orbit.x, -80f, 80f);
+                orbit.y = Mathf.Clamp(orbit.y, -25f, 30f);
+                orbitIdle = 0f;
+            }
+            else
+            {
+                orbitIdle += dt;
+                if (orbitIdle > 1.2f) orbit = Vector2.MoveTowards(orbit, Vector2.zero, 90f * dt);
+            }
+            rideFollow.FollowOffset = Quaternion.Euler(-orbit.y, orbit.x, 0f) * rideBaseOffset;
+            tubeFollow.FollowOffset = Quaternion.Euler(-orbit.y * 0.5f, orbit.x * 0.5f, 0f) * tubeBaseOffset;
+
+            // tube camera with hysteresis: no flip-flop when the lip briefly opens
+            bool inTube = rider.InTube && rider.TubeTime > 0.2f;
+            if (inTube) { tubeActive = true; tubeExitTimer = 0f; }
+            else if (tubeActive)
+            {
+                tubeExitTimer += dt;
+                if (tubeExitTimer > 0.7f || rider.State != RiderState.Ride) tubeActive = false;
+            }
+            tubeCam.Priority = tubeActive ? 20 : 5;
             bool paddle = rider.State == RiderState.Paddle || rider.State == RiderState.DuckDive || rider.State == RiderState.Wipeout;
             lineupCam.Priority = paddle ? 12 : 5;
         }

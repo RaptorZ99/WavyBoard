@@ -31,7 +31,7 @@ namespace Biscotte.Wave
 
         [Header("Timing (s)")]
         public float shoalTime = 3f;
-        public float pitchTime = 1.7f;
+        public float pitchTime = 2.0f;
         public float collapseTime = 1.2f;
         public float decayTime = 9f;
         public float spawnFadeTime = 4f;
@@ -40,13 +40,13 @@ namespace Biscotte.Wave
         [Header("Break line (sorted by s)")]
         public List<Key> keys = new List<Key>
         {
-            // peel angle ~61 deg (f' ~ 1.8) -> peel speed ~3.9 m/s at c = 7 m/s
-            new Key { s = 0f,   breakOffset = 40f,  height = 1.8f, intensity = 2.0f },
-            new Key { s = 30f,  breakOffset = 95f,  height = 2.0f, intensity = 2.4f },
-            new Key { s = 65f,  breakOffset = 160f, height = 2.2f, intensity = 2.8f },
-            new Key { s = 100f, breakOffset = 225f, height = 2.0f, intensity = 2.2f },
-            new Key { s = 130f, breakOffset = 280f, height = 1.7f, intensity = 1.8f },
-            new Key { s = 150f, breakOffset = 300f, height = 1.4f, intensity = 1.6f }, // closing section
+            // peel angle ~61 deg (f' ~ 1.8) -> peel speed ~3.9 m/s at c = 7 m/s; overhead faces (2.6-3.2 m) with a hollow middle section
+            new Key { s = 0f,   breakOffset = 40f,  height = 2.6f, intensity = 2.0f },
+            new Key { s = 30f,  breakOffset = 95f,  height = 2.9f, intensity = 2.5f },
+            new Key { s = 65f,  breakOffset = 160f, height = 3.2f, intensity = 2.9f },
+            new Key { s = 100f, breakOffset = 225f, height = 3.0f, intensity = 2.4f },
+            new Key { s = 130f, breakOffset = 280f, height = 2.6f, intensity = 2.0f },
+            new Key { s = 150f, breakOffset = 300f, height = 2.0f, intensity = 1.7f }, // closing section
         };
 
         [Header("Lineup")]

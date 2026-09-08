@@ -135,12 +135,26 @@ namespace Biscotte.Tools
             if (oceanPrefab == null) return "ERROR: Ocean prefab missing";
             var ocean = (GameObject)PrefabUtility.InstantiatePrefab(oceanPrefab); ocean.name = "Ocean";
             var rend = ocean.GetComponentInChildren<MeshRenderer>();
+            Material surfMat = null;
             if (rend != null && rend.sharedMaterial != null)
             {
                 var oceanMat = LoadOrCreate<Material>(kMat + "/Ocean_Ambient.mat", () => new Material(rend.sharedMaterial));
                 rend.sharedMaterial = oceanMat;
                 rend.shadowCastingMode = ShadowCastingMode.Off;   // water must not cast hard polygonal shadows on itself
                 rend.receiveShadows = true;
+
+                // surf wave material: the Storm Breakers ocean graph + foam/tube/face normals (Tools/make_surfwave_graph.py),
+                // same property values as the ambient ocean so both surfaces are seamless
+                var surfShader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/_Project/Shaders/SurfWaveOcean.shadergraph");
+                if (surfShader == null) log.Append("WARNING: SurfWaveOcean.shadergraph not imported, surf wave falls back to SurfWaveWater. ");
+                else
+                {
+                    surfMat = LoadOrCreate<Material>(kMat + "/SurfWaveOcean.mat", () => new Material(surfShader));
+                    surfMat.shader = surfShader;
+                    surfMat.CopyPropertiesFromMaterial(oceanMat);
+                    surfMat.renderQueue = oceanMat.renderQueue;
+                    EditorUtility.SetDirty(surfMat);
+                }
             }
             var oc = ocean.GetComponentInChildren<StormBreakers.OceanController>();
             if (oc != null)
@@ -167,7 +181,7 @@ namespace Biscotte.Tools
             var swGo = new GameObject("SurfWave");
             var swMf = swGo.AddComponent<MeshFilter>();
             var swMr = swGo.AddComponent<MeshRenderer>();
-            swMr.sharedMaterial = waterMat;
+            swMr.sharedMaterial = surfMat != null ? surfMat : waterMat;
             swGo.AddComponent<SurfWave>();
             var wvfx = swGo.AddComponent<Biscotte.VFX.WaveVfx>(); wvfx.sprayMaterial = sprayMat; wvfx.foamMaterial = foamMat;
             var swPrefab = PrefabUtility.SaveAsPrefabAsset(swGo, kPrefabs + "/SurfWave.prefab");
@@ -209,6 +223,7 @@ namespace Biscotte.Tools
             managers.AddComponent<WaveClockDriver>();
             var amb = managers.AddComponent<OceanAmbient>();
             SetPrivate(amb, "controller", oc);
+            amb.syncMaterials = surfMat != null ? new[] { surfMat } : null;
             managers.AddComponent<WaterSurfaceComposite>();
             var input = managers.AddComponent<InputRouter>();
             SetPrivate(input, "actions", actions);

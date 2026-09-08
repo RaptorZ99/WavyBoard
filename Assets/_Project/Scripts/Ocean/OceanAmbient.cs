@@ -69,5 +69,34 @@ namespace Biscotte.Ocean
         }
 
         public float AmbientTime => Time.time;
+
+        // ---------------------------------------------------------------- material mirroring
+        [Tooltip("Materials sharing the Storm Breakers ocean look (surf wave mesh): the dynamic ocean properties are mirrored every frame")]
+        public Material[] syncMaterials;
+
+        static readonly int[] kMatrixIds = { Shader.PropertyToID("_LIDR"), Shader.PropertyToID("_NKVW") };
+        static readonly int[] kColorIds = { Shader.PropertyToID("_waterColor"), Shader.PropertyToID("_totalLigthColor"), Shader.PropertyToID("_groundColor") };
+        static readonly int[] kFloatIds = { Shader.PropertyToID("_oceanIntensity"), Shader.PropertyToID("_underwater"), Shader.PropertyToID("_smoothness"), Shader.PropertyToID("_ripplesIntensity"), Shader.PropertyToID("_ripplesDirection") };
+        static readonly int[] kVectorIds = { Shader.PropertyToID("_terrainPosition"), Shader.PropertyToID("_terrainScale") };
+        static readonly int kTerrainTex = Shader.PropertyToID("_terrainHeightmap");
+
+        void LateUpdate() { SyncMaterials(); }
+
+        /// <summary>Copies the per-frame Storm Breakers material state (wave matrices, light, terrain) to the surf wave material(s).</summary>
+        public void SyncMaterials()
+        {
+            var src = StormBreakers.Ocean.sharedMaterial;
+            if (src == null || syncMaterials == null) return;
+            for (int i = 0; i < syncMaterials.Length; i++)
+            {
+                var m = syncMaterials[i];
+                if (m == null) continue;
+                foreach (int id in kMatrixIds) if (src.HasMatrix(id) && m.HasMatrix(id)) m.SetMatrix(id, src.GetMatrix(id));
+                foreach (int id in kColorIds) if (src.HasColor(id) && m.HasColor(id)) m.SetColor(id, src.GetColor(id));
+                foreach (int id in kFloatIds) if (src.HasFloat(id) && m.HasFloat(id)) m.SetFloat(id, src.GetFloat(id));
+                foreach (int id in kVectorIds) if (src.HasVector(id) && m.HasVector(id)) m.SetVector(id, src.GetVector(id));
+                if (src.HasTexture(kTerrainTex) && m.HasTexture(kTerrainTex)) m.SetTexture(kTerrainTex, src.GetTexture(kTerrainTex));
+            }
+        }
     }
 }

@@ -58,12 +58,10 @@ namespace Biscotte.Wave
             float crest = P.CrestOffset(TimeW);
 
             SurfLocal L = SurfWaveMath.Evaluate(P, Profile, s, xi, TimeW);
-            float3 wp = World(s, crest + xi, 0f);
-            float3 und = new float3(wp.x, 0f, wp.z);
-            float hA = OceanMath.GetHeight(Ambient, AmbientTime, wp, ref und, out float3 def, GroundDepth);
-            float3 nA = OceanMath.GetNormal(Ambient, AmbientTime, und, def, GroundDepth, 0.3f);
 
-            // wave normal from finite differences of the wave component only
+            // The mesh holds the surf wave shape only, on the UNDEFORMED ambient plane: the Storm Breakers shader
+            // (SurfWaveOcean graph) adds the ambient swell deformation and its normal on the GPU, exactly like the
+            // ambient ocean plane, so both surfaces match without a seam.
             const float e = 0.2f;
             float hs1 = SurfWaveMath.HeightAt(P, Profile, s + e, xi, TimeW);
             float hs0 = SurfWaveMath.HeightAt(P, Profile, s - e, xi, TimeW);
@@ -72,11 +70,16 @@ namespace Biscotte.Wave
             float dhs = (hs1 - hs0) / (2f * e);
             float dhx = (hx1 - hx0) / (2f * e);
             float3 nW = math.normalize(new float3(0f, 1f, 0f) - P.crestDir * dhs - P.travelDir * dhx);
-            float3 n = math.normalize(nW + (nA - new float3(0f, 1f, 0f)) * 0.6f);
+
+            // Flat parts of the grid sink 12 cm under the ambient plane (no z-fighting, hidden by the ocean);
+            // foamy flat water (whitewater trail) floats 3 cm above it instead so the foam stays visible.
+            float foamK = math.saturate((L.foam + L.whitewater) * 3f);
+            float skirt = 0.12f * (1f - math.smoothstep(0.02f, 0.3f, math.max(0f, L.height))) * (1f - foamK);
+            float y = L.height + 0.03f * foamK - skirt;
 
             SurfVertex v;
-            v.pos = World(s, crest + xi, hA + L.height + 0.02f);
-            v.nrm = n;
+            v.pos = World(s, crest + xi, y);
+            v.nrm = nW;
             v.col = new float4(L.energy, L.foam, L.tubeAO, L.whitewater);
             v.uv0 = new float2(s / math.max(1f, P.length), xi / P.wavelength);
             v.uv1 = new float2(L.phase, L.sss);
@@ -95,9 +98,6 @@ namespace Biscotte.Wave
             float crest = P.CrestOffset(TimeW);
 
             SurfLocal L = SurfWaveMath.Evaluate(P, Profile, s, 0f, TimeW);
-            float3 wpCrest = World(s, crest, 0f);
-            float3 und = new float3(wpCrest.x, 0f, wpCrest.z);
-            float hA = OceanMath.GetHeight(Ambient, AmbientTime, wpCrest, ref und, out _, GroundDepth);
 
             SurfWaveMath.LipPoint(L, vv, out float2 pt, out float2 nrm2, out float th);
             float sign = side == 0 ? 1f : -1f;
@@ -107,7 +107,7 @@ namespace Biscotte.Wave
 
             float tipFoam = math.saturate(0.35f + 0.65f * vv) * L.lipAmount;
             SurfVertex v;
-            v.pos = World(s, crest + pos2.x, hA + pos2.y);
+            v.pos = World(s, crest + pos2.x, pos2.y);
             v.nrm = nrm;
             v.col = new float4(L.energy, tipFoam, 0f, 0f);
             v.uv0 = new float2(s / math.max(1f, P.length), 0.5f + vv * 0.2f);

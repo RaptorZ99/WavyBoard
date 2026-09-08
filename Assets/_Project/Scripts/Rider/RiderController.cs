@@ -161,7 +161,18 @@ namespace Biscotte.Rider
             Vector3 horiz = new Vector3(vel.x, 0f, vel.z);
             horiz = Vector3.MoveTowards(horiz, F * target, 3.5f * dt);
             Vector3 wv = lastSample.Velocity; wv.y = 0f;
-            Vector3 push = wv * (0.3f + lastSample.WhitewaterAmount * tuning.whitewaterPush);
+            Vector3 push = wv * (0.5f + lastSample.WhitewaterAmount * tuning.whitewaterPush);
+            // take-off assist: a face rising behind a paddling rider carries him along and lines him up with the wave
+            var ls = lastSample;
+            bool faceBehind = ls.BreakPhase > 0.15f && ls.BreakPhase < tuning.takeoffMaxPhase && ls.CrestDistance > -1f && ls.CrestDistance < ls.FaceWidth + 10f && ls.WaveHeight > 0.4f;
+            if (faceBehind && mv.y > 0.2f && tuning.takeoffAssist > 0f)
+            {
+                Vector3 D = ls.TravelDir;
+                float slopeK = Mathf.Clamp01(Mathf.Sqrt(Mathf.Max(0f, 1f - ls.Normal.y * ls.Normal.y)) / 0.12f);
+                push += D * (FindCelerity(ls.WaveId) * 0.45f * tuning.takeoffAssist * slopeK);
+                float yawD = Mathf.Atan2(D.x, D.z) * Mathf.Rad2Deg;
+                yaw = Mathf.LerpAngle(yaw, yawD, 1f - Mathf.Exp(-dt * 2.5f * tuning.takeoffAssist));
+            }
             pos += (horiz + push) * dt;
             vel = horiz;
             float targetY = lastSample.Height - tuning.paddleDraft;
@@ -180,13 +191,13 @@ namespace Biscotte.Rider
         bool CanTakeOff()
         {
             var s = lastSample;
-            if (s.BreakPhase < 0.3f || s.BreakPhase > tuning.takeoffMaxPhase) return false;
-            if (s.WaveHeight < 0.5f) return false;
-            // on the face: between the crest and the bottom of the face
-            if (s.CrestDistance < 1.0f || s.CrestDistance > s.FaceWidth + 3f) return false;
+            if (s.BreakPhase < 0.2f || s.BreakPhase > tuning.takeoffMaxPhase) return false;
+            if (s.WaveHeight < 0.4f) return false;
+            // on the face: between the crest and the bottom of the face (generous: the assist pulls the rider into the pocket)
+            if (s.CrestDistance < 0.5f || s.CrestDistance > s.FaceWidth + 6f) return false;
             float slope = Mathf.Sqrt(Mathf.Max(0f, 1f - s.Normal.y * s.Normal.y)) / Mathf.Max(0.05f, s.Normal.y);
-            if (slope < 0.06f) return false;
-            bool paddling = In.Move.y > 0.3f || Vector3.Dot(vel, (Vector3)s.TravelDir) >= tuning.takeoffMinForwardSpeed;
+            if (slope < 0.035f) return false;
+            bool paddling = In.Move.y > 0.2f || Vector3.Dot(vel, (Vector3)s.TravelDir) >= tuning.takeoffMinForwardSpeed;
             return paddling;
         }
 

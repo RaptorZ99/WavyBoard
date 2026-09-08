@@ -177,13 +177,14 @@ namespace Biscotte.Wave
         public WaterSample Sample(float3 worldPos, float time, in OceanParams ambient, float ambientTime, float groundDepth)
         {
             float tw = (float)(time - SpawnTime);
-            LocalCoords(worldPos, tw, out float s, out float xi);
-            SurfLocal L = SurfWaveMath.Evaluate(Params, profile, s, xi, tw);
-
             float3 und = new float3(worldPos.x, 0f, worldPos.z);
             float hA = OceanMath.GetHeight(in ambient, ambientTime, worldPos, ref und, out float3 def, groundDepth);
             float3 nA = OceanMath.GetNormal(in ambient, ambientTime, und, def, groundDepth, 0.3f);
             float3 vA = OceanMath.GetVelocity(in ambient, ambientTime, und, def, groundDepth, 0.1f);
+            // The mesh is built on the undeformed plane and displaced by the ambient swell on the GPU (SurfWaveOcean graph):
+            // evaluate the surf shape at the undeformed footprint so physics and visuals coincide.
+            LocalCoords(new float3(und.x, 0f, und.z), tw, out float s, out float xi);
+            SurfLocal L = SurfWaveMath.Evaluate(Params, profile, s, xi, tw);
 
             const float e = 0.2f;
             float hs1 = SurfWaveMath.HeightAt(Params, profile, s + e, xi, tw);
@@ -191,7 +192,7 @@ namespace Biscotte.Wave
             float hx1 = SurfWaveMath.HeightAt(Params, profile, s, xi + e, tw);
             float hx0 = SurfWaveMath.HeightAt(Params, profile, s, xi - e, tw);
             float3 nW = math.normalize(new float3(0f, 1f, 0f) - Params.crestDir * ((hs1 - hs0) / (2f * e)) - Params.travelDir * ((hx1 - hx0) / (2f * e)));
-            float3 n = math.normalize(nW + (nA - new float3(0f, 1f, 0f)) * 0.6f);
+            float3 n = math.normalize(nW + (nA - new float3(0f, 1f, 0f)));
 
             WaterSample r = default;
             r.Height = hA + L.height;
@@ -272,10 +273,9 @@ namespace Biscotte.Wave
             SurfWaveMath.LipPoint(L, v, out float2 pt, out float2 nrm, out float th);
             lipAmount = L.lipAmount;
             float crest = Params.CrestOffset(tw);
-            float3 wp = Params.origin + Params.crestDir * s + Params.travelDir * crest;
-            float hA = AmbientHeightAt(wp);
+            float3 wp = Params.origin + Params.crestDir * s + Params.travelDir * (crest + pt.x);
             dir = (Vector3)Params.travelDir;
-            return (Vector3)(Params.origin + Params.crestDir * s + Params.travelDir * (crest + pt.x) + new float3(0f, hA + pt.y, 0f));
+            return (Vector3)(wp + AmbientDeform(wp) + new float3(0f, pt.y, 0f));
         }
 
         /// <summary>World position on the face at (s, xi) at render time.</summary>
@@ -285,15 +285,15 @@ namespace Biscotte.Wave
             L = SurfWaveMath.Evaluate(Params, profile, s, xi, tw);
             float crest = Params.CrestOffset(tw);
             float3 wp = Params.origin + Params.crestDir * s + Params.travelDir * (crest + xi);
-            float hA = AmbientHeightAt(wp);
-            return (Vector3)(wp + new float3(0f, hA + L.height, 0f));
+            return (Vector3)(wp + AmbientDeform(wp) + new float3(0f, L.height, 0f));
         }
 
-        float AmbientHeightAt(float3 wp)
+        /// <summary>Ambient swell displacement applied by the GPU to a mesh point built on the undeformed plane.</summary>
+        float3 AmbientDeform(float3 undeformed)
         {
             var amb = OceanAmbient.Instance;
-            if (amb == null) return 0f;
-            return OceanMath.QuickHeight(in amb.Params, amb.AmbientTime, wp, 200f);
+            if (amb == null || !amb.Ready) return float3.zero;
+            return OceanMath.Deformation(in amb.Params, amb.AmbientTime, undeformed, amb.GroundDepth(undeformed), out _);
         }
     }
 }

@@ -22,6 +22,8 @@ namespace Biscotte.Rider
         public float takeoffMinForwardSpeed = 1.2f;
         public float takeoffInitialCelerityFactor = 0.55f;
         public float takeoffDuration = 0.45f;
+        [Tooltip("0..1: how much a rising face pulls a paddling rider along and lines him up (arcade feel)")]
+        public float takeoffAssist = 0.8f;
 
         [Header("Ride")]
         public float gravity = 9.81f;
