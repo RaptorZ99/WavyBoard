@@ -344,7 +344,7 @@ namespace Biscotte.Rider
             float speed = vel.magnitude;
             if (speed < tuning.minRideSpeedBeforeStall && s2.BreakPhase >= 1f) { stallTimer += dt; if (stallTimer > tuning.stallWipeoutTime) { Wipeout("stalled"); return; } }
             else stallTimer = 0f;
-            if (n2.y < 0.35f && relSpeed < 2f) { Wipeout("too steep"); return; }
+            if (n2.y < 0.3f && speed < 3f && !s2.InTube) { Wipeout("too steep"); return; }
             if (s2.WhitewaterAmount > 0.75f && speed < 3.5f && s2.CrestDistance < 4f) { Wipeout("whitewater"); return; }
         }
 
@@ -428,6 +428,7 @@ namespace Biscotte.Rider
             visualRot = visualRot * Quaternion.Euler(wipeoutSpin * dt);
             if (stateTime >= tuning.wipeoutDuration)
             {
+                if (tuning.autoReturnToLineup) { Respawn(); Event("Back to the lineup"); return; }
                 pos.y = s.Height - tuning.paddleDraft;
                 vel = Vector3.zero;
                 yaw = initialYaw;
@@ -447,7 +448,11 @@ namespace Biscotte.Rider
             vel = Vector3.Lerp(vel, Vector3.zero, 1f - Mathf.Exp(-dt * 1.5f));
             pos += vel * dt;
             pos.y = Mathf.Lerp(pos.y, lastSample.Height - tuning.paddleDraft, 1f - Mathf.Exp(-dt * 8f));
-            if (stateTime >= 1.0f) Enter(RiderState.Paddle);
+            if (stateTime >= 1.6f)
+            {
+                if (tuning.autoReturnToLineup) { Respawn(); Event("Back to the lineup"); }
+                else Enter(RiderState.Paddle);
+            }
         }
 
         // ------------------------------------------------------------------ Visuals

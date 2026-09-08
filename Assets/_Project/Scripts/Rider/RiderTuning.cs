@@ -63,5 +63,9 @@ namespace Biscotte.Rider
         public float wipeoutDuration = 2.6f;
         public float wipeoutDrift = 0.7f;
         public float tubeCloseoutWipeoutPhase = 2.25f;
+
+        [Header("Prototype")]
+        [Tooltip("After a wipeout or kick-out, respawn at the lineup instead of paddling back (no channel yet).")]
+        public bool autoReturnToLineup = true;
     }
 }
