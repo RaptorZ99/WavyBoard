@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 1638273119630696134}
   - component: {fileID: 388226389729300841}
   - component: {fileID: 4680083090893444784}
+  - component: {fileID: 1658650345210958972}
   m_Layer: 0
   m_Name: SurfWave
   m_TagString: Untagged
@@ -106,3 +107,18 @@ MonoBehaviour:
   Ns: 160
   Nxi: 44
   Nv: 12
+--- !u!114 &1658650345210958972
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1105488277323545227}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae18f952a96555140a9f7d11790bfe8d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Biscotte.Runtime::Biscotte.VFX.WaveVfx
+  sprayMaterial: {fileID: 2100000, guid: 34781301427f1a746a95b1b77b7a9f27, type: 2}
+  foamMaterial: {fileID: 2100000, guid: c1ec097854de67f48831b17931c1a90b, type: 2}
+  intensity: 1

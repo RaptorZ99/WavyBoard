@@ -246,5 +246,54 @@ namespace Biscotte.Wave
         }
 
         public float CrestPositionAlongD => Params.CrestOffset(WaveTime);
+
+        // ---------------------------------------------------------------- VFX helpers (render time)
+        /// <summary>Crest coordinate of the breaking front (phase == 1) at render time.</summary>
+        public float PeelS()
+        {
+            float tw = WaveTime;
+            int n = profile.Length;
+            float best = float.PositiveInfinity; float bestS = 0f;
+            for (int i = 0; i < n; i++)
+            {
+                float si = Params.length * i / (n - 1);
+                float ph = SurfWaveMath.Phase(Params, tw - Params.BreakTime(profile[i].x));
+                float d = math.abs(ph - 1f);
+                if (d < best) { best = d; bestS = si; }
+            }
+            return bestS;
+        }
+
+        /// <summary>World position of a point on the lip curve (v in 0..1) at crest coordinate s; lipAmount 0 = no lip there.</summary>
+        public Vector3 LipPointWorld(float s, float v, out float lipAmount, out Vector3 dir)
+        {
+            float tw = WaveTime;
+            SurfLocal L = SurfWaveMath.Evaluate(Params, profile, s, 0f, tw);
+            SurfWaveMath.LipPoint(L, v, out float2 pt, out float2 nrm, out float th);
+            lipAmount = L.lipAmount;
+            float crest = Params.CrestOffset(tw);
+            float3 wp = Params.origin + Params.crestDir * s + Params.travelDir * crest;
+            float hA = AmbientHeightAt(wp);
+            dir = (Vector3)Params.travelDir;
+            return (Vector3)(Params.origin + Params.crestDir * s + Params.travelDir * (crest + pt.x) + new float3(0f, hA + pt.y, 0f));
+        }
+
+        /// <summary>World position on the face at (s, xi) at render time.</summary>
+        public Vector3 FacePointWorld(float s, float xi, out SurfLocal L)
+        {
+            float tw = WaveTime;
+            L = SurfWaveMath.Evaluate(Params, profile, s, xi, tw);
+            float crest = Params.CrestOffset(tw);
+            float3 wp = Params.origin + Params.crestDir * s + Params.travelDir * (crest + xi);
+            float hA = AmbientHeightAt(wp);
+            return (Vector3)(wp + new float3(0f, hA + L.height, 0f));
+        }
+
+        float AmbientHeightAt(float3 wp)
+        {
+            var amb = OceanAmbient.Instance;
+            if (amb == null) return 0f;
+            return OceanMath.QuickHeight(in amb.Params, amb.AmbientTime, wp, 200f);
+        }
     }
 }

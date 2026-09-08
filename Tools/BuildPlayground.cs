@@ -54,6 +54,8 @@ namespace Biscotte.Tools
             EditorUtility.SetDirty(waterMat);
 
             var litShader = Shader.Find("Universal Render Pipeline/Lit");
+            var sprayMat = LoadOrCreate<Material>(kMat + "/Particles_Spray.mat", () => MakeParticleMaterial("Assets/ThirdParty/Kenney/ParticlePack/Textures/circle_05.png", new Color(1f, 1f, 1f, 0.9f)));
+            var foamMat = LoadOrCreate<Material>(kMat + "/Particles_Foam.mat", () => MakeParticleMaterial("Assets/ThirdParty/Kenney/ParticlePack/Textures/smoke_04.png", new Color(0.97f, 0.99f, 1f, 0.85f)));
             var boardMat = LoadOrCreate<Material>(kMat + "/Board_Deck.mat", () => new Material(litShader));
             boardMat.SetColor("_BaseColor", new Color(0.95f, 0.82f, 0.18f)); boardMat.SetFloat("_Smoothness", 0.65f); EditorUtility.SetDirty(boardMat);
             var riderMat = LoadOrCreate<Material>(kMat + "/Rider_Placeholder.mat", () => new Material(litShader));
@@ -165,6 +167,7 @@ namespace Biscotte.Tools
             var swMr = swGo.AddComponent<MeshRenderer>();
             swMr.sharedMaterial = waterMat;
             swGo.AddComponent<SurfWave>();
+            var wvfx = swGo.AddComponent<Biscotte.VFX.WaveVfx>(); wvfx.sprayMaterial = sprayMat; wvfx.foamMaterial = foamMat;
             var swPrefab = PrefabUtility.SaveAsPrefabAsset(swGo, kPrefabs + "/SurfWave.prefab");
             Object.DestroyImmediate(swGo);
 
@@ -190,6 +193,8 @@ namespace Biscotte.Tools
             var camTarget = new GameObject("CameraTarget"); camTarget.transform.SetParent(riderGo.transform, false);
             var rc = riderGo.AddComponent<RiderController>();
             rc.tuning = tuning; rc.board = boardSpec; rc.visualRoot = visual.transform; rc.boardRoot = boardGo.transform; rc.cameraTarget = camTarget.transform;
+            var rvfx = riderGo.AddComponent<Biscotte.VFX.RiderVfx>(); rvfx.rider = rc; rvfx.sprayMaterial = sprayMat; rvfx.foamMaterial = foamMat;
+            var scorer = riderGo.AddComponent<Biscotte.Scoring.RideScorer>(); scorer.rider = rc;
             var riderPrefab = PrefabUtility.SaveAsPrefabAsset(riderGo, kPrefabs + "/Rider.prefab");
             Object.DestroyImmediate(riderGo);
             var riderInst = (GameObject)PrefabUtility.InstantiatePrefab(riderPrefab);
@@ -210,7 +215,15 @@ namespace Biscotte.Tools
             var director = managers.AddComponent<CameraDirector>();
             director.rider = riderCtrl; director.cameraTarget = riderInst.transform.Find("CameraTarget");
             var overlay = managers.AddComponent<Biscotte.Debugging.DebugOverlay>();
-            overlay.rider = riderCtrl; overlay.scheduler = sched;
+            overlay.rider = riderCtrl; overlay.scheduler = sched; overlay.scorer = riderInst.GetComponent<Biscotte.Scoring.RideScorer>();
+            var audio = managers.AddComponent<Biscotte.Audio.AudioDirector>();
+            audio.rider = riderCtrl;
+            audio.ambienceLoop = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/ThirdParty/OpenGameArt/Audio/ocean_ambience_loop_57s_generated.wav");
+            audio.splashClips = new[] {
+                AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/ThirdParty/OpenGameArt/Audio/beach_wave_01_cc0_jasinski.wav"),
+                AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/ThirdParty/OpenGameArt/Audio/beach_wave_02_cc0_jasinski.wav"),
+                AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/ThirdParty/OpenGameArt/Audio/beach_wave_03_cc0_jasinski.wav"),
+                AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/ThirdParty/OpenGameArt/Audio/beach_wave_04_cc0_jasinski.wav") };
 
             // (shore rocks come back in the environment phase once they have Mesh LODs; the raw Poly Haven scans are 0.5-2M tris)
 
@@ -220,6 +233,26 @@ namespace Biscotte.Tools
             bool has = false; foreach (var s in scenes) if (s.path == kScene) has = true;
             if (!has) { scenes.Insert(0, new EditorBuildSettingsScene(kScene, true)); EditorBuildSettings.scenes = scenes.ToArray(); }
             return "Playground built: " + kScene + " | " + log;
+        }
+
+        static Material MakeParticleMaterial(string texPath, Color tint)
+        {
+            var m = new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit"));
+            var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(texPath);
+            if (tex == null) tex = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/ThirdParty/Kenney/ParticlePack/Textures/circle_05.png");
+            m.SetTexture("_BaseMap", tex);
+            m.SetColor("_BaseColor", tint);
+            m.SetFloat("_Surface", 1f); m.SetFloat("_Blend", 0f);
+            m.SetOverrideTag("RenderType", "Transparent");
+            m.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            m.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            m.SetInt("_ZWrite", 0);
+            m.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            m.EnableKeyword("_ALPHABLEND_ON");
+            m.SetFloat("_SoftParticlesEnabled", 1f);
+            m.EnableKeyword("_SOFTPARTICLES_ON");
+            m.renderQueue = 3000;
+            return m;
         }
 
         static void PlaceRock(string path, Vector3 pos, float yaw)

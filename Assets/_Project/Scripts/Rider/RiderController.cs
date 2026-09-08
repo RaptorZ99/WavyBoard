@@ -41,6 +41,16 @@ namespace Biscotte.Rider
         public int PumpsThisRide { get; private set; }
         public int AirsLanded { get; private set; }
         public string LastWipeoutReason { get; private set; } = "";
+        public float AirSpin { get; private set; }     // accumulated yaw degrees during the current/last air
+        public float AirFlip { get; private set; }     // accumulated pitch degrees
+        public float AirRoll { get; private set; }     // accumulated roll degrees (El Rollo)
+        public float AirPeak { get; private set; }     // max height above the surface during the air
+        public float PopEnergy { get; private set; }   // pocket energy at take-off of the air
+        public bool GrabHeldInAir { get; private set; }
+        public float RailSlip { get; private set; }    // lateral slip speed on the face (spray)
+        public Vector3 RelVelocity => relVel;
+        public Vector3 BoardForward { get; private set; } = Vector3.forward;
+        public Vector3 BoardRight { get; private set; } = Vector3.right;
         public event System.Action<string> OnEvent;
 
         Vector3 pos, vel, relVel;
@@ -98,7 +108,7 @@ namespace Biscotte.Rider
         {
             State = s;
             stateTime = 0f;
-            if (s == RiderState.Air) { AirTime = 0f; airRot = visualRot; }
+            if (s == RiderState.Air) { AirTime = 0f; airRot = visualRot; AirSpin = 0f; AirFlip = 0f; AirRoll = 0f; AirPeak = 0f; GrabHeldInAir = false; PopEnergy = lastSample.Energy; }
             if (s == RiderState.Ride)
             {
                 RideTime = 0f; PumpsThisRide = 0;
@@ -278,6 +288,8 @@ namespace Biscotte.Rider
             float vF = Vector3.Dot(relVel, F), vR = Vector3.Dot(relVel, R), vN = Vector3.Dot(relVel, n);
             float gripTau = tuning.gripTau * board.gripMultiplier * (1f + 0.8f * (1f - Mathf.Abs(x))) * (lastSample.WhitewaterAmount > 0.5f ? 2.5f : 1f) * (DropKnee ? 0.8f : 1f);
             vR *= Mathf.Exp(-dt / gripTau);
+            RailSlip = Mathf.Abs(vR);
+            BoardForward = F; BoardRight = R;
             relVel = F * vF + R * vR + n * vN;
             Vector3 vh = relVel - n * vN;
             float vhMag = vh.magnitude;
@@ -332,7 +344,7 @@ namespace Biscotte.Rider
             {
                 TubeTime += dt; TotalTubeTime += dt;
                 if (TubeTime > 0.3f && stateTime > 0.5f && LastEvent != "Tube") Event("Tube");
-                if (s2.BreakPhase >= tuning.tubeCloseoutWipeoutPhase && s2.TubeDepth > 0.45f) { Wipeout("closeout"); return; }
+                if (s2.BreakPhase >= tuning.tubeCloseoutWipeoutPhase && s2.TubeDepth > 0.6f) { Wipeout("closeout"); return; }
             }
             else TubeTime = 0f;
 
@@ -365,9 +377,12 @@ namespace Biscotte.Rider
             if (rolloTimer > 0f) { roll = 360f / tuning.rolloDuration; rolloTimer -= dt; }
             airRot = airRot * Quaternion.Euler(flip * dt, spin * dt, roll * dt);
             yaw += spin * dt;
+            AirSpin += spin * dt; AirFlip += flip * dt; AirRoll += roll * dt;
+            GrabHeldInAir |= In.GrabHeld;
 
             var s = Water.Sample(pos, t);
             lastSample = s;
+            AirPeak = Mathf.Max(AirPeak, pos.y - s.Height);
             if (pos.y <= s.Height + 0.05f) { Land(s); return; }
             if (AirTime > tuning.maxAirTime) { Wipeout("fell"); }
         }

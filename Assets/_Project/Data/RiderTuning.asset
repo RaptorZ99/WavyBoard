@@ -58,4 +58,5 @@ MonoBehaviour:
   maxAirTime: 3.5
   wipeoutDuration: 2.6
   wipeoutDrift: 0.7
-  tubeCloseoutWipeoutPhase: 2.25
+  tubeCloseoutWipeoutPhase: 2.4
+  autoReturnToLineup: 1
