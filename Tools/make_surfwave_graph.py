@@ -10,15 +10,23 @@ import json, re, uuid, os
 SRC = "Assets/ThirdParty/StormBreakers/7-Shaders/ocean.shadergraph"
 DST = "Assets/_Project/Shaders/SurfWaveOcean.shadergraph"
 
+# debug switches (environment): SURF_NO_FOAM=1 SURF_NO_SSS=1 SURF_NO_NORMAL=1 SURF_DEBUG=vc (emission = vertex colour)
+NO_FOAM = os.environ.get("SURF_NO_FOAM") == "1"
+NO_SSS = os.environ.get("SURF_NO_SSS") == "1"
+NO_NORMAL = os.environ.get("SURF_NO_NORMAL") == "1"
+DEBUG = os.environ.get("SURF_DEBUG", "")
+
 # tunables
 FOAM_TILING = (150.0, 30.0)   # uv0 = (s/L, xi/lambda) -> metres
 FOAM_NOISE_SCALE = 0.8
-FOAM_EDGE = (0.15, 0.55)
+FOAM_EDGE = (0.25, 0.8)
+AERATED = (0.5, 0.72, 0.76, 1.0)     # milky water colour under the whitewater foam
 FOAM_TINT = (0.93, 0.965, 1.0, 1.0)
 FOAM_SMOOTHNESS = 0.22
 FOAM_NORMAL_FLATTEN = 0.7
-TUBE_DARK = 0.55
+TUBE_DARK = 0.8
 SSS_BOOST = 0.8
+SSS_GLOW = (0.04, 0.36, 0.32, 1.0)   # translucency tint added to the emission by vertex colour R (steep face / lip)
 
 raw = open(SRC, encoding="utf-8").read()
 objs = [json.loads(c) for c in re.split(r"\n\s*\n", raw.strip()) if c.strip()]
@@ -200,98 +208,151 @@ src_normalTS = by_prefix("7c65d8")
 src_vnormal = by_prefix("1480b3")
 
 # ================= vertex stage: normal = normalize(ambientNormal + meshNormal - up)
-e = remove_edge_into(blk_vnormal)
-assert e["m_OutputSlot"]["m_Node"]["m_Id"] == src_vnormal["m_ObjectId"]
-sub = Subtract((0, 1, 0, 0))
-edge(src_vnormal, e["m_OutputSlot"]["m_SlotId"], sub, 0)
-nv = NormalVectorObj()
-ad = Add()
-edge(sub, 2, ad, 0)
-edge(nv, 0, ad, 1)
-nz = Normalize()
-edge(ad, 2, nz, 0)
-edge(nz, 1, blk_vnormal, e["m_InputSlot"]["m_SlotId"])
+if not NO_NORMAL:
+    e = remove_edge_into(blk_vnormal)
+    assert e["m_OutputSlot"]["m_Node"]["m_Id"] == src_vnormal["m_ObjectId"]
+    sub = Subtract((0, 1, 0, 0))
+    edge(src_vnormal, e["m_OutputSlot"]["m_SlotId"], sub, 0)
+    nv = NormalVectorObj()
+    ad = Add()
+    edge(sub, 2, ad, 0)
+    edge(nv, 0, ad, 1)
+    nz = Normalize()
+    edge(ad, 2, nz, 0)
+    edge(nz, 1, blk_vnormal, e["m_InputSlot"]["m_SlotId"])
 
 # ================= vertex stage: sub-surface boost from the pocket energy (vertex color R)
-e = None
-for cand in list(edges):
-    if cand["m_OutputSlot"]["m_Node"]["m_Id"] == redirect_sss["m_ObjectId"] and cand["m_InputSlot"]["m_Node"]["m_Id"] == mul_sss["m_ObjectId"]:
-        e = cand
-        edges.remove(cand)
-        break
-assert e is not None
-vc2 = VertexColor()
-sp2 = Split()
-edge(vc2, 0, sp2, 0)
-mk = Multiply(SSS_BOOST)
-edge(sp2, 1, mk, 0)
-sadd = Add()
-edge(redirect_sss, e["m_OutputSlot"]["m_SlotId"], sadd, 0)
-edge(mk, 2, sadd, 1)
-edge(sadd, 2, mul_sss, e["m_InputSlot"]["m_SlotId"])
+if not NO_SSS:
+    e = None
+    for cand in list(edges):
+        if cand["m_OutputSlot"]["m_Node"]["m_Id"] == redirect_sss["m_ObjectId"] and cand["m_InputSlot"]["m_Node"]["m_Id"] == mul_sss["m_ObjectId"]:
+            e = cand
+            edges.remove(cand)
+            break
+    assert e is not None
+    vc2 = VertexColor()
+    sp2 = Split()
+    edge(vc2, 0, sp2, 0)
+    mk = Multiply(SSS_BOOST)
+    edge(sp2, 1, mk, 0)
+    sadd = Add()
+    edge(redirect_sss, e["m_OutputSlot"]["m_SlotId"], sadd, 0)
+    edge(mk, 2, sadd, 1)
+    edge(sadd, 2, mul_sss, e["m_InputSlot"]["m_SlotId"])
 
 # ================= fragment stage: foam mask = smoothstep(foamRaw * (0.55 + 0.9 * noise))
 vc = VertexColor()
 sp = Split()
 edge(vc, 0, sp, 0)
-fadd = Add()
-edge(sp, 2, fadd, 0)
-edge(sp, 4, fadd, 1)
-fraw = Saturate()
-edge(fadd, 2, fraw, 0)
-to = TilingOffset(FOAM_TILING)
-gn = GradientNoise(FOAM_NOISE_SCALE)
-edge(to, 3, gn, 0)
-nmul = Multiply(0.9)
-edge(gn, 2, nmul, 0)
-nadd = Add((0.55, 0.55, 0.55, 0.55))
-edge(nmul, 2, nadd, 0)
-arg = Multiply()
-edge(fraw, 1, arg, 0)
-edge(nadd, 2, arg, 1)
-mask = Smoothstep(*FOAM_EDGE)
-edge(arg, 2, mask, 2)
 
-# foam colour = total light * tint
-plight, plight_out = PropertyRef("_totalLigthColor")
-tint = ColorC(FOAM_TINT)
-fcol = Multiply()
-edge(plight, plight_out, fcol, 0)
-edge(tint, 0, fcol, 1)
+if DEBUG == "vc":
+    # emission = raw vertex colour (r energy, g foam, b tubeAO), alpha (whitewater) shown as smoothness
+    e = remove_edge_into(blk_emission)
+    edge(vc, 0, blk_emission, e["m_InputSlot"]["m_SlotId"])
+    e = remove_edge_into(blk_smooth)
+    edge(sp, 4, blk_smooth, e["m_InputSlot"]["m_SlotId"])
+elif not NO_FOAM:
+    # foamRaw = foam (G) + 0.55 * whitewater (A); three octaves of wave-relative gradient noise break it up (patches, streaks, bubbles)
+    wwk = Multiply(0.55)
+    edge(sp, 4, wwk, 0)
+    fadd = Add()
+    edge(sp, 2, fadd, 0)
+    edge(wwk, 2, fadd, 1)
+    fraw = Saturate()
+    edge(fadd, 2, fraw, 0)
+    to = TilingOffset(FOAM_TILING)
+    gn1 = GradientNoise(FOAM_NOISE_SCALE)
+    gn2 = GradientNoise(FOAM_NOISE_SCALE * 3.7)
+    gn3 = GradientNoise(FOAM_NOISE_SCALE * 14.0)
+    edge(to, 3, gn1, 0)
+    edge(to, 3, gn2, 0)
+    edge(to, 3, gn3, 0)
+    n1 = Multiply(0.7)
+    edge(gn1, 2, n1, 0)
+    n2 = Multiply(0.45)
+    edge(gn2, 2, n2, 0)
+    n3 = Multiply(0.2)
+    edge(gn3, 2, n3, 0)
+    nsum = Add()
+    edge(n1, 2, nsum, 0)
+    edge(n2, 2, nsum, 1)
+    nsum2 = Add()
+    edge(nsum, 2, nsum2, 0)
+    edge(n3, 2, nsum2, 1)
+    nadd = Add((0.3, 0.3, 0.3, 0.3))
+    edge(nsum2, 2, nadd, 0)
+    arg = Multiply()
+    edge(fraw, 1, arg, 0)
+    edge(nadd, 2, arg, 1)
+    mask = Smoothstep(*FOAM_EDGE)
+    edge(arg, 2, mask, 2)
+    om = OneMinus()
+    edge(mask, 3, om, 0)
 
-# emission: lerp to foam, then tube darkening
-e = remove_edge_into(blk_emission)
-assert e["m_OutputSlot"]["m_Node"]["m_Id"] == src_emission["m_ObjectId"]
-lerp_e = Lerp()
-edge(src_emission, e["m_OutputSlot"]["m_SlotId"], lerp_e, 0)
-edge(fcol, 2, lerp_e, 1)
-edge(mask, 3, lerp_e, 2)
-tmul = Multiply(TUBE_DARK)
-edge(sp, 3, tmul, 0)
-tk = OneMinus()
-edge(tmul, 2, tk, 0)
-emul = Multiply()
-edge(lerp_e, 3, emul, 0)
-edge(tk, 1, emul, 1)
-edge(emul, 2, blk_emission, e["m_InputSlot"]["m_SlotId"])
+    # foam is a lit albedo (BaseColor), not emission: it gets sun, sky and the ripple normals like real foam
+    blk_base = next(o for o in objs if o.get("m_Type") == "UnityEditor.ShaderGraph.BlockNode" and o.get("m_SerializedDescriptor") == "SurfaceDescription.BaseColor")
+    tint = ColorC(FOAM_TINT)
+    bmul = Multiply()
+    edge(tint, 0, bmul, 0)
+    edge(mask, 3, bmul, 1)
+    edge(bmul, 2, blk_base, 0)
 
-# smoothness: foam is rough
-e = remove_edge_into(blk_smooth)
-assert e["m_OutputSlot"]["m_Node"]["m_Id"] == src_smooth["m_ObjectId"]
-lerp_s = Lerp((FOAM_SMOOTHNESS,) * 4)
-edge(src_smooth, e["m_OutputSlot"]["m_SlotId"], lerp_s, 0)
-edge(mask, 3, lerp_s, 2)
-edge(lerp_s, 3, blk_smooth, e["m_InputSlot"]["m_SlotId"])
+    # emission: water colour darkened inside the tube (B), plus a translucency glow from the steep face (R), gone under foam
+    e = remove_edge_into(blk_emission)
+    assert e["m_OutputSlot"]["m_Node"]["m_Id"] == src_emission["m_ObjectId"]
+    tmul = Multiply(TUBE_DARK)
+    edge(sp, 3, tmul, 0)
+    tk = OneMinus()
+    edge(tmul, 2, tk, 0)
+    emul = Multiply()
+    edge(src_emission, e["m_OutputSlot"]["m_SlotId"], emul, 0)
+    edge(tk, 1, emul, 1)
+    glowc = ColorC(SSS_GLOW)
+    gb = Multiply(0.7)                 # the lip underside / tube roof is backlit water too
+    edge(sp, 3, gb, 0)
+    gamt = Add()
+    edge(sp, 1, gamt, 0)
+    edge(gb, 2, gamt, 1)
+    glow = Multiply()
+    edge(glowc, 0, glow, 0)
+    edge(gamt, 2, glow, 1)
+    eadd = Add()
+    edge(emul, 2, eadd, 0)
+    edge(glow, 2, eadd, 1)
+    # aerated water under / between the foam patches: lighter milky turquoise where whitewater (A) is high
+    aer = ColorC(AERATED)
+    ak = Multiply(0.6)
+    edge(sp, 4, ak, 0)
+    lerp_a = Lerp()
+    edge(eadd, 2, lerp_a, 0)
+    edge(aer, 0, lerp_a, 1)
+    edge(ak, 2, lerp_a, 2)
+    efin = Multiply()
+    edge(lerp_a, 3, efin, 0)
+    edge(om, 1, efin, 1)
+    edge(efin, 2, blk_emission, e["m_InputSlot"]["m_SlotId"])
 
-# normal: flatten the ripples under the foam
-e = remove_edge_into(blk_normalTS)
-assert e["m_OutputSlot"]["m_Node"]["m_Id"] == src_normalTS["m_ObjectId"]
-fm = Multiply(FOAM_NORMAL_FLATTEN)
-edge(mask, 3, fm, 0)
-lerp_n = Lerp((0, 0, 1, 0))
-edge(src_normalTS, e["m_OutputSlot"]["m_SlotId"], lerp_n, 0)
-edge(fm, 2, lerp_n, 2)
-edge(lerp_n, 3, blk_normalTS, e["m_InputSlot"]["m_SlotId"])
+    # smoothness: foam is rough, and the tube roof must not mirror the sky (kills the flat grey reflection inside the barrel)
+    e = remove_edge_into(blk_smooth)
+    assert e["m_OutputSlot"]["m_Node"]["m_Id"] == src_smooth["m_ObjectId"]
+    lerp_t = Lerp((0.15, 0.15, 0.15, 0.15))
+    edge(src_smooth, e["m_OutputSlot"]["m_SlotId"], lerp_t, 0)
+    edge(sp, 3, lerp_t, 2)
+    lerp_s = Lerp((FOAM_SMOOTHNESS,) * 4)
+    edge(lerp_t, 3, lerp_s, 0)
+    edge(mask, 3, lerp_s, 2)
+    edge(lerp_s, 3, blk_smooth, e["m_InputSlot"]["m_SlotId"])
+
+    # normal: flatten the ripples under the foam
+    e = remove_edge_into(blk_normalTS)
+    assert e["m_OutputSlot"]["m_Node"]["m_Id"] == src_normalTS["m_ObjectId"]
+    fm = Multiply(FOAM_NORMAL_FLATTEN)
+    edge(mask, 3, fm, 0)
+    lerp_n = Lerp((0, 0, 1, 0))
+    edge(src_normalTS, e["m_OutputSlot"]["m_SlotId"], lerp_n, 0)
+    edge(fm, 2, lerp_n, 2)
+    edge(lerp_n, 3, blk_normalTS, e["m_InputSlot"]["m_SlotId"])
+print("flags: NO_FOAM=%s NO_SSS=%s NO_NORMAL=%s DEBUG=%s" % (NO_FOAM, NO_SSS, NO_NORMAL, DEBUG))
 
 graph["m_Path"] = "Biscotte"
 os.makedirs(os.path.dirname(DST), exist_ok=True)

@@ -12,7 +12,7 @@ namespace Biscotte.Wave
     {
         public float3 pos;
         public float3 nrm;
-        public float4 col;   // r = energy, g = foam, b = tubeAO, a = whitewater
+        public float4 col;   // r = sss (translucency glow), g = foam, b = tubeAO, a = whitewater
         public float2 uv0;   // s/L, xi/lambda
         public float2 uv1;   // phase, sss
     }
@@ -74,13 +74,13 @@ namespace Biscotte.Wave
             // Flat parts of the grid sink 12 cm under the ambient plane (no z-fighting, hidden by the ocean);
             // foamy flat water (whitewater trail) floats 3 cm above it instead so the foam stays visible.
             float foamK = math.saturate((L.foam + L.whitewater) * 3f);
-            float skirt = 0.12f * (1f - math.smoothstep(0.02f, 0.3f, math.max(0f, L.height))) * (1f - foamK);
-            float y = L.height + 0.03f * foamK - skirt;
+            float skirt = 0.3f * (1f - math.smoothstep(0f, 0.5f, math.max(0f, L.height))) * (1f - foamK);
+            float y = L.height + 0.08f * foamK - skirt;
 
             SurfVertex v;
             v.pos = World(s, crest + xi, y);
             v.nrm = nW;
-            v.col = new float4(L.energy, L.foam, L.tubeAO, L.whitewater);
+            v.col = new float4(L.sss, L.foam, L.tubeAO, L.whitewater);
             v.uv0 = new float2(s / math.max(1f, P.length), xi / P.wavelength);
             v.uv1 = new float2(L.phase, L.sss);
             Verts[i] = v;
@@ -105,11 +105,12 @@ namespace Biscotte.Wave
             float3 nrm = P.travelDir * nrm2.x + new float3(0f, nrm2.y, 0f);
             nrm = math.normalize(nrm) * sign;
 
-            float tipFoam = math.saturate(0.35f + 0.65f * vv) * L.lipAmount;
+            // the thrown lip is translucent water; foam only where the tip shatters (last part of the curl)
+            float tipFoam = math.smoothstep(0.6f, 1f, vv) * 0.6f * L.lipAmount;
             SurfVertex v;
             v.pos = World(s, crest + pos2.x, pos2.y);
             v.nrm = nrm;
-            v.col = new float4(L.energy, tipFoam, 0f, 0f);
+            v.col = new float4(0.35f, tipFoam, side == 1 ? 0.6f * L.lipAmount : 0f, 0f);
             v.uv0 = new float2(s / math.max(1f, P.length), 0.5f + vv * 0.2f);
             v.uv1 = new float2(L.phase, 1f);
             int baseIndex = Ns * Nxi;

@@ -14,7 +14,7 @@ namespace Biscotte.Wave
     {
         [Header("Mesh resolution")]
         public int Ns = 160;
-        public int Nxi = 44;
+        public int Nxi = 60;
         public int Nv = 12;
 
         public SurfWaveParams Params;
@@ -45,12 +45,18 @@ namespace Biscotte.Wave
 
         void Awake()
         {
+            EnsureTopology();
+            mr.enabled = false;
+        }
+
+        void EnsureTopology()
+        {
+            if (mesh != null) return;
             mf = GetComponent<MeshFilter>();
             mr = GetComponent<MeshRenderer>();
             mr.shadowCastingMode = ShadowCastingMode.Off;
             mr.receiveShadows = true;
             BuildTopology();
-            mr.enabled = false;
         }
 
         void OnDestroy()
@@ -58,7 +64,56 @@ namespace Biscotte.Wave
             if (jobScheduled) handle.Complete();
             if (profile.IsCreated) profile.Dispose();
             if (verts.IsCreated) verts.Dispose();
-            if (mesh != null) Destroy(mesh);
+            if (mesh != null) { if (Application.isPlaying) Destroy(mesh); else DestroyImmediate(mesh); }
+        }
+
+        /// <summary>Editor/preview helper: spawns and builds the mesh synchronously for a given wave time (no Play mode, no ambient).</summary>
+        public void BuildNow(SurfSpotConfig spot, float tw, float heightScale = 1f, int id = 999)
+        {
+            EnsureTopology();
+            Spot = spot;
+            Params = spot.BuildParams(id);
+            maxTravel = spot.maxTravel;
+            if (!profile.IsCreated) profile = new NativeArray<float4>(96, Allocator.Persistent);
+            spot.FillProfile(profile, heightScale);
+            SpawnTime = Time.timeAsDouble - tw;
+            IsAlive = true;
+            mr.enabled = true;
+            transform.position = Vector3.zero;
+            transform.rotation = Quaternion.identity;
+            var job = new SurfWaveMeshJob
+            {
+                P = Params, Profile = profile, Ambient = default, TimeW = tw, AmbientTime = 0f,
+                Ns = Ns, Nxi = Nxi, Nv = Nv, GroundDepth = 200f, Verts = verts
+            };
+            job.Schedule(vertexCount, 64).Complete();
+            Upload(tw);
+        }
+
+        /// <summary>Min / max / mean of the face vertex colour channels (energy, foam, tubeAO, whitewater) and the y range, for diagnostics.</summary>
+        public string VertexStats()
+        {
+            if (!verts.IsCreated) return "no verts";
+            int n = Ns * Nxi;
+            float4 mn = new float4(float.MaxValue), mx = new float4(float.MinValue), sum = float4.zero;
+            float ymin = float.MaxValue, ymax = float.MinValue; int foamy = 0;
+            for (int i = 0; i < n; i++)
+            {
+                var v = verts[i];
+                mn = math.min(mn, v.col); mx = math.max(mx, v.col); sum += v.col;
+                ymin = math.min(ymin, v.pos.y); ymax = math.max(ymax, v.pos.y);
+                if (v.col.y + v.col.w > 0.05f) foamy++;
+            }
+            return $"face verts {n}: col min {mn} max {mx} mean {sum / n} | y [{ymin:0.00}, {ymax:0.00}] | foamy {foamy} ({100f * foamy / n:0.0}%)";
+        }
+
+        void Upload(float tw)
+        {
+            mesh.SetVertexBufferData(verts, 0, 0, vertexCount, 0, MeshUpdateFlags.DontRecalculateBounds | MeshUpdateFlags.DontValidateIndices | MeshUpdateFlags.DontNotifyMeshUsers);
+            float crest = Params.CrestOffset(tw);
+            float3 c = Params.origin + Params.crestDir * (Params.length * 0.5f) + Params.travelDir * (crest + (Params.xiMin + Params.xiMax) * 0.5f);
+            float3 ext = math.abs(Params.crestDir) * (Params.length * 0.5f + Params.sPad + 2f) + math.abs(Params.travelDir) * ((Params.xiMax - Params.xiMin) * 0.5f + 4f) + new float3(2f, 12f, 2f);
+            mesh.bounds = new Bounds(c, ext * 2f);
         }
 
         void BuildTopology()
@@ -77,9 +132,11 @@ namespace Biscotte.Wave
             for (int c = 0; c < Nxi - 1; c++)
             {
                 uint a = (uint)(r * Nxi + c), b = a + 1, cc = (uint)((r + 1) * Nxi + c), d = cc + 1;
-                // crestDir x travelDir = -up ... choose winding so normals (up) face outwards: (a, cc, b) (b, cc, d)
-                indices[k++] = a; indices[k++] = cc; indices[k++] = b;
-                indices[k++] = b; indices[k++] = cc; indices[k++] = d;
+                // a->b runs along travelDir (+Z), a->cc along crestDir (+X): (a, b, cc) is clockwise seen from above,
+                // i.e. front-facing for a viewer above the water (the Storm Breakers graph switches to its underwater
+                // look on back faces, so the winding matters).
+                indices[k++] = a; indices[k++] = b; indices[k++] = cc;
+                indices[k++] = b; indices[k++] = d; indices[k++] = cc;
             }
             int lipBase = Ns * Nxi;
             for (int side = 0; side < 2; side++)
@@ -89,8 +146,9 @@ namespace Biscotte.Wave
                 for (int c = 0; c < Nv - 1; c++)
                 {
                     uint a = (uint)(sb + r * Nv + c), b = a + 1, cc = (uint)(sb + (r + 1) * Nv + c), d = cc + 1;
-                    if (side == 0) { indices[k++] = a; indices[k++] = cc; indices[k++] = b; indices[k++] = b; indices[k++] = cc; indices[k++] = d; }
-                    else { indices[k++] = a; indices[k++] = b; indices[k++] = cc; indices[k++] = b; indices[k++] = d; indices[k++] = cc; }
+                    // side 0 = outer/top surface of the lip (front face outward), side 1 = underside (reversed winding)
+                    if (side == 0) { indices[k++] = a; indices[k++] = b; indices[k++] = cc; indices[k++] = b; indices[k++] = d; indices[k++] = cc; }
+                    else { indices[k++] = a; indices[k++] = cc; indices[k++] = b; indices[k++] = b; indices[k++] = cc; indices[k++] = d; }
                 }
             }
             mesh.SetIndexBufferParams(indices.Length, IndexFormat.UInt32);
@@ -148,11 +206,7 @@ namespace Biscotte.Wave
             if (!jobScheduled) return;
             handle.Complete();
             jobScheduled = false;
-            mesh.SetVertexBufferData(verts, 0, 0, vertexCount, 0, MeshUpdateFlags.DontRecalculateBounds | MeshUpdateFlags.DontValidateIndices | MeshUpdateFlags.DontNotifyMeshUsers);
-            float crest = Params.CrestOffset(WaveTime);
-            float3 c = Params.origin + Params.crestDir * (Params.length * 0.5f) + Params.travelDir * (crest + (Params.xiMin + Params.xiMax) * 0.5f);
-            float3 ext = math.abs(Params.crestDir) * (Params.length * 0.5f + Params.sPad + 2f) + math.abs(Params.travelDir) * ((Params.xiMax - Params.xiMin) * 0.5f + 4f) + new float3(2f, 12f, 2f);
-            mesh.bounds = new Bounds(c, ext * 2f);
+            Upload(WaveTime);
         }
 
         // ---------------------------------------------------------------- gameplay sampling

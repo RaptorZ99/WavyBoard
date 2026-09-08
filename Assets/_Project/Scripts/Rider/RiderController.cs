@@ -355,7 +355,7 @@ namespace Biscotte.Rider
             {
                 TubeTime += dt; TotalTubeTime += dt;
                 if (TubeTime > 0.3f && stateTime > 0.5f && LastEvent != "Tube") Event("Tube");
-                if (s2.BreakPhase >= tuning.tubeCloseoutWipeoutPhase && s2.TubeDepth > 0.6f) { Wipeout("closeout"); return; }
+                if (s2.BreakPhase >= tuning.tubeCloseoutWipeoutPhase && s2.TubeDepth > 0.8f) { Wipeout("closeout"); return; }
             }
             else TubeTime = 0f;
 

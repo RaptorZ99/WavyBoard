@@ -18,7 +18,7 @@ namespace Biscotte.Debugging
         public bool doAirs = false;
         [Range(0f, 90f)] public float rideAngleDeg = 32f;     // heading angle from the travel direction toward the peel side
         public float pumpInterval = 0.55f;
-        public float targetPeelDistance = -3.5f;   // negative = behind the breaking front, inside the curl (too deep = closeout)
+        public float targetPeelDistance = -2f;     // negative = behind the breaking front, inside the curl (too deep = closeout)
 
         float nextPump;
         float lastAirTime = -10f;

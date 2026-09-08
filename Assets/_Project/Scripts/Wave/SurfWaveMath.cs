@@ -137,9 +137,11 @@ namespace Biscotte.Wave
             float energy = pocket * math.smoothstep(0.35f, 1f, math.min(phi, 1f)) * (1f - math.smoothstep(2.0f, 2.6f, phi)) * env;
 
             // foam: feathering crest before/at pitch, lip impact zone, whitewater
-            float feather = math.smoothstep(0.85f, 1.3f, phi) * (1f - math.smoothstep(2.2f, 2.8f, phi)) * math.exp(-(x * x) / (0.05f * lambda * lambda * 0.25f + 1e-3f));
+            // feathering: a thin line of spray right at the crest while the wave pitches (1 m in front, 0.5 m behind)
+            float sigF = x >= 0f ? 1.0f : 0.5f;
+            float feather = math.smoothstep(0.95f, 1.35f, phi) * (1f - math.smoothstep(2.0f, 2.5f, phi)) * math.exp(-(x * x) / (2f * sigF * sigF));
             float impact = lipAmount * math.exp(-math.pow((x - wv) / math.max(0.5f, 0.35f * wv + 0.4f), 2f));
-            float foam = math.saturate(feather * 0.7f + impact * 0.9f + whitewater);
+            float foam = math.saturate(feather * 0.45f + impact * 0.9f);   // whitewater is carried separately (vertex colour A)
 
             // tube ambient occlusion on the face under the lip
             float tubeAO = 0f;

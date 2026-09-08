@@ -57,7 +57,7 @@ namespace Biscotte.Tools
             var sprayMat = LoadOrCreate<Material>(kMat + "/Particles_Spray.mat", () => new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit")));
             ConfigureParticleMaterial(sprayMat, "Assets/ThirdParty/Kenney/ParticlePack/Textures/circle_05.png", new Color(1f, 1f, 1f, 0.85f));
             var foamMat = LoadOrCreate<Material>(kMat + "/Particles_Foam.mat", () => new Material(Shader.Find("Universal Render Pipeline/Particles/Unlit")));
-            ConfigureParticleMaterial(foamMat, "Assets/ThirdParty/Kenney/ParticlePack/Textures/circle_04.png", new Color(1f, 1f, 1f, 0.7f));
+            ConfigureParticleMaterial(foamMat, "Assets/ThirdParty/Kenney/ParticlePack/Textures/circle_05.png", new Color(1f, 1f, 1f, 0.7f));
             var boardMat = LoadOrCreate<Material>(kMat + "/Board_Deck.mat", () => new Material(litShader));
             boardMat.SetColor("_BaseColor", new Color(0.95f, 0.82f, 0.18f)); boardMat.SetFloat("_Smoothness", 0.65f); EditorUtility.SetDirty(boardMat);
             var riderMat = LoadOrCreate<Material>(kMat + "/Rider_Placeholder.mat", () => new Material(litShader));

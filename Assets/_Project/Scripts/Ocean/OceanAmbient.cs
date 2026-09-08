@@ -82,20 +82,30 @@ namespace Biscotte.Ocean
 
         void LateUpdate() { SyncMaterials(); }
 
-        /// <summary>Copies the per-frame Storm Breakers material state (wave matrices, light, terrain) to the surf wave material(s).</summary>
+        /// <summary>
+        /// Copies the per-frame Storm Breakers material state (wave matrices, light, terrain) to the surf wave material(s).
+        /// The wave matrices _LIDR/_NKVW are NON-exposed graph properties: Material.HasMatrix reports false for them
+        /// and they are never serialized, so they are copied unconditionally (the CPU statics are the ground truth).
+        /// </summary>
         public void SyncMaterials()
         {
+            if (syncMaterials == null) return;
             var src = StormBreakers.Ocean.sharedMaterial;
-            if (src == null || syncMaterials == null) return;
+            bool haveWaves = StormBreakers.Ocean.wavelength != null && StormBreakers.Ocean.wavelength.Length >= 4;
             for (int i = 0; i < syncMaterials.Length; i++)
             {
                 var m = syncMaterials[i];
                 if (m == null) continue;
-                foreach (int id in kMatrixIds) if (src.HasMatrix(id) && m.HasMatrix(id)) m.SetMatrix(id, src.GetMatrix(id));
-                foreach (int id in kColorIds) if (src.HasColor(id) && m.HasColor(id)) m.SetColor(id, src.GetColor(id));
-                foreach (int id in kFloatIds) if (src.HasFloat(id) && m.HasFloat(id)) m.SetFloat(id, src.GetFloat(id));
-                foreach (int id in kVectorIds) if (src.HasVector(id) && m.HasVector(id)) m.SetVector(id, src.GetVector(id));
-                if (src.HasTexture(kTerrainTex) && m.HasTexture(kTerrainTex)) m.SetTexture(kTerrainTex, src.GetTexture(kTerrainTex));
+                if (haveWaves)
+                {
+                    m.SetMatrix(kMatrixIds[0], StormBreakers.Ocean.LIDR);
+                    m.SetMatrix(kMatrixIds[1], StormBreakers.Ocean.NKVW);
+                }
+                if (src == null) continue;
+                foreach (int id in kColorIds) if (src.HasColor(id)) m.SetColor(id, src.GetColor(id));
+                foreach (int id in kFloatIds) if (src.HasFloat(id)) m.SetFloat(id, src.GetFloat(id));
+                foreach (int id in kVectorIds) if (src.HasVector(id)) m.SetVector(id, src.GetVector(id));
+                if (src.HasTexture(kTerrainTex)) { var t = src.GetTexture(kTerrainTex); if (t != null) m.SetTexture(kTerrainTex, t); }
             }
         }
     }
