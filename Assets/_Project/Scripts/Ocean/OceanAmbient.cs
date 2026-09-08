@@ -23,7 +23,13 @@ namespace Biscotte.Ocean
         static void ResetStatics() { Instance = null; }
 
         void OnEnable() { Instance = this; }
-        void OnDisable() { if (Instance == this) Instance = null; }
+        void OnDisable()
+        {
+            if (Instance == this) Instance = null;
+            // the hole rectangles live on the shared material asset: clear them so no hole is left in the plane after Play
+            var mat = StormBreakers.Ocean.sharedMaterial;
+            if (mat != null) for (int i = 0; i < kMaxHoles; i++) mat.SetVector(kRectB[i], kFar);
+        }
 
         void Update() { Refresh(); }
         void FixedUpdate() { if (!Ready) Refresh(); }
@@ -81,7 +87,40 @@ namespace Biscotte.Ocean
         static readonly int[] kVectorIds = { Shader.PropertyToID("_terrainPosition"), Shader.PropertyToID("_terrainScale") };
         static readonly int kTerrainTex = Shader.PropertyToID("_terrainHeightmap");
 
-        void LateUpdate() { SyncMaterials(); SyncHoles(); }
+        void LateUpdate() { SyncMaterials(); SyncHoles(); SyncReflections(); }
+
+        // ---------------------------------------------------------------- reflections
+        // The Storm Breakers graph samples its own cubemap textures (auto-named _SampleReflectedCubemap_*), whose original
+        // assets are not in this project: left null they reflect a flat grey (the beige patches). Feed the scene reflection
+        // probe (sky + shore + water) instead, every frame, into the ambient material and the surf wave material(s).
+        [Tooltip("Reflection probe whose cubemap replaces the Storm Breakers reflection cubemaps (found automatically when empty)")]
+        public ReflectionProbe reflectionProbe;
+        public Texture fallbackReflection;
+        readonly System.Collections.Generic.List<int> cubemapIds = new System.Collections.Generic.List<int>();
+        Material cubemapIdsSource;
+
+        public void SyncReflections()
+        {
+            var src = StormBreakers.Ocean.sharedMaterial;
+            if (src == null) return;
+            if (cubemapIdsSource != src)
+            {
+                cubemapIds.Clear();
+                foreach (var name in src.GetTexturePropertyNames()) if (name.Contains("SampleReflectedCubemap")) cubemapIds.Add(Shader.PropertyToID(name));
+                cubemapIdsSource = src;
+            }
+            if (cubemapIds.Count == 0) return;
+            if (reflectionProbe == null) reflectionProbe = FindFirstObjectByType<ReflectionProbe>();
+            Texture cube = null;
+            if (reflectionProbe != null) cube = reflectionProbe.mode == UnityEngine.Rendering.ReflectionProbeMode.Realtime ? reflectionProbe.realtimeTexture : reflectionProbe.texture;
+            if (cube == null) cube = fallbackReflection;
+            if (cube == null) return;
+            foreach (int id in cubemapIds)
+            {
+                src.SetTexture(id, cube);
+                if (syncMaterials != null) foreach (var m in syncMaterials) if (m != null) m.SetTexture(id, cube);
+            }
+        }
 
         // ---------------------------------------------------------------- holes in the ambient plane under the surf waves
         [Tooltip("Inset (m) of the alpha-clipped hole relative to the surf mesh border; the mesh ring overlapping the plane dips under it")]

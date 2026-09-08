@@ -209,6 +209,11 @@ MonoBehaviour:
   strokeRate: 1.5
   sprintStrokeRate: 2.3
   lookAlongCrestDeg: 55
+  toDropKneeDuration: 0.7
+  toProneDuration: 0.6
+  transitionBlendRate: 9
+  landingPulseDuration: 0.5
+  railSlipFull: 4
   fins: 1
   finMaterial: {fileID: 2100000, guid: 4ee54acdf848dc646b91fcce52789301, type: 2}
   finLength: 0.3

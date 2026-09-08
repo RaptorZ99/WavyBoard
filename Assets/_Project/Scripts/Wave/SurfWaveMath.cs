@@ -132,6 +132,14 @@ namespace Biscotte.Wave
 
             float height = H * h * env;
 
+            // whitewater is a rolling, turbulent pile, not a smooth bump: low-frequency noise travelling with the foam
+            if (whitewater > 0.01f)
+            {
+                float2 np = new float2(s * 0.22f + tau * 0.4f, x * 0.3f - tau * 1.1f);
+                float turb = noise.snoise(np) * 0.65f + noise.snoise(np * 2.3f + 7.1f) * 0.35f;
+                height += 0.15f * H * whitewater * env * turb;
+            }
+
             // pocket energy: strongest just in front of the crest on a steep face
             float pocket = math.saturate(1f - math.abs(x - 0.35f * Lf) / (0.8f * Lf));
             float energy = pocket * math.smoothstep(0.35f, 1f, math.min(phi, 1f)) * (1f - math.smoothstep(2.0f, 2.6f, phi)) * env;

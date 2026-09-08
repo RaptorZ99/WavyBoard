@@ -261,8 +261,17 @@ namespace Biscotte.Rider
         }
 
         // ------------------------------------------------------------------ Ride
-        // Model: world velocity = carry (the wave transports the rider at its celerity while he is in the pocket)
-        //        + relative velocity on the face (gravity down the slope, planing damping, rail grip, steering, pump).
+        // Model: world velocity = carry (the wave transports the rider at its celerity while he is on the face)
+        //        + relative velocity on the face (gravity down the slope, drag, rail grip, steering, pump, drive).
+        //
+        // Speed tuning (2026-09-08, "il faut prendre beaucoup plus de vitesse pour taper la lèvre"):
+        //   gravity along the slope x slopeGravityGain (1 -> 1.7 between slope 0.3 and 1), x climbGravityScale (0.6) uphill;
+        //   drag = quadraticDrag (0.025) * v^2 + planingDamping (0.25) * v   (stall: stallDamping 2.2 + x3.2 quadratic);
+        //   carveDrive 1.2 m/s^2 at full lean and speed, trimDrive 1.5 m/s^2 stick-forward on the way down;
+        //   pump = (0.08 * (vRel + c) + 0.4) * pumpBoost 1.4 * [0.7..1 by pocket energy]  -> +1.5..2.1 m/s;
+        //   caps: relative speed <= maxSpeed - 2, world speed <= maxSpeed (16).
+        //   Expected: a drop from the top of a 3 m face reaches 9-11 m/s relative (15-16 m/s world in the direction of
+        //   travel), a bottom turn from 8-10 m/s still hits the lip with > 5 m/s; pop vertical speed = 2.5 + 0.25 * speed.
         void UpdateRide(float dt, float t)
         {
             RideTime += dt;
@@ -285,15 +294,28 @@ namespace Biscotte.Rider
             if (F.sqrMagnitude < 1e-4f) F = Heading();
             Vector3 R = Vector3.Cross(n, F).normalized;
 
+            // gravity along the face: stronger on the steep part (the drop is where speed is made), softer when climbing
             Vector3 aG = -tuning.gravity * (Vector3.up - n * Vector3.Dot(Vector3.up, n));
-            float cd = tuning.dragCoefficient * board.dragMultiplier;
+            bool descending = Vector3.Dot(relVel, aG) > 0f;
+            float ny = Mathf.Clamp(n.y, 0.05f, 1f);
+            float slope = Mathf.Sqrt(Mathf.Max(0f, 1f - ny * ny)) / ny;
+            float gGain = Mathf.Lerp(1f, tuning.slopeGravityGain, Mathf.Clamp01((slope - 0.3f) / 0.7f));
+            if (!descending && relSpeed > 0.5f) gGain *= tuning.climbGravityScale;
+            aG *= gGain;
+
+            // drag: quadratic (terminal speed of a drop) + a low linear planing damping; the stall button drags hard
+            float cd = tuning.quadraticDrag * board.dragMultiplier;
             if (In.StallHeld) cd *= tuning.stallDragMultiplier;
             cd *= trim > 0f ? Mathf.Lerp(1f, 0.85f, trim) : Mathf.Lerp(1f, 1.3f, -trim);
-            float planing = In.StallHeld ? 2.2f : 0.9f;                       // linear damping (board planing / water friction)
+            float planing = In.StallHeld ? tuning.stallDamping : tuning.planingDamping;
             Vector3 aDrag = -cd * relSpeed * relVel - relVel * planing;
 
+            // rail drive (arcade): carving hard at speed and trimming forward down the face generate speed
+            float drive = tuning.carveDrive * Mathf.Abs(x) * Mathf.Clamp01(relSpeed / 6f);
+            if (descending && trim > 0f) drive += tuning.trimDrive * trim;
+            Vector3 aDrive = F * drive;
+
             // pump: rhythmic press while dropping down the face
-            bool descending = Vector3.Dot(relVel, aG) > 0f;
             if (descending && !wasDescending) pumpsThisDescent = 0;
             wasDescending = descending;
             if (In.ConsumePump())
@@ -302,14 +324,15 @@ namespace Biscotte.Rider
                 lastPumpTime = t;
                 if (descending && since >= tuning.pumpWindowMin && since <= tuning.pumpWindowMax && pumpsThisDescent < tuning.pumpMaxPerDescent)
                 {
-                    relVel += F * (tuning.pumpGainFactor * (relSpeed + c) + tuning.pumpGainFlat) * Mathf.Max(0.3f, lastSample.Energy) * (DropKnee ? 0.7f : 1f);
+                    float energyK = Mathf.Lerp(tuning.pumpEnergyFloor, 1f, Mathf.Clamp01(lastSample.Energy));
+                    relVel += F * (tuning.pumpGainFactor * (relSpeed + c) + tuning.pumpGainFlat) * tuning.pumpBoost * energyK * (DropKnee ? 0.7f : 1f);
                     pumpsThisDescent++; PumpsThisRide++; PumpFlash = 1f;
                     Event("Pump");
                 }
                 else relVel *= tuning.pumpPenalty;
             }
 
-            relVel += (aG + aDrag) * dt;
+            relVel += (aG + aDrag + aDrive) * dt;
 
             // rail grip / slip and alignment of the relative velocity with the board heading
             float vF = Vector3.Dot(relVel, F), vR = Vector3.Dot(relVel, R), vN = Vector3.Dot(relVel, n);
@@ -329,10 +352,17 @@ namespace Biscotte.Rider
                 relVel = dir * vhMag + n * vN;
             }
             relSpeed = relVel.magnitude;
-            float maxRel = tuning.maxSpeed - c * carryK;
+            float maxRel = Mathf.Max(4f, tuning.maxSpeed - 2f);
             if (relSpeed > maxRel) relVel = relVel / relSpeed * maxRel;
 
             vel = carry + relVel;
+            float vmag = vel.magnitude;
+            if (vmag > tuning.maxSpeed)
+            {
+                // cap the WORLD speed by trimming the relative velocity along the motion
+                relVel -= vel / vmag * (vmag - tuning.maxSpeed);
+                vel = carry + relVel;
+            }
             pos += vel * dt;
             var s2 = Water.Sample(pos, t);
             lastSample = s2;
@@ -351,18 +381,24 @@ namespace Biscotte.Rider
             relVel -= n2 * Vector3.Dot(relVel, n2);
             vel = carry + relVel;
 
-            // pop / kick-out
-            if (In.ConsumePop())
+            // pop / El Rollo off the lip, kick-out on the shoulder. Pressing Rollo at the lip launches the air with the roll
+            // already started, so a fast bottom turn -> lip -> Rollo reads as one move.
+            bool popPressed = In.ConsumePop();
+            bool rolloPressed = In.ConsumeRollo();
+            if (popPressed || rolloPressed)
             {
-                bool nearLip = Mathf.Abs(s2.CrestDistance) < tuning.popWindowCrestDistance && s2.CrestDistance > -2.5f && s2.BreakPhase >= 0.7f && s2.BreakPhase < 2.2f;
-                if (nearLip)
+                float speedNow = vel.magnitude;
+                bool nearLip = Mathf.Abs(s2.CrestDistance) < tuning.popWindowCrestDistance && s2.CrestDistance > -2.5f && s2.BreakPhase >= 0.6f && s2.BreakPhase < 2.3f;
+                if (nearLip && speedNow >= tuning.popMinSpeed)
                 {
-                    vel += Vector3.up * (tuning.popVerticalSpeed * board.popMultiplier * (0.6f + 0.4f * Mathf.Clamp01(vel.magnitude / 10f))) + (Vector3)n2 * 0.8f;
+                    float vUp = (tuning.popVerticalSpeed + tuning.popSpeedGain * speedNow) * board.popMultiplier;
+                    vel += Vector3.up * vUp + (Vector3)n2 * 1.0f;
                     Enter(RiderState.Air);
-                    Event("Pop");
+                    if (rolloPressed) { rolloTimer = tuning.rolloDuration; Event("El Rollo"); }
+                    else Event("Pop");
                     return;
                 }
-                if (s2.Energy < 0.35f && s2.BreakPhase < 1.2f) { Enter(RiderState.KickOut); Event("Kick-out"); return; }
+                if (popPressed && s2.Energy < 0.35f && s2.BreakPhase < 1.2f) { Enter(RiderState.KickOut); Event("Kick-out"); return; }
             }
 
             // tube
@@ -383,8 +419,8 @@ namespace Biscotte.Rider
             float speed = vel.magnitude;
             if (speed < tuning.minRideSpeedBeforeStall && s2.BreakPhase >= 1f) { stallTimer += dt; if (stallTimer > tuning.stallWipeoutTime) { Wipeout("stalled"); return; } }
             else stallTimer = 0f;
-            if (n2.y < 0.3f && speed < 3f && !s2.InTube) { Wipeout("too steep"); return; }
-            if (s2.WhitewaterAmount > 0.75f && speed < 3.5f && s2.CrestDistance < 4f) { Wipeout("whitewater"); return; }
+            if (n2.y < 0.3f && speed < tuning.tooSteepMaxSpeed && !s2.InTube) { Wipeout("too steep"); return; }
+            if (s2.WhitewaterAmount > 0.75f && speed < tuning.whitewaterWipeoutSpeed && s2.CrestDistance < 4f) { Wipeout("whitewater"); return; }
         }
 
         // ------------------------------------------------------------------ Air
@@ -399,7 +435,7 @@ namespace Biscotte.Rider
             float mul = In.GrabHeld ? tuning.grabRateMultiplier : 1f;
             float spin = rot.x * tuning.spinRate * mul;
             float flip = -rot.y * tuning.flipRate * mul;
-            if (In.ConsumeRollo() && rolloTimer <= 0f && stateTime < 0.6f) { rolloTimer = tuning.rolloDuration; Event("El Rollo"); }
+            if (In.ConsumeRollo() && rolloTimer <= 0f && AirRoll < 90f && stateTime < 0.8f) { rolloTimer = tuning.rolloDuration; Event("El Rollo"); }
             float roll = 0f;
             if (rolloTimer > 0f) { roll = 360f / tuning.rolloDuration; rolloTimer -= dt; }
             airRot = airRot * Quaternion.Euler(flip * dt, spin * dt, roll * dt);

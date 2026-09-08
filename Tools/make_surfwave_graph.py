@@ -26,6 +26,8 @@ DEBUG = os.environ.get("SURF_DEBUG", "")
 # tunables (surf mode)
 FOAM_TILING = (150.0, 30.0)   # uv0 = (s/L, xi/lambda) -> metres
 FOAM_NOISE_SCALE = 0.8
+FOAM_TEX_METRES = 3.0         # size of one foam texture tile on the water (m)
+FOAM_DRIFT = 0.9              # backward drift of the foam pattern in the wave frame (m/s)
 FOAM_EDGE = (0.25, 0.8)
 AERATED = (0.5, 0.72, 0.76, 1.0)     # milky water colour under the whitewater foam
 FOAM_TINT = (0.93, 0.965, 1.0, 1.0)
@@ -200,6 +202,64 @@ def PropertyRef(prop_name):
     return n, out_slot
 
 
+def TextureProperty(name):
+    """Adds an exposed Texture2D material property (cloned from _terrainHeightmap) and returns (propertyNode, outSlotId)."""
+    tmpl_prop = next(o for o in objs if o.get("m_Type", "").endswith("Texture2DShaderProperty"))
+    tmpl_node = next(o for o in objs if o.get("m_Type") == "UnityEditor.ShaderGraph.PropertyNode" and o.get("m_Property", {}).get("m_Id") == tmpl_prop["m_ObjectId"])
+    p = json.loads(json.dumps(tmpl_prop))
+    p["m_ObjectId"] = nid()
+    p["m_Guid"] = {"m_GuidSerialized": str(uuid.uuid4())}
+    p["m_Name"] = name
+    p["m_RefNameGeneratedByDisplayName"] = name
+    p["m_DefaultReferenceName"] = name
+    p["m_OverrideReferenceName"] = ""
+    p["m_DefaultType"] = 0   # white
+    add(p)
+    graph["m_Properties"].append({"m_Id": p["m_ObjectId"]})
+    cat = next((o for o in objs if o.get("m_Type", "").endswith("CategoryData") and o.get("m_Name") == "Set By Scripts"), None)
+    if cat is not None:
+        cat["m_ChildObjectList"].append({"m_Id": p["m_ObjectId"]})
+    n = json.loads(json.dumps(tmpl_node))
+    n["m_ObjectId"] = nid()
+    n["m_DrawState"] = draw()
+    n["m_Group"] = {"m_Id": ""}
+    n["m_Property"] = {"m_Id": p["m_ObjectId"]}
+    slots = []
+    for s in tmpl_node["m_Slots"]:
+        sc = json.loads(json.dumps(byid[s["m_Id"]]))
+        sc["m_ObjectId"] = nid()
+        add(sc)
+        slots.append(sc)
+    n["m_Slots"] = [{"m_Id": s["m_ObjectId"]} for s in slots]
+    add(n)
+    graph["m_Nodes"].append({"m_Id": n["m_ObjectId"]})
+    out_slot = next(s["m_Id"] for s in slots if s["m_SlotType"] == 1)
+    return n, out_slot
+
+
+def SampleTexture2D():
+    """Slots: RGBA=0 (out), Texture=1, UV=2, Sampler=3, R=4, G=5, B=6, A=7 (outs)."""
+    rgba = s_v4(0, "RGBA", True)
+    rgba["m_StageCapability"] = 2
+    tex = add({"m_SGVersion": 0, "m_Type": "UnityEditor.ShaderGraph.Texture2DInputMaterialSlot", "m_ObjectId": nid(), "m_Id": 1, "m_DisplayName": "Texture", "m_SlotType": 0, "m_Hidden": False, "m_ShaderOutputName": "Texture", "m_StageCapability": 3, "m_BareResource": False, "m_Texture": {"m_SerializedTexture": "{\"texture\":{\"instanceID\":0}}", "m_Guid": ""}, "m_DefaultType": 0})
+    uv = s_uv(2)
+    sampler = add({"m_SGVersion": 0, "m_Type": "UnityEditor.ShaderGraph.SamplerStateMaterialSlot", "m_ObjectId": nid(), "m_Id": 3, "m_DisplayName": "Sampler", "m_SlotType": 0, "m_Hidden": False, "m_ShaderOutputName": "Sampler", "m_StageCapability": 3, "m_BareResource": False})
+    chans = []
+    for i, c in enumerate("RGBA"):
+        sl = s_v1(4 + i, c, True)
+        sl["m_StageCapability"] = 2
+        chans.append(sl)
+    return node("SampleTexture2DNode", "Sample Texture 2D", [rgba, tex, uv, sampler] + chans, {"m_TextureType": 0, "m_NormalMapSpace": 0, "m_EnableGlobalMipBias": True, "m_MipSamplingMode": 0})
+
+
+def TimeNode():
+    return node("TimeNode", "Time", [s_v1(0, "Time", True), s_v1(1, "Sine Time", True), s_v1(2, "Cosine Time", True), s_v1(3, "Delta Time", True), s_v1(4, "Smooth Delta", True)])
+
+
+def Vector2C(x, y):
+    return node("Vector2Node", "Vector 2", [s_v1(1, "X", False, x), s_v1(2, "Y", False, y), s_v2(0, "Out", True)], {"m_Value": {"x": float(x), "y": float(y)}})
+
+
 def Vector4Property(name, default=(0, 0, 0, 0)):
     """Adds an exposed Vector4 material property (in the 'Set By Scripts' category) and returns (propertyNode, outSlotId)."""
     tmpl_prop = next(o for o in objs if o.get("m_Type", "").endswith("Vector3ShaderProperty"))
@@ -312,11 +372,9 @@ if MODE == "ocean":
         pb, sb = Vector4Property("_SurfRectB%d" % i, far)
         edge(pa, sa, cf, 1 + i)
         edge(pb, sb, cf, 5 + i)
+    # Alpha = hole factor ONLY: the SB alpha (depth-based shore transparency) must not clip the opaque plane
     e = remove_edge_into(blk_alpha)
-    amul = Multiply()
-    edge(byid[e["m_OutputSlot"]["m_Node"]["m_Id"]], e["m_OutputSlot"]["m_SlotId"], amul, 0)
-    edge(cf, 9, amul, 1)
-    edge(amul, 2, blk_alpha, e["m_InputSlot"]["m_SlotId"])
+    edge(cf, 9, blk_alpha, e["m_InputSlot"]["m_SlotId"])
 else:
     # ================= back faces of the lip ribbon / face grid seen from inside the barrel must NOT use the SB
     # underwater look (a flat translucent sheet): force every IsFrontFace predicate to true
@@ -383,26 +441,40 @@ else:
         edge(wwk, 2, fadd, 1)
         fraw = Saturate()
         edge(fadd, 2, fraw, 0)
+        # wave-relative metres, drifting backward at 0.9 m/s (foam lags the wave)
+        drift = Multiply()
+        tnode = TimeNode()
+        dvec = Vector2C(0.0, FOAM_DRIFT)
+        edge(tnode, 0, drift, 0)
+        edge(dvec, 0, drift, 1)
         to = TilingOffset(FOAM_TILING)
+        edge(drift, 2, to, 2)
         gn1 = GradientNoise(FOAM_NOISE_SCALE)
         gn2 = GradientNoise(FOAM_NOISE_SCALE * 3.7)
-        gn3 = GradientNoise(FOAM_NOISE_SCALE * 14.0)
         edge(to, 3, gn1, 0)
         edge(to, 3, gn2, 0)
-        edge(to, 3, gn3, 0)
-        n1 = Multiply(0.7)
+        # bubble / streak detail from a tileable foam texture (Tools/make_foam_texture.py -> _FoamTex, one tile = FOAM_TEX_METRES)
+        ftex, ftex_out = TextureProperty("_FoamTex")
+        tscale = Multiply()
+        tvec = Vector2C(1.0 / FOAM_TEX_METRES, 1.0 / FOAM_TEX_METRES)
+        edge(to, 3, tscale, 0)
+        edge(tvec, 0, tscale, 1)
+        samp = SampleTexture2D()
+        edge(ftex, ftex_out, samp, 1)
+        edge(tscale, 2, samp, 2)
+        n1 = Multiply(0.55)
         edge(gn1, 2, n1, 0)
-        n2 = Multiply(0.45)
+        n2 = Multiply(0.35)
         edge(gn2, 2, n2, 0)
-        n3 = Multiply(0.2)
-        edge(gn3, 2, n3, 0)
+        n3 = Multiply(0.6)
+        edge(samp, 4, n3, 0)
         nsum = Add()
         edge(n1, 2, nsum, 0)
         edge(n2, 2, nsum, 1)
         nsum2 = Add()
         edge(nsum, 2, nsum2, 0)
         edge(n3, 2, nsum2, 1)
-        nadd = Add((0.3, 0.3, 0.3, 0.3))
+        nadd = Add((0.25, 0.25, 0.25, 0.25))
         edge(nsum2, 2, nadd, 0)
         arg = Multiply()
         edge(fraw, 1, arg, 0)

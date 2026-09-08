@@ -24,6 +24,7 @@ namespace Biscotte.Tools
         public static string SetupCloseRide() { return Build(3, 4); }     // ride / ride lean R
         public static string SetupCloseAir() { return Build(3, 6); }      // air grab / duck dive / wipeout
         public static string SetupCloseDK() { return Build(3, 8); }       // drop-knee
+        public static string SetupCloseUp() { return Build(3, 9); }       // push-up transition pose (drop-knee blend 0.5)
 
         static string Build(int view, int focus = 0)
         {
@@ -39,11 +40,13 @@ namespace Biscotte.Tools
                 ("paddle 90", new PoseInput { state = RiderState.Paddle, paddle = 1f, paddlePhase = Mathf.PI * 0.5f, time = 1f }),
                 ("paddle rest", new PoseInput { state = RiderState.Paddle, paddle = 0f, time = 1f }),
                 ("ride", new PoseInput { state = RiderState.Ride, speed = 8f, time = 1f, lookYaw = 40f }),
-                ("ride lean R", new PoseInput { state = RiderState.Ride, speed = 8f, lean = 0.8f, time = 1f }),
-                ("air grab", new PoseInput { state = RiderState.Air, airTuck = 1f, grab = true, time = 1f }),
+                ("ride lean R", new PoseInput { state = RiderState.Ride, speed = 8f, lean = 0.8f, steer = 0.6f, time = 1f }),
+                ("air grab", new PoseInput { state = RiderState.Air, stateTime = 0.6f, airTuck = 1f, grab = true, time = 1f }),
                 ("duck dive", new PoseInput { state = RiderState.DuckDive, stateTime = 0.6f, time = 1f }),
                 ("wipeout", new PoseInput { state = RiderState.Wipeout, stateTime = 1f, time = 1f }),
-                ("drop-knee", new PoseInput { state = RiderState.Ride, dropKnee = true, speed = 8f, time = 1f }),
+                ("drop-knee", new PoseInput { state = RiderState.Ride, dropKnee = true, dropKneeBlend = 1f, speed = 8f, time = 1f }),
+                ("getting up", new PoseInput { state = RiderState.Ride, dropKneeBlend = 0.5f, speed = 8f, time = 1f }),
+                ("ride landing", new PoseInput { state = RiderState.Ride, landing = 1f, speed = 8f, time = 1f }),
             };
 
             var boardMesh = BodyboardMeshBuilder.Build();

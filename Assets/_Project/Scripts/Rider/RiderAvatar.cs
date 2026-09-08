@@ -17,6 +17,13 @@ namespace Biscotte.Rider
         public float strokeRate = 1.5f;        // paddle strokes per second at full paddle
         public float sprintStrokeRate = 2.3f;
         public float lookAlongCrestDeg = 55f;  // how much the head turns toward the peel while riding
+        [Header("Prone <-> drop-knee transition (through a push-up pose)")]
+        public float toDropKneeDuration = 0.7f;
+        public float toProneDuration = 0.6f;
+        [Range(1f, 40f)] public float transitionBlendRate = 9f;
+        [Header("Secondary motion")]
+        public float landingPulseDuration = 0.5f;
+        public float railSlipFull = 4f;        // m/s of lateral slide that fully braces the outer arm
         [Header("Swim fins (procedural, attached to the foot bones)")]
         public bool fins = true;
         public Material finMaterial;
@@ -30,6 +37,11 @@ namespace Biscotte.Rider
         Vector3 curPos;
         Quaternion curRot = Quaternion.identity;
         float paddlePhase;
+        float dkBlend;            // 0 prone .. 1 drop-knee, advanced over time (the solver routes it through the push-up)
+        bool transitioning;
+        RiderState prevState;
+        float landingTimer;
+        float prevVelY, vertAccel, steer;
         bool ready;
 
         void Start()
@@ -49,6 +61,8 @@ namespace Biscotte.Rider
             if (pose.muscles == null || pose.muscles.Length != RiderPose.MuscleCount) pose.muscles = new float[RiderPose.MuscleCount];
             if (fins) AttachFins();
             // start directly in the prone pose (no blend from the T-pose)
+            prevState = rider.State;
+            prevVelY = rider.Velocity.y;
             var input = BuildInput(0f);
             RiderPose.Solve(in input, current, out curPos, out curRot);
             ready = true;
@@ -126,7 +140,8 @@ namespace Biscotte.Rider
             float dt = Time.deltaTime;
             var input = BuildInput(dt);
             RiderPose.Solve(in input, target, out Vector3 bp, out Quaternion br);
-            float k = 1f - Mathf.Exp(-dt * blendRate);
+            // slower smoothing while getting up / lying back down: the timed transition path already carries the motion
+            float k = 1f - Mathf.Exp(-dt * (transitioning ? transitionBlendRate : blendRate));
             for (int i = 0; i < RiderPose.MuscleCount; i++) current[i] = Mathf.Lerp(current[i], target[i], k);
             curPos = Vector3.Lerp(curPos, bp, k);
             curRot = Quaternion.Slerp(curRot, br, k);
@@ -159,6 +174,33 @@ namespace Biscotte.Rider
             paddlePhase += dt * rate * Mathf.Lerp(0.15f, 1f, paddle) * 2f * Mathf.PI;
             if (paddlePhase > 1000f) paddlePhase -= 1000f;
 
+            // drop-knee blend: only advances while riding (the prone states ignore it), goes back to prone elsewhere
+            bool riding = rider.State == RiderState.Ride || rider.State == RiderState.KickOut;
+            float dkTarget = rider.DropKnee && riding ? 1f : 0f;
+            float duration = dkTarget > dkBlend ? toDropKneeDuration : toProneDuration;
+            dkBlend = dt > 0f ? Mathf.MoveTowards(dkBlend, dkTarget, dt / Mathf.Max(0.05f, duration)) : dkTarget;
+            transitioning = dkBlend > 0.001f && dkBlend < 0.999f;
+
+            // landing / drop-in pulse
+            if (rider.State != prevState)
+            {
+                if (rider.State == RiderState.Ride && prevState == RiderState.Air) landingTimer = landingPulseDuration;
+                else if (rider.State == RiderState.Ride && prevState == RiderState.TakeOff) landingTimer = landingPulseDuration * 0.6f;
+                prevState = rider.State;
+            }
+            landingTimer = Mathf.Max(0f, landingTimer - dt);
+            float landing = landingPulseDuration > 0f ? Mathf.Clamp01(landingTimer / landingPulseDuration) : 0f;
+            landing *= landing;   // ease out
+
+            // smoothed vertical acceleration (drops / bumps) and raw steering (anticipation)
+            float vy = rider.Velocity.y;
+            float accRaw = dt > 1e-4f ? Mathf.Clamp((vy - prevVelY) / dt, -30f, 30f) : 0f;
+            prevVelY = vy;
+            float smooth = dt > 0f ? 1f - Mathf.Exp(-dt * 12f) : 1f;
+            vertAccel = Mathf.Lerp(vertAccel, accRaw, smooth);
+            float steerRaw = In != null && riding ? Mathf.Clamp(In.Move.x, -1f, 1f) : 0f;
+            steer = Mathf.Lerp(steer, steerRaw, dt > 0f ? 1f - Mathf.Exp(-dt * 10f) : 1f);
+
             // head: look along the crest toward the unbroken section (the peel) while riding
             float lookYaw = 0f;
             if (rider.State == RiderState.Ride || rider.State == RiderState.Air)
@@ -176,7 +218,8 @@ namespace Biscotte.Rider
                 state = rider.State,
                 stateTime = rider.StateTime,
                 lean = Mathf.Clamp(rider.Lean, -1f, 1f),
-                dropKnee = rider.DropKnee,
+                dropKnee = dkBlend > 0.5f,
+                dropKneeBlend = dkBlend,
                 paddle = paddle,
                 paddlePhase = paddlePhase,
                 sprint = sprint,
@@ -187,6 +230,10 @@ namespace Biscotte.Rider
                 lookYaw = lookYaw,
                 lookPitch = rider.State == RiderState.Ride ? 8f : 0f,
                 speed = rider.Speed,
+                steer = steer,
+                railSlip = Mathf.Clamp01(Mathf.Abs(rider.RailSlip) / Mathf.Max(0.1f, railSlipFull)),
+                vertAccel = vertAccel,
+                landing = landing,
             };
         }
     }

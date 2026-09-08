@@ -122,7 +122,7 @@ namespace Biscotte.Tools
             probe.mode = ReflectionProbeMode.Realtime;
             probe.refreshMode = ReflectionProbeRefreshMode.ViaScripting;
             probe.timeSlicingMode = ReflectionProbeTimeSlicingMode.IndividualFaces;
-            probe.resolution = 128;
+            probe.resolution = 256;
             probe.size = new Vector3(4000f, 400f, 4000f);
             probe.boxProjection = false;
             probe.importance = 2;
@@ -157,6 +157,13 @@ namespace Biscotte.Tools
                     surfMat.shader = surfShader;
                     surfMat.CopyPropertiesFromMaterial(oceanMat);
                     surfMat.renderQueue = oceanMat.renderQueue;
+                    // tileable foam detail texture (Tools/make_foam_texture.py), linear mask
+                    const string kFoamTex = "Assets/_Project/Art/Textures/FoamDetail.png";
+                    var fImp = AssetImporter.GetAtPath(kFoamTex) as TextureImporter;
+                    if (fImp != null && fImp.sRGBTexture) { fImp.sRGBTexture = false; fImp.wrapMode = TextureWrapMode.Repeat; fImp.SaveAndReimport(); }
+                    var foamTex = AssetDatabase.LoadAssetAtPath<Texture2D>(kFoamTex);
+                    if (foamTex != null && surfMat.HasTexture("_FoamTex")) surfMat.SetTexture("_FoamTex", foamTex);
+                    else log.Append("WARNING: FoamDetail.png or _FoamTex missing. ");
                     EditorUtility.SetDirty(surfMat);
                 }
             }
@@ -253,6 +260,9 @@ namespace Biscotte.Tools
             var amb = managers.AddComponent<OceanAmbient>();
             SetPrivate(amb, "controller", oc);
             amb.syncMaterials = surfMat != null ? new[] { surfMat } : null;
+            // sky HDRI cubemap as the reflection fallback (the SB cubemap assets are missing -> grey/beige patches otherwise)
+            amb.fallbackReflection = AssetDatabase.LoadAssetAtPath<Cubemap>("Assets/ThirdParty/PolyHaven/hdris/secluded_beach/secluded_beach_4k.hdr");
+            amb.reflectionProbe = Object.FindFirstObjectByType<ReflectionProbe>();
             managers.AddComponent<WaterSurfaceComposite>();
             var input = managers.AddComponent<InputRouter>();
             SetPrivate(input, "actions", actions);

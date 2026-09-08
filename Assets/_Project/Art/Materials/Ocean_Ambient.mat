@@ -62,15 +62,15 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SampleReflectedCubemap_1b812563b1ce45e0bc3c489696de9303_Cube_1:
-        m_Texture: {fileID: 8900000, guid: 4ad0a6778d2b11045ba3650a79f1a43c, type: 3}
+        m_Texture: {fileID: 8900000, guid: b33f967a715b2714d9da2745e3cd063f, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SampleReflectedCubemap_4d2a8053eb5c41cfa4eae05d89609484_Cube_1:
-        m_Texture: {fileID: 8900000, guid: be1d0956365b74346b0617b4a9deafbd, type: 3}
+        m_Texture: {fileID: 8900000, guid: b33f967a715b2714d9da2745e3cd063f, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SampleReflectedCubemap_5fa64508247e447cb06868fd2bcc6166_Cube_1:
-        m_Texture: {fileID: 8900000, guid: be1d0956365b74346b0617b4a9deafbd, type: 3}
+        m_Texture: {fileID: 8900000, guid: b33f967a715b2714d9da2745e3cd063f, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SampleTexture2D_244827f56033465e84b80fca67c417b5_Texture_1:
@@ -278,10 +278,10 @@ Material:
     - _Color: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _SpecColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}
-    - _SurfRectA0: {r: 0, g: 0, b: 1, a: 0}
-    - _SurfRectA1: {r: 0, g: 0, b: 1, a: 0}
-    - _SurfRectA2: {r: 0, g: 0, b: 1, a: 0}
-    - _SurfRectA3: {r: 0, g: 0, b: 1, a: 0}
+    - _SurfRectA0: {r: -60, g: 0, b: 1, a: 0}
+    - _SurfRectA1: {r: -60, g: 0, b: 1, a: 0}
+    - _SurfRectA2: {r: -60, g: 0, b: 1, a: 0}
+    - _SurfRectA3: {r: -60, g: 0, b: 1, a: 0}
     - _SurfRectB0: {r: 1e+9, g: 1e+9, b: 1e+9, a: 1e+9}
     - _SurfRectB1: {r: 1e+9, g: 1e+9, b: 1e+9, a: 1e+9}
     - _SurfRectB2: {r: 1e+9, g: 1e+9, b: 1e+9, a: 1e+9}

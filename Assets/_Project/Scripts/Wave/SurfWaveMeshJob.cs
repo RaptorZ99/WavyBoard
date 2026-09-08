@@ -80,7 +80,9 @@ namespace Biscotte.Wave
             SurfVertex v;
             v.pos = World(s, crest + xi, y);
             v.nrm = nW;
-            v.col = new float4(L.sss, L.foam, L.tubeAO, L.whitewater);
+            // translucency glow only on the face (beach side of the crest); the back of the wave stays plain water
+            float frontK = math.saturate(1f + (xi - L.crestShift) / 2f);
+            v.col = new float4(L.sss * frontK, L.foam, L.tubeAO, L.whitewater);
             v.uv0 = new float2(s / math.max(1f, P.length), xi / P.wavelength);
             v.uv1 = new float2(L.phase, L.sss);
             Verts[i] = v;

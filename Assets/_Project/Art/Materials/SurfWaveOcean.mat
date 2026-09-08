@@ -49,6 +49,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _FoamTex:
+        m_Texture: {fileID: 2800000, guid: ed04f2bb350e28646986b23c1433d0b0, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _MainTex:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -62,15 +66,15 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SampleReflectedCubemap_1b812563b1ce45e0bc3c489696de9303_Cube_1:
-        m_Texture: {fileID: 8900000, guid: 4ad0a6778d2b11045ba3650a79f1a43c, type: 3}
+        m_Texture: {fileID: 8900000, guid: b33f967a715b2714d9da2745e3cd063f, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SampleReflectedCubemap_4d2a8053eb5c41cfa4eae05d89609484_Cube_1:
-        m_Texture: {fileID: 8900000, guid: be1d0956365b74346b0617b4a9deafbd, type: 3}
+        m_Texture: {fileID: 8900000, guid: b33f967a715b2714d9da2745e3cd063f, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SampleReflectedCubemap_5fa64508247e447cb06868fd2bcc6166_Cube_1:
-        m_Texture: {fileID: 8900000, guid: be1d0956365b74346b0617b4a9deafbd, type: 3}
+        m_Texture: {fileID: 8900000, guid: b33f967a715b2714d9da2745e3cd063f, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _SampleTexture2D_244827f56033465e84b80fca67c417b5_Texture_1:
@@ -278,19 +282,19 @@ Material:
     - _Color: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _SpecColor: {r: 0.2, g: 0.2, b: 0.2, a: 1}
-    - _SurfRectA0: {r: 0, g: 0, b: 1, a: 0}
-    - _SurfRectA1: {r: 0, g: 0, b: 1, a: 0}
-    - _SurfRectA2: {r: 0, g: 0, b: 1, a: 0}
-    - _SurfRectA3: {r: 0, g: 0, b: 1, a: 0}
-    - _SurfRectB0: {r: 1e+9, g: 1e+9, b: 1e+9, a: 1e+9}
-    - _SurfRectB1: {r: 1e+9, g: 1e+9, b: 1e+9, a: 1e+9}
-    - _SurfRectB2: {r: 1e+9, g: 1e+9, b: 1e+9, a: 1e+9}
+    - _SurfRectA0: {r: -60, g: 0, b: 1, a: 0}
+    - _SurfRectA1: {r: -60, g: 0, b: 1, a: 0}
+    - _SurfRectA2: {r: -60, g: 0, b: 1, a: 0}
+    - _SurfRectA3: {r: -60, g: 0, b: 1, a: 0}
+    - _SurfRectB0: {r: -24, g: 174, b: 190.55682, a: 256.55682}
+    - _SurfRectB1: {r: -24, g: 174, b: 118.55684, a: 184.55684}
+    - _SurfRectB2: {r: -24, g: 174, b: -61.497814, a: 4.502186}
     - _SurfRectB3: {r: 1e+9, g: 1e+9, b: 1e+9, a: 1e+9}
-    - _groundColor: {r: 0.6603774, g: 0.5951459, b: 0.38314348, a: 0}
+    - _groundColor: {r: 0.6603774, g: 0.5951458, b: 0.38314345, a: 0}
     - _terrainPosition: {r: 0, g: -200, b: 0, a: 0}
     - _terrainScale: {r: 1, g: 1, b: 1, a: 0}
     - _totalLigthColor: {r: 1, g: 1, b: 1, a: 1}
-    - _waterColor: {r: 0.03, g: 0.12, b: 0.16, a: 1}
+    - _waterColor: {r: 0.03, g: 0.11999995, b: 0.15999997, a: 1}
     - waterColor: {r: 0.19428623, g: 0.57415575, b: 0.6981132, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
