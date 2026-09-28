@@ -27,11 +27,40 @@ namespace WavyBoard.CameraRig
         }
 
         /// <summary>
-        /// The camera inside the barrel, behind the rider along the tube and looking at the exit. Tries the full
-        /// distance first, then closer (the barrel may already have closed behind him); a candidate must be inside an
-        /// open part of the cavity AND see the rider (the tube curves, the lip hangs lower in places).
+        /// Which way along the crest the rider is riding, as the ride shot frames it (+1 = +T). It follows the board
+        /// the moment the rider commits: nose pointed the other way along the line AND already moving that way, for a
+        /// short while — the slide of a top turn, a wobble or the nose swinging through an air do not swing the camera,
+        /// a cutback or a U-turn does, at once.
         /// </summary>
-        public static bool TryTubeShot(SurfWave wave, Vector3 anchor, float side, float waveHeight, double time,
+        public struct LineSide
+        {
+            public float Side;
+            float timer;
+
+            public void Reset(float side = 1f) { Side = side; timer = 0f; }
+
+            /// <param name="headingT">the board's nose along the crest (-1..1)</param>
+            /// <param name="vT">the rider's speed along the crest (m/s)</param>
+            /// <returns>true when it switched side</returns>
+            public bool Update(float headingT, float vT, float minSpeed, float delay, float dt)
+            {
+                float want = headingT >= 0f ? 1f : -1f;
+                if (want == Side || Mathf.Abs(headingT) < 0.5f || vT * want < minSpeed) { timer = 0f; return false; }
+                timer += dt;
+                if (timer < delay) return false;
+                Side = want;
+                timer = 0f;
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// The camera inside the barrel, deeper than the rider along the tube (away from <paramref name="exitSide"/>,
+        /// the way the mouth is) and looking out at the mouth. Tries the full distance first, then closer (the barrel
+        /// may already have closed behind him); a candidate must be inside an open part of the cavity AND see the rider
+        /// (the tube curves, the lip hangs lower in places).
+        /// </summary>
+        public static bool TryTubeShot(SurfWave wave, Vector3 anchor, float exitSide, float waveHeight, double time,
                                        in TubeShotSettings k, out Vector3 camPos, out Vector3 lookPos)
         {
             camPos = lookPos = anchor;
@@ -43,7 +72,7 @@ namespace WavyBoard.CameraRig
             for (int i = 0; i < 5; i++, back *= 0.75f)
             {
                 if (back < 2f) break;   // closer than this, the rider's own body fills the frame
-                if (!wave.TryTubeSlice(s - side * back, xi, time, k.minHeadroom, out var sl)) continue;
+                if (!wave.TryTubeSlice(s - exitSide * back, xi, time, k.minHeadroom, out var sl)) continue;
                 float y = sl.yFloor + k.heightShare * sl.Headroom;
                 y = Mathf.Min(y, riderY + k.maxAboveRider);
                 y = Mathf.Clamp(y, sl.yFloor + 0.5f, sl.yRoof - 0.4f);
@@ -51,8 +80,8 @@ namespace WavyBoard.CameraRig
                 if (FreeLength(wave, anchor, p, time) < 0.85f * Vector3.Distance(anchor, p)) continue;
                 camPos = p;
                 // aim just ahead of the rider, drawn toward the middle of the tube ahead: the exit stays in the frame
-                lookPos = anchor + T * (side * k.lookAhead) + Vector3.up * 0.2f;
-                if (wave.TryTubeSlice(s + side * k.lookAhead * 1.5f, xi, time, 0.8f, out var ahead))
+                lookPos = anchor + T * (exitSide * k.lookAhead) + Vector3.up * 0.2f;
+                if (wave.TryTubeSlice(s + exitSide * k.lookAhead * 1.5f, xi, time, 0.8f, out var ahead))
                 {
                     Vector3 mid = wave.WaveToWorld(ahead.s, ahead.x, ahead.yFloor + 0.45f * ahead.Headroom, time);
                     lookPos = Vector3.Lerp(lookPos, mid, 0.35f);

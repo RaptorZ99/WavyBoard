@@ -84,6 +84,16 @@ namespace WavyBoard.Wave
             return p.sMax;
         }
 
+        /// <summary>How fast the curl runs toward +T (the ride side) where it is pitching at crest coordinate s (m/s): the
+        /// slope of the break delays just ahead of it (the peel slows to a stop in the channel).</summary>
+        public static float PeelSpeed(in SurfWaveParams p, in NativeArray<float4> sections, float s)
+        {
+            const float e = 2f;
+            float s0 = math.max(0f, s);
+            float dDelay = SampleSections(sections, p, s0 + e).x - SampleSections(sections, p, s0).x;
+            return math.clamp(e / math.max(1e-3f, dDelay), 1f, 14f);
+        }
+
         /// <summary>Stage of the break at a point of the crest: 0 swell, 1 pitching, 2 barrel, 3 whitewater.</summary>
         public static float BreakPhase(in WaveProfile.RowInput ri)
         {

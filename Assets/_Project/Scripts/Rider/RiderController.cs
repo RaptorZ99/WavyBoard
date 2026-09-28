@@ -6,17 +6,22 @@ using UnityEngine;
 
 namespace WavyBoard.Rider
 {
+    /// <summary>KickOut: the ride is over without a fall — gone over the back of the wave, or ridden to its end.</summary>
     public enum RiderState { Paddle, DuckDive, TakeOff, Ride, Air, Wipeout, KickOut }
 
     /// <summary>
     /// Surface-locked bodyboard controller. The physics runs in FixedUpdate (kinematic integration on the analytic
     /// water); the visuals are extrapolated to render time every frame so the rider and the camera stay perfectly
     /// smooth on the moving wave. The class is split by concern:
-    ///   RiderController.cs ......... state machine, paddling, take-off, wipeout, kick-out
-    ///   RiderController.Ride.cs .... riding the face: carving, pumping, climbing, the lip, the tube wall, jumping
+    ///   RiderController.cs ......... state machine, paddling, take-off, wipeout, end of the ride
+    ///   RiderController.Ride.cs .... riding the face: speed (the wave's power), carving, pumping, the lip, the tube, jumping
     ///   RiderController.Air.cs ..... flight: launch, return to the face, attitude, landing, air scoring
     ///   RiderController.Tricks.cs .. zones and the flick / button manoeuvres
     ///   RiderController.Render.cs .. render-time pose (extrapolation), camera pivot
+    ///
+    /// The controls and the water are injectable (<see cref="Input"/>, <see cref="WaterSource"/>) and a physics step is
+    /// one call (<see cref="Step"/>): the tests ride whole waves in the Editor, without Play mode, with a bot at the
+    /// same controls a player has.
     /// </summary>
     [DefaultExecutionOrder(-50)]
     public partial class RiderController : MonoBehaviour
@@ -79,6 +84,13 @@ namespace WavyBoard.Rider
         public float Engaged { get; private set; }
         /// <summary>Speed on the face, relative to the moving water (m/s): what tricks ask for.</summary>
         public float FaceSpeed => State == RiderState.Paddle ? vel.magnitude : relVel.magnitude;
+        /// <summary>Speed of the board through the water along its nose while riding (m/s).</summary>
+        public float LineSpeed { get; private set; }
+        /// <summary>The pace the wave holds the rider at along the line right now (m/s; 0 out of its power): the
+        /// curl's own speed, more when he leans on, less when he sits back or stalls.</summary>
+        public float PaceTarget { get; private set; }
+        /// <summary>0..1: how much of the breaking wave's power reaches the rider (the pocket = 1).</summary>
+        public float Power { get; private set; }
         /// <summary>A wave face is arriving behind a paddling rider: paddle now and it takes you. (Paddling much
         /// earlier runs away from it: it then reaches you already broken.)</summary>
         public bool CanCatchNow
@@ -111,14 +123,31 @@ namespace WavyBoard.Rider
         float initialYaw;
         WaterSample lastSample;
         float lastPumpTime = -10f;
-        int pumpsThisDescent;
-        bool wasDescending;
         float stallTimer;
+        float lineShare = -1f, lineYLast;   // the height on the face the board holds, stick centred (share of H)
+        bool onBackLast;                    // past the top of the face at the end of the last step
         float rideCelerity = 7f;
         readonly TrickRunner tricks = new TrickRunner();
+        IRiderInput driver;
+        IWaterSurface waterSource;
 
-        IWaterSurface Water => WaterSurfaceComposite.Instance;
-        InputRouter In => InputRouter.Instance;
+        /// <summary>Where the controls come from: the player (the <see cref="InputRouter"/>) unless a bot drives.</summary>
+        public IRiderInput Input
+        {
+            get => driver ?? InputRouter.Instance;
+            set => driver = value;
+        }
+
+        /// <summary>The water ridden: the scene's <see cref="WaterSurfaceComposite"/> unless a simulated sea is given.</summary>
+        public IWaterSurface WaterSource
+        {
+            get => waterSource ?? WaterSurfaceComposite.Instance;
+            set => waterSource = value;
+        }
+
+        IWaterSurface Water => WaterSource;
+        IRiderInput In => Input;
+        double now;   // time of the physics step being run
 
         void Start()
         {
@@ -132,6 +161,7 @@ namespace WavyBoard.Rider
                 lineup = transform.position;
                 initialYaw = transform.eulerAngles.y;
             }
+            now = Time.timeAsDouble;
             Respawn();
             // the rider is the centre of the world: every wave is generated around him
             var sched = FindAnyObjectByType<WaveSetScheduler>();
@@ -147,9 +177,19 @@ namespace WavyBoard.Rider
             InTube = false; TubeTime = 0f; AirTime = 0f; RideTime = 0f; stallTimer = 0f; Crouch = 0f;
             tricks.Reset(); surfaceRoll = 0f; surfaceTrick = ""; surfacePoints = 0f; surfaceTimer = 0f; airSettling = false;
             airWaveId = -1;
-            if (Water != null) lastSample = Water.Sample(pos, (float)Time.timeAsDouble);
+            if (Water != null) lastSample = Water.Sample(pos, now);
             Enter(RiderState.Paddle);
             SnapVisuals();
+        }
+
+        /// <summary>Puts the rider on the water at <paramref name="position"/>, lying on the board facing
+        /// <paramref name="yawDeg"/>, waiting for a wave — the line-up is now there.</summary>
+        public void PlaceAt(Vector3 position, float yawDeg, double time)
+        {
+            now = time;
+            lineup = position;
+            initialYaw = yawDeg;
+            Respawn();
         }
 
         /// <summary>Back in the line-up without being teleported: the waves come to the rider wherever he is, so the
@@ -168,9 +208,12 @@ namespace WavyBoard.Rider
             State = s;
             stateTime = 0f;
             if (s == RiderState.Air) BeginAir(from);
+            if (s != RiderState.Ride) { LineSpeed = 0f; PaceTarget = 0f; Power = 0f; }
             if (s == RiderState.Ride)
             {
                 if (from != RiderState.Air) RideTime = 0f;
+                lineShare = -1f;
+                lineYLast = pos.y - lastSample.SeaLevel;
                 float carryK = CarryFactor(in lastSample);
                 relVel = vel - (Vector3)lastSample.TravelDir * (rideCelerity * carryK);
             }
@@ -189,19 +232,25 @@ namespace WavyBoard.Rider
             OnEvent?.Invoke(name);
         }
 
-        void FixedUpdate()
+        void FixedUpdate() => Step(Time.fixedDeltaTime, Time.fixedTimeAsDouble);
+
+        /// <summary>One physics step of <paramref name="dt"/> seconds at <paramref name="time"/> (the game calls it from
+        /// FixedUpdate; the ride simulation calls it directly).</summary>
+        public void Step(float dt, double time)
         {
             if (Water == null || In == null || tuning == null) return;
-            float dt = Time.fixedDeltaTime;
-            float t = (float)Time.fixedTimeAsDouble;
+            now = time;
+            float t = (float)time;
             stateTime += dt;
             PumpFlash = Mathf.Max(0f, PumpFlash - dt * 3f);
 
             if (In.ConsumeReset()) { RecoverHere(); return; }
             if (In.ConsumeStance() && (State == RiderState.Ride || State == RiderState.Paddle)) { DropKnee = !DropKnee; Event(DropKnee ? "Drop-knee" : "Prone"); }
 
-            lastSample = Water.Sample(pos, t);
-            In.RideContext = true;   // the right stick is the board, everywhere, always (hold L1 / Q to look around)
+            // which side of the crest the last step left him on: the resample below is at the new time, and the wave
+            // has moved on under him since
+            onBackLast = lastSample.OnBack;
+            lastSample = Water.Sample(pos, time);
             // a grab is the stick parked out on the rim in mid-air, the way a skater's hand holds the board
             Grabbing = State == RiderState.Air && In.StickHeld;
             Zone = ComputeZone();
@@ -251,7 +300,6 @@ namespace WavyBoard.Rider
             pos.y = Mathf.Lerp(pos.y, targetY, 1f - Mathf.Exp(-dt * 12f));
 
             if (In.ConsumeDuck()) { Enter(RiderState.DuckDive); Event("Duck dive"); return; }
-            In.ConsumeKickOut();   // same button as the sprint: a press while paddling means nothing
             In.ConsumePump();
             if (In.ConsumeJump(out float charge)) { Hop(charge); return; }
             // the right stick is the board here too: hops, flat rolls, and the duck dive
@@ -266,7 +314,8 @@ namespace WavyBoard.Rider
 
         /// <summary>
         /// How much the wave transports the rider along D (0..1 of the celerity): the formed pocket, the whitewater,
-        /// or simply lying on a sloped face of a shoaling wave (arcade: on the face = carried, the wave never outruns you).
+        /// or simply lying on a sloped face of a shoaling wave (arcade: on the face = carried, the wave never outruns
+        /// you). Only its front carries: behind the crest the wave runs on from under the rider (the way out of it).
         /// </summary>
         static float CarryFactor(in WaterSample s)
         {
@@ -275,7 +324,8 @@ namespace WavyBoard.Rider
             float face = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.04f, 0.14f, slope))
                        * Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.25f, 0.55f, s.BreakPhase))
                        * (1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(2.4f, 3f, s.BreakPhase)));
-            return Mathf.Clamp01(Mathf.Max(Mathf.Max(s.Energy * 1.6f, s.WhitewaterAmount * 0.9f), face));
+            float front = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(-0.5f * Mathf.Max(1f, s.WaveHeight), 0f, s.CrestDistance));
+            return Mathf.Clamp01(Mathf.Max(Mathf.Max(s.Energy * 1.6f, face) * front, s.WhitewaterAmount * 0.9f));
         }
 
         bool CanTakeOff()
@@ -299,7 +349,7 @@ namespace WavyBoard.Rider
             return w != null ? w.Params.celerity : 7f;
         }
 
-        static SurfWave FindWave(int waveId) => WaterSurfaceComposite.Instance != null ? WaterSurfaceComposite.Instance.FindWave(waveId) : null;
+        SurfWave FindWave(int waveId) => Water?.FindWave(waveId);
 
         // ------------------------------------------------------------------ Duck dive
         void UpdateDuckDive(float dt, float t)
@@ -327,17 +377,17 @@ namespace WavyBoard.Rider
             Vector3 target = D * rideCelerity * 0.95f + Heading() * 1.0f;
             vel = Vector3.Lerp(vel, target, 1f - Mathf.Exp(-dt * 10f)) + aG * dt;
             pos += vel * dt;
-            var s2 = Water.Sample(pos, t); lastSample = s2;
+            var s2 = Water.Sample(pos, now); lastSample = s2;
             float draft = Mathf.Lerp(tuning.paddleDraft, tuning.rideDraft, k);
             pos.y = s2.Height - draft;
-            // face the travel direction progressively
-            float targetYaw = Mathf.Atan2(D.x, D.z) * Mathf.Rad2Deg;
+            // face the travel direction progressively — angled the way the player steers: straight into the line
+            float targetYaw = Mathf.Atan2(D.x, D.z) * Mathf.Rad2Deg + Mathf.Clamp(In.Move.x, -1f, 1f) * tuning.takeoffAngleMax;
             yaw = Mathf.LerpAngle(yaw, targetYaw, 1f - Mathf.Exp(-dt * 5f));
             if (k >= 1f) { Enter(RiderState.Ride); Event("Riding"); }
             if (s2.BreakPhase < 0f || s2.BreakPhase > 2.4f) { Enter(RiderState.Paddle); Event("Missed"); }
         }
 
-        // ------------------------------------------------------------------ Wipeout / Kick-out
+        // ------------------------------------------------------------------ Wipeout / end of the ride
         void Wipeout(string reason)
         {
             LastWipeoutReason = reason;

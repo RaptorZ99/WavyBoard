@@ -1,4 +1,3 @@
-using WavyBoard.InputSys;
 using UnityEngine;
 
 namespace WavyBoard.Rider
@@ -158,7 +157,7 @@ namespace WavyBoard.Rider
 
         PoseInput BuildInput(float dt)
         {
-            var In = InputRouter.Instance;
+            var In = rider.Input;
             var s = rider.Sample;
             float paddle = 0f;
             bool sprint = false;

@@ -31,10 +31,7 @@ namespace WavyBoard.Ocean
         void OnEnable()
         {
             Instance = this;
-            probePts = new NativeArray<float3>(ProbeCapacity, Allocator.Persistent);
-            probeRes = new NativeArray<WaterProbe>(ProbeCapacity, Allocator.Persistent);
-            subPts = new NativeArray<float3>(ProbeCapacity, Allocator.Persistent);
-            subRes = new NativeArray<WaterProbe>(ProbeCapacity, Allocator.Persistent);
+            EnsureBuffers();
         }
 
         void OnDisable()
@@ -46,9 +43,22 @@ namespace WavyBoard.Ocean
             if (subRes.IsCreated) subRes.Dispose();
         }
 
+        // also used outside Play mode (the ride simulation), where OnEnable never runs
+        void EnsureBuffers()
+        {
+            if (probePts.IsCreated) return;
+            probePts = new NativeArray<float3>(ProbeCapacity, Allocator.Persistent);
+            probeRes = new NativeArray<WaterProbe>(ProbeCapacity, Allocator.Persistent);
+            subPts = new NativeArray<float3>(ProbeCapacity, Allocator.Persistent);
+            subRes = new NativeArray<WaterProbe>(ProbeCapacity, Allocator.Persistent);
+        }
+
+        /// <summary>Releases the probe buffers of a composite that never went through OnEnable/OnDisable (simulation).</summary>
+        public void ReleaseBuffers() => OnDisable();
+
         public int Capacity => ProbeCapacity;
-        public NativeArray<float3> ProbePoints => probePts;
-        public NativeArray<WaterProbe> ProbeResults => probeRes;
+        public NativeArray<float3> ProbePoints { get { EnsureBuffers(); return probePts; } }
+        public NativeArray<WaterProbe> ProbeResults { get { EnsureBuffers(); return probeRes; } }
 
         /// <summary>
         /// Answers the batch in <see cref="ProbePoints"/>[0..count): each point goes to the wave that owns it (as
@@ -56,8 +66,9 @@ namespace WavyBoard.Ocean
         /// </summary>
         public void Probe(int count, double time)
         {
+            EnsureBuffers();
             count = math.min(count, ProbeCapacity);
-            for (int i = 0; i < count; i++) owners[i] = OwnerIndex(probePts[i]);
+            for (int i = 0; i < count; i++) owners[i] = OwnerIndex(probePts[i], time);
             for (int wi = 0; wi < active.Count; wi++)
             {
                 int n = 0;
@@ -82,6 +93,7 @@ namespace WavyBoard.Ocean
         /// <summary>One probe at a world point: inside the water or not, the ridable surface and the lip above it.</summary>
         public WaterProbe ProbeOne(float3 worldPos, double time)
         {
+            EnsureBuffers();
             probePts[0] = worldPos;
             Probe(1, time);
             return probeRes[0];
@@ -90,32 +102,24 @@ namespace WavyBoard.Ocean
         public void Register(SurfWave w) { if (!active.Contains(w)) active.Add(w); }
         public void Unregister(SurfWave w) { active.Remove(w); }
 
-        public WaterSample Sample(float3 worldPos, float time) => Sample(worldPos, (double)time);
-
-        /// <summary>Index in <see cref="ActiveSurfWaves"/> of the wave that owns the point, or -1 (ambient sea).</summary>
-        public int OwnerIndex(float3 worldPos)
+        /// <summary>Index in <see cref="ActiveSurfWaves"/> of the wave that owns the point at that time, or -1 (ambient sea).</summary>
+        public int OwnerIndex(float3 worldPos, double time)
         {
             int best = -1;
             float bestScore = float.MaxValue;
             for (int i = 0; i < active.Count; i++)
             {
                 var w = active[i];
-                if (w == null || !w.Ownership(worldPos, out float score) || score >= bestScore) continue;
+                if (w == null || !w.Ownership(worldPos, time, out float score) || score >= bestScore) continue;
                 best = i; bestScore = score;
             }
             return best;
         }
 
-        /// <summary>The wave that owns the point, or null (ambient sea).</summary>
-        public SurfWave Owner(float3 worldPos)
-        {
-            int i = OwnerIndex(worldPos);
-            return i >= 0 ? active[i] : null;
-        }
-
         public WaterSample Sample(float3 worldPos, double time)
         {
-            var owner = Owner(worldPos);
+            int oi = OwnerIndex(worldPos, time);
+            var owner = oi >= 0 ? active[oi] : null;
             if (owner != null) return owner.Sample(worldPos, time);
 
             WaterSample s = default;

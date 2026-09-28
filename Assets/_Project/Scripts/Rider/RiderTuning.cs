@@ -18,6 +18,8 @@ namespace WavyBoard.Rider
         public float takeoffMaxPhase = 1.9f;
         public float takeoffMinForwardSpeed = 1.2f;
         public float takeoffDuration = 0.45f;
+        [Tooltip("Steering during the take-off angles the drop up to this (deg) from straight down: into the line at once")]
+        public float takeoffAngleMax = 50f;
         [Tooltip("0..1: how much a rising face pulls a paddling rider along and lines him up (arcade feel)")]
         public float takeoffAssist = 0.8f;
 
@@ -37,13 +39,19 @@ namespace WavyBoard.Rider
         public float climbGravityScale = 0.38f;
         [Tooltip("Drag scale while climbing the face (the board planes on water that is itself rising)")]
         public float climbDragScale = 0.55f;
-        [Tooltip("Speed of the water up a live face, as a share of the wave's celerity (the power of the pocket: trimming\nslightly down the face keeps the speed along the line)")]
+        [Tooltip("Speed of the water up a live face, as a share of the wave's celerity: what holds a rider trimming along\nthe face at his height")]
         public float faceFlow = 0.3f;
-        [Tooltip("Forward drive while carving hard at speed (m/s^2, scaled by |stick x| and speed)")]
-        public float carveDrive = 1.2f;
-        [Tooltip("Forward drive while trimming forward (stick up) on the way down the face (m/s^2)")]
-        public float trimDrive = 1.5f;
         public float yawRateMax = 150f;          // deg/s
+        [Tooltip("Share of the turn rate a slow board keeps (the turn rate grows with speed up to x1.2)")]
+        [Range(0.3f, 1f)] public float turnLowSpeedShare = 0.75f;
+        [Tooltip("Steering while stalling pivots the board round on its tail this much faster (the tight turn of a\ncutback, of a U-turn in the barrel)")]
+        public float pivotBoost = 1.8f;
+        [Tooltip("Steering stick centred, the nose eases onto the line at this rate (1/s) ...")]
+        public float lineAlignRate = 1.5f;
+        [Tooltip("... and the rider is held at his height on the face, the error closed at this rate (1/s) ...")]
+        public float lineHoldGain = 1.5f;
+        [Tooltip("... by the wave carrying him up or down its face at most this fast (m/s)")]
+        public float lineHoldMaxSpeed = 2.5f;
         public float leanMax = 55f;              // deg (visual)
         public float gripTau = 0.22f;
         public float alignTau = 0.3f;
@@ -56,6 +64,8 @@ namespace WavyBoard.Rider
         public float lipLaunchMinVy = 2f;
         [Tooltip("Same, while crouched (board stick pulled down to pop): the player asked for air, the lip gives it sooner")]
         public float lipLaunchMinVyCrouched = 0.6f;
+        [Tooltip("Same, while steering hard: carving off the lip is a top turn, the board stays on the face (to fly, let\nthe steering go or crouch)")]
+        public float lipLaunchMinVyCarving = 9f;
         [Tooltip("Extra upward speed (m/s) the lip adds when it throws a rider off (arcade pop)")]
         public float lipLaunchLift = 0.8f;
         [Tooltip("Near the top of the face, too slow to launch: the lip draws the rider back onto the face (m/s^2)")]
@@ -63,16 +73,39 @@ namespace WavyBoard.Rider
         [Tooltip("Headroom (m) a rider keeps under the lip in the tube: the wall above it cannot be climbed")]
         public float tubeWallHeadroom = 1.15f;
 
+        [Header("The wave's power: the pace along the line")]
+        [Tooltip("Pace the wave holds a rider at along the line, as a share over the curl's own speed: stick centred\n(> 0: the rider slowly gains on the curl, a tube spits him out if he does nothing)")]
+        public float trimNeutral = 0.1f;
+        [Tooltip("Same, leaning on (stick forward): racing the curl, out of the tube")]
+        public float trimForward = 0.32f;
+        [Tooltip("Same, sitting back (stick back): the curl slowly catches up")]
+        public float trimBack = -0.22f;
+        [Tooltip("Same, stalling (the stall button): the curl comes over, into the tube")]
+        public float trimStall = -0.45f;
+        [Tooltip("Ridden back toward the curl (a cutback), the wave still carries the rider at this share of the curl's\nspeed, up to the curl (not deeper into the barrel)")]
+        [Range(0f, 1f)] public float cutbackPace = 0.6f;
+        [Tooltip("The pace never drops under this (m/s) where the peel slows to a stop (the channel): the rider trims out\nof a dying wave instead of crawling on it")]
+        public float paceFloor = 3.5f;
+        [Tooltip("Rate (1/s) the power closes the gap to the pace")]
+        public float powerRate = 1.6f;
+        [Tooltip("Over the pace by this much (m/s) the power no longer holds the drag back: a drop or pumps carry him\nover it for a while")]
+        public float powerHoldBand = 2f;
+        [Tooltip("Ahead of the curl the power is full up to this many wave heights ...")]
+        public float powerFullAhead = 0.4f;
+        [Tooltip("... and down to its shoulder share this many wave heights ahead")]
+        public float powerFadedAhead = 3.5f;
+        [Tooltip("Share of the power (and so of the pace) left out on the shoulder, far ahead of the curl")]
+        [Range(0f, 1f)] public float powerShoulderShare = 0.55f;
+
         [Header("Pump")]
+        [Tooltip("Pumps closer together than this (s) are mashing: they only cost speed")]
         public float pumpWindowMin = 0.3f;
-        public float pumpWindowMax = 1.3f;
-        public float pumpGainFactor = 0.08f;
-        public float pumpGainFlat = 0.4f;
         public float pumpPenalty = 0.97f;
-        public int pumpMaxPerDescent = 3;
-        [Tooltip("Multiplier on the pump impulse (a well-timed pump at speed gives +1.5..2 m/s)")]
-        public float pumpBoost = 1.4f;
-        [Tooltip("Pump impulse factor when the pocket energy is 0 (lerps to 1 at full energy)")]
+        [Tooltip("Speed (m/s) a pump in rhythm adds along the board")]
+        public float pumpGain = 1.6f;
+        [Tooltip("A pump gives nothing once the rider is this much (m/s) over the wave's pace")]
+        public float pumpOverPace = 4f;
+        [Tooltip("Pump factor with none of the wave's power (lerps to 1 in the pocket)")]
         public float pumpEnergyFloor = 0.7f;
 
         [Header("Pop (right stick down then up; left mouse button)")]

@@ -15,9 +15,15 @@ namespace WavyBoard.CameraRig
     /// FRONT of the face to the other side — it never crosses the wave. It is anchored halfway to the wave, so the rider
     /// visibly moves up and down the face (and flies above it) instead of the wave moving round a locked rider.
     ///
-    /// <b>Tube.</b> Inside the barrel, a few metres behind the rider along the tube, placed in the actual cavity of the
-    /// wave (between the face and the lip, from the analytic profile) and looking out at the exit. When the barrel
-    /// behind him has already closed the camera comes in closer; blends in and out over a fraction of a second.
+    /// <b>Tube.</b> Inside the barrel, a few metres deeper than the rider, placed in the actual cavity of the wave
+    /// (between the face and the lip, from the analytic profile) and looking out at the mouth. The mouth is always the
+    /// same way (the wave peels toward +T), so whichever way the rider rides in there — racing out, or coming in on a
+    /// cutback and turning round — the camera stays on the deep side: it never has to swing through the barrel. When
+    /// the barrel behind him has already closed it comes in closer; blends in and out over a fraction of a second.
+    ///
+    /// <b>Changing direction.</b> The ride shot follows the way the board is committed to (see
+    /// <see cref="SurfCameraMath.LineSide"/>): nose and motion pointing the other way along the line — a cutback, a
+    /// pivot — and it swings round at once; the slide of a top turn or a spin in the air does not move it.
     ///
     /// <b>Air, paddle, wipeout.</b> Pulls back and up in the air, showing where he will land; chases the board while
     /// paddling and turns round to show a wave standing up behind a rider paddling for it; holds still in a wipeout.
@@ -46,13 +52,14 @@ namespace WavyBoard.CameraRig
         public float rideLookAhead = 1.4f;
         public float rideLookAheadPerSpeed = 0.2f;
         public float rideLookUpPerH = 0.16f;
-        [Tooltip("Speed along the line (m/s) that calls a change of direction")]
-        public float sideSwitchSpeed = 1.2f;
-        public float sideSwitchDelay = 0.25f;
+        [Tooltip("Speed along the line (m/s), the way the board points, that commits a change of direction")]
+        public float sideSwitchSpeed = 1f;
+        [Tooltip("Seconds the rider must stay committed to the other way before the camera swings round")]
+        public float sideSwitchDelay = 0.15f;
         [Tooltip("Seconds the camera takes to swing round to the other side")]
-        public float swingTime = 0.6f;
+        public float swingTime = 0.45f;
 
-        [Header("Tube: inside the barrel, behind the rider, looking at the exit")]
+        [Header("Tube: inside the barrel, deeper than the rider, looking out at the mouth")]
         public SurfCameraMath.TubeShotSettings tubeShot = SurfCameraMath.TubeShotSettings.Default;
         public float tubeFov = 80f;
         public float tubeBlendIn = 0.3f;
@@ -92,11 +99,14 @@ namespace WavyBoard.CameraRig
         Camera cam;
         Vector3 D = Vector3.forward, T = Vector3.right;
         float H = 3f, hVel;
-        float side = 1f, sideTimer, theta, thetaVel;
+        SurfCameraMath.LineSide lineSide = new SurfCameraMath.LineSide { Side = 1f };
+        float theta, thetaVel;
+        const float ExitSide = 1f;   // the wave peels toward +T (see SurfSpotConfig): the mouth of every tube is that way
         float wWave, wWaveVel, wTube, wTubeVel, wAir, wAirVel, wWatch, wWatchVel, wWipe, wWipeVel;
         bool tubeActive; float tubeExitTimer; bool tubeShotValid;
         Vector3 tubeOffset, tubeLook;
-        Vector3 offset, offsetVel, look, lookVel;
+        Vector3 offset, look, lookVel, armDir = Vector3.back;
+        float armLen, armLenVel;
         float arm = 10f, armVel;
         Vector3 avoidOffset, avoidVel;
         float avoidW, avoidWVel;
@@ -142,6 +152,10 @@ namespace WavyBoard.CameraRig
         /// <summary>The shot being played, for the debug overlay.</summary>
         public string ShotName => wWipe > 0.5f ? "wipeout" : wTube > 0.5f ? "tube" : wAir > 0.5f ? "air" : wWave > 0.5f ? "ride" : wWatch > 0.5f ? "wave coming" : "paddle";
 
+        /// <summary>How the shot is being kept out of the water, for the debug overlay and the playtests: the arm asked
+        /// for, what the water leaves of it, and how much of an avoiding angle is blended in.</summary>
+        public string ArmState { get; private set; } = "";
+
         void LateUpdate()
         {
             if (rider == null || cam == null || rider.tuning == null) return;
@@ -168,18 +182,16 @@ namespace WavyBoard.CameraRig
             else H = Mathf.SmoothDamp(H, 2.5f, ref hVel, 2f);
 
             // ---------------------------------------------------------------- which way along the line
-            float vT = Vector3.Dot(rider.Velocity, T);
-            if (!riding) { side = 1f; sideTimer = 0f; }    // a new ride starts toward the unbroken shoulder (+T)
-            else if (Mathf.Abs(vT) > sideSwitchSpeed && Mathf.Sign(vT) != side)
-            {
-                sideTimer += dt;
-                if (sideTimer > sideSwitchDelay) { side = Mathf.Sign(vT); sideTimer = 0f; }
-            }
-            else sideTimer = 0f;
+            if (!riding) lineSide.Reset();    // a new ride starts toward the unbroken shoulder (+T)
+            else if (state == RiderState.Ride)   // on the water only: a spin in the air is not a change of direction
+                lineSide.Update(Vector3.Dot(rider.HeadingDir, T), Vector3.Dot(rider.Velocity, T), sideSwitchSpeed, sideSwitchDelay, dt);
+            float side = lineSide.Side;
             theta = Mathf.SmoothDamp(theta, -side * rideAngle, ref thetaVel, swingTime);
 
             // ---------------------------------------------------------------- mode weights
-            bool inTubeNow = riding && rider.InTube && rider.TubeTime > 0.1f;
+            // in the tube, or about to be (the lip pitching over him): from out in front of the face the curtain would
+            // come between him and the camera, from inside the barrel behind him it frames him
+            bool inTubeNow = riding && (rider.InTube && rider.TubeTime > 0.1f || UnderTheCurl(in s));
             if (inTubeNow) { tubeActive = true; tubeExitTimer = 0f; }
             else if (tubeActive)
             {
@@ -188,7 +200,7 @@ namespace WavyBoard.CameraRig
             }
             if (tubeActive && wave != null)
             {
-                tubeShotValid = SurfCameraMath.TryTubeShot(wave, anchor, side, H, time, in tubeShot, out Vector3 tubeCam, out Vector3 tubeAim);
+                tubeShotValid = SurfCameraMath.TryTubeShot(wave, anchor, ExitSide, H, time, in tubeShot, out Vector3 tubeCam, out Vector3 tubeAim);
                 if (tubeShotValid) { tubeOffset = tubeCam - anchor; tubeLook = tubeAim - anchor; }
             }
             else if (!tubeActive) tubeShotValid = false;
@@ -236,13 +248,13 @@ namespace WavyBoard.CameraRig
                 Vector3 offWatch = hw * (rideDistance + rideDistancePerH * H) + Vector3.up * (rideHeight + 0.2f * H);
                 float xi = incomingXi < float.MaxValue ? incomingXi : 10f;
                 Vector3 lookWatch = -D * (Mathf.Clamp(xi, 0f, watchRange) * 0.22f) + Vector3.up * (0.3f * H);
-                offPad = Vector3.Lerp(offPad, offWatch, wWatch);
+                offPad = Orbit(offPad, offWatch, wWatch);
                 lookPad = Vector3.Lerp(lookPad, lookWatch, wWatch);
             }
 
-            Vector3 off = Vector3.Lerp(offPad, offRide, wWave);
+            Vector3 off = Orbit(offPad, offRide, wWave);
             Vector3 lk = Vector3.Lerp(lookPad, lookRide, wWave);
-            off = Vector3.Lerp(off, tubeOffset, wTube);
+            off = Orbit(off, tubeOffset, wTube);
             lk = Vector3.Lerp(lk, tubeLook, wTube);
 
             // wipeout: the camera stays where it was and watches
@@ -252,7 +264,7 @@ namespace WavyBoard.CameraRig
             {
                 Vector3 hold = Vector3.ClampMagnitude(wipeCamPos - anchor, 14f);
                 if (hold.sqrMagnitude < 4f) hold = off;
-                off = Vector3.Lerp(off, hold, wWipe);
+                off = Orbit(off, hold, wWipe);
                 lk = Vector3.Lerp(lk, Vector3.zero, wWipe);
             }
 
@@ -279,9 +291,13 @@ namespace WavyBoard.CameraRig
             }
 
             // ---------------------------------------------------------------- smoothing (relative to the rider: he never drifts in frame)
-            if (!initialised) { offset = off; look = lk; }
+            // direction and distance separately: a shot swinging round to the other side (into the tube, a cutback)
+            // travels round the rider, never through him
+            if (!initialised) { offset = off; look = lk; armDir = off.normalized; armLen = off.magnitude; }
             float smooth = Mathf.Lerp(Mathf.Lerp(offsetSmoothTime, 0.12f, wTube), 0.5f, wWipe);
-            offset = Vector3.SmoothDamp(offset, off, ref offsetVel, smooth);
+            if (off.sqrMagnitude > 1e-6f) armDir = Vector3.Slerp(armDir, off.normalized, 1f - Mathf.Exp(-dt * 2.2f / Mathf.Max(0.02f, smooth)));
+            armLen = Mathf.SmoothDamp(armLen, off.magnitude, ref armLenVel, smooth);
+            offset = armDir * armLen;
             look = Vector3.SmoothDamp(look, lk, ref lookVel, Mathf.Lerp(lookSmoothTime, 0.25f, wWipe));
 
             // ---------------------------------------------------------------- stay out of the water
@@ -295,30 +311,48 @@ namespace WavyBoard.CameraRig
             // nearby rather than pulling in onto the rider
             float want = offset.magnitude;
             float direct = water != null ? SurfCameraMath.FreeLength(water, pivot, pivot + offset, time) : want;
+            // in the barrel the tube shot was placed where it sees the rider: if the smoothed shot lags into the wall
+            // (he pivots, the tube curves) cut straight to it rather than fold the arm into him
+            if (water != null && wTube > 0.5f && tubeShotValid && direct < Mathf.Min(want, minArmLength))
+            {
+                offset = tubeOffset;
+                armDir = tubeOffset.normalized;
+                armLen = tubeOffset.magnitude;
+                armLenVel = 0f;
+                want = armLen;
+                direct = SurfCameraMath.FreeLength(water, pivot, pivot + offset, time);
+                avoidW = 0f; avoidWVel = 0f;
+            }
             bool blocked = direct < Mathf.Min(want, minArmLength) || direct < 0.6f * want;
             if (blocked && water != null)
             {
                 Vector3 clear = ClearOffset(water, pivot, offset, time);
                 avoidOffset = avoidW < 0.01f ? clear : Vector3.SmoothDamp(avoidOffset, clear, ref avoidVel, 0.2f);
             }
-            avoidW = Mathf.SmoothDamp(avoidW, blocked ? 1f : 0f, ref avoidWVel, blocked ? 0.12f : 0.45f);
-            Vector3 desired = pivot + Vector3.Lerp(offset, avoidOffset, avoidW);
+            // in the tube the shot is clear by construction: an avoiding angle is dropped at once once it is not needed
+            avoidW = Mathf.SmoothDamp(avoidW, blocked ? 1f : 0f, ref avoidWVel, blocked ? 0.08f : wTube > 0.5f ? 0.08f : 0.45f);
+            Vector3 desired = pivot + Orbit(offset, avoidOffset, avoidW);
             float len = Vector3.Distance(pivot, desired);
             float free = water != null ? SurfCameraMath.FreeLength(water, pivot, desired, time) : len;
+            // out of the tube the arm never folds into the rider: for the instant a thrown lip passes between them the
+            // camera stays at arm's length (lifted out of the water below) while it swings round to a clear angle
+            if (wTube < 0.5f) free = Mathf.Max(free, Mathf.Min(len, minArmLength));
             if (!initialised) arm = free;
             if (free < arm) { arm = free; armVel = 0f; }
             else arm = Mathf.SmoothDamp(arm, free, ref armVel, armRecoverTime);
             Vector3 dir = len > 1e-3f ? (desired - pivot) / len : Vector3.back;
             Vector3 p = pivot + dir * Mathf.Min(len, arm);
+            Vector3 armEnd = p;
             if (water != null) p = KeepOutOfWater(water, p, time);
             camPos = p;
+            ArmState = $"want {want:0.0} direct {direct:0.0} free {free:0.0} arm {arm:0.0} avoid {avoidW:0.00} lifted {Vector3.Distance(armEnd, p):0.0}";
 
             // ---------------------------------------------------------------- lens, roll, shake
             float targetFov = baseFov + speedFov * Mathf.Clamp01(speed / 12f) + airFov * wAir;
             targetFov = Mathf.Lerp(targetFov, tubeFov, wTube);
             fov = Mathf.SmoothDamp(fov, targetFov, ref fovVel, 0.35f);
             float dutchTarget = riding ? -rider.Lean * dutchPerLean * (1f - wAir) : 0f;
-            dutchTarget += wTube * side * 4f;   // the barrel curls over one side of the frame
+            dutchTarget += wTube * ExitSide * 4f;   // the barrel curls over one side of the frame
             dutch = Mathf.Lerp(dutch, dutchTarget, 1f - Mathf.Exp(-dt * 4f));
 
             float ambient = rider.InTube ? 0.1f + 0.15f * rider.Sample.TubeDepth : 0f;
@@ -356,8 +390,8 @@ namespace WavyBoard.CameraRig
                 {
                     case 0: cand = Tilt(flatDir, el + 25f * Mathf.Deg2Rad) * len; break;
                     case 1: cand = Tilt(flatDir, el + 50f * Mathf.Deg2Rad) * len; break;
-                    case 2: cand = Tilt(-side * T, 12f * Mathf.Deg2Rad) * len; break;    // along the tube, behind him
-                    case 3: cand = Tilt(side * T, 12f * Mathf.Deg2Rad) * len; break;     // along the tube, ahead, looking back
+                    case 2: cand = Tilt(-ExitSide * T, 12f * Mathf.Deg2Rad) * len; break;    // along the tube, deeper
+                    case 3: cand = Tilt(ExitSide * T, 12f * Mathf.Deg2Rad) * len; break;     // along the tube, toward the mouth
                     case 4: cand = Tilt(D, 30f * Mathf.Deg2Rad) * len; break;            // out in front of the face
                     case 5: cand = Tilt(D, 55f * Mathf.Deg2Rad) * len; break;
                     default: cand = Tilt(flatDir, 75f * Mathf.Deg2Rad) * len; break;     // high above him
@@ -367,6 +401,18 @@ namespace WavyBoard.CameraRig
                 if (share > bestShare) { bestShare = share; best = cand; }
             }
             return best;
+        }
+
+        /// <summary>The lip is being thrown over this part of the face: the mouth of the tube.</summary>
+        static bool UnderTheCurl(in WaterSample s)
+            => s.WaveId >= 0 && s.BreakPhase > 1.15f && s.BreakPhase < 2.3f && s.LipWidth > 0.6f && s.CrestDistance < s.LipWidth + 0.5f;
+
+        /// <summary>Blends two camera offsets from the rider by direction and distance: round him, never through him.</summary>
+        static Vector3 Orbit(Vector3 a, Vector3 b, float t)
+        {
+            float la = a.magnitude, lb = b.magnitude;
+            if (la < 1e-3f || lb < 1e-3f) return Vector3.Lerp(a, b, t);
+            return Vector3.Slerp(a / la, b / lb, t) * Mathf.Lerp(la, lb, t);
         }
 
         static Vector3 Tilt(Vector3 flatDir, float elevation)

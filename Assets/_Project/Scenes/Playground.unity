@@ -190,7 +190,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: WavyBoard.Runtime::WavyBoard.CameraRig.CameraDirector
   rider: {fileID: 793071093}
-  cameraTarget: {fileID: 0}
   rideAngle: 50
   rideDistance: 3.8
   rideDistancePerH: 0.75
@@ -201,9 +200,9 @@ MonoBehaviour:
   rideLookAhead: 1.4
   rideLookAheadPerSpeed: 0.2
   rideLookUpPerH: 0.16
-  sideSwitchSpeed: 1.2
-  sideSwitchDelay: 0.25
-  swingTime: 0.6
+  sideSwitchSpeed: 1
+  sideSwitchDelay: 0.15
+  swingTime: 0.45
   tubeShot:
     backPerH: 0.85
     backMin: 2.2
@@ -231,6 +230,7 @@ MonoBehaviour:
   offsetSmoothTime: 0.22
   lookSmoothTime: 0.12
   armRecoverTime: 0.35
+  minArmLength: 1.8
   waterClearance: 0.45
   shakeAmplitude: 1.6
 --- !u!114 &94001683
@@ -292,12 +292,6 @@ MonoBehaviour:
   jumpChargeTime: 0.35
   mouseStickPixels: 220
   mouseStickReturn: 7
-  OverrideEnabled: 0
-  OverrideMove: {x: 0, y: 0}
-  OverrideSprint: 0
-  OverrideStall: 0
-  OverrideCrouch: 0
-  RideContext: 0
 --- !u!114 &94001685
 MonoBehaviour:
   m_ObjectHideFlags: 0

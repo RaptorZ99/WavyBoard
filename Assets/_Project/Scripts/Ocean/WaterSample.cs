@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Unity.Mathematics;
 
 namespace WavyBoard.Ocean
@@ -15,6 +14,7 @@ namespace WavyBoard.Ocean
         public float3 CrestDir;       // T
         public float CrestDistance;   // x = xi - crestShift (+ toward the beach)
         public float PeelDistance;    // distance along the crest to the peel point (+ = unbroken side)
+        public float PeelSpeed;       // how fast the curl is running along the crest right now (m/s): the pace to race
         public bool InTube;
         public float TubeDepth;       // 0..1
         public float WhitewaterAmount;
@@ -30,9 +30,11 @@ namespace WavyBoard.Ocean
         public float SeaLevel;        // world height of the ambient sea under this point (the foot of the wave)
     }
 
+    /// <summary>The water a rider rides: the game's <see cref="WaterSurfaceComposite"/>, or a simulated sea (tests).</summary>
     public interface IWaterSurface
     {
-        WaterSample Sample(float3 worldPos, float time);
-        IReadOnlyList<WavyBoard.Wave.SurfWave> ActiveSurfWaves { get; }
+        WaterSample Sample(float3 worldPos, double time);
+        /// <summary>The live surf wave with this id, or null.</summary>
+        WavyBoard.Wave.SurfWave FindWave(int id);
     }
 }

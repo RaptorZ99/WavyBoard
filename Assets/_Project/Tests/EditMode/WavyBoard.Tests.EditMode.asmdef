@@ -3,6 +3,7 @@
     "rootNamespace": "WavyBoard.Tests",
     "references": [
         "WavyBoard.Runtime",
+        "WavyBoard.Editor",
         "Unity.Mathematics",
         "Unity.Collections",
         "UnityEngine.TestRunner",

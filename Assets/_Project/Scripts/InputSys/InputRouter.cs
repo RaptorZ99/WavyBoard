@@ -11,10 +11,11 @@ namespace WavyBoard.InputSys
     /// Every trick is on the right stick (or the mouse): it is the board, everywhere, and traces Skate-style flick-it
     /// gestures (see <see cref="FlickIt"/>): pull it down to crouch, flick it up to pop, and the way it travels names the
     /// trick. The buttons only ever ride:
-    ///   left stick / ZQSD ........ steer, paddle; in the air: spin
-    ///   Cross / Space ............ sprint while paddling (held), kick out on the shoulder
+    ///   left stick / ZQSD ........ steer, paddle; on the wave: forward drives down the line, back eases off; in the air: spin
+    ///   Cross / Space ............ sprint while paddling (held)
     ///   R2 / Shift ............... pump
-    ///   L2 / Ctrl ................ stall (let the curl catch you)
+    ///   L2 / Ctrl ................ stall (let the curl catch you); with steering: pivot round (U-turn); out on the
+    ///                              shoulder, pointed over it: pull out of the wave
     ///   Circle / C ............... duck dive
     ///   L1 / Q ................... tap: prone / drop-knee; hold: the right stick (mouse) looks around
     ///   left mouse button ........ keyboard and mouse only: hold to crouch, release to pop (same as down-then-up)
@@ -23,7 +24,7 @@ namespace WavyBoard.InputSys
     /// run on the frame the button went down).
     /// </summary>
     [DefaultExecutionOrder(-280)]
-    public class InputRouter : MonoBehaviour
+    public class InputRouter : MonoBehaviour, IRiderInput
     {
         public static InputRouter Instance { get; private set; }
 
@@ -45,11 +46,11 @@ namespace WavyBoard.InputSys
         float mouseStickReturn = 7f;
 
         InputActionMap surf;
-        InputAction move, boardStick, camNudge, pump, stall, kickOut, stance, duck, reset, sprint, dbg, spawn, mouseJump;
+        InputAction move, boardStick, camNudge, pump, stall, stance, duck, reset, sprint, dbg, spawn, mouseJump;
 
         // latched presses (set in Update, consumed by gameplay)
         bool stanceP, resetP, spawnP, dbgP;
-        float pumpT = -99f, kickOutT = -99f, duckT = -99f, jumpReleaseT = -99f;
+        float pumpT = -99f, duckT = -99f, jumpReleaseT = -99f;
         float jumpDownT = -99f, jumpReleaseCharge;
         bool jumpDown;
 
@@ -63,30 +64,18 @@ namespace WavyBoard.InputSys
 
         static float Now => Time.unscaledTime;
 
-        // ---- scripted override (autopilot / automated tests)
-        public bool OverrideEnabled;
-        public Vector2 OverrideMove;
-        public bool OverrideSprint, OverrideStall, OverrideCrouch;
-        public void InjectPump() { pumpT = Now; }
-        /// <summary>Applies a gesture as if the stick had traced it (autopilot, tests).</summary>
-        public void InjectFlick(FlickResult r) { flick_ = r; flickT = Now; }
+        public Vector2 Move => move != null ? move.ReadValue<Vector2>() : Vector2.zero;
 
-        /// <summary>Set by the rider each tick: true while the right stick belongs to the board, not the camera.</summary>
-        public bool RideContext;
+        /// <summary>Camera orbit: the right stick (the mouse) while the stance button is held; otherwise it is the board.</summary>
+        public Vector2 CameraNudge => camNudge != null && LookHeld ? camNudge.ReadValue<Vector2>() : Vector2.zero;
 
-        public Vector2 Move => OverrideEnabled ? OverrideMove : (move != null ? move.ReadValue<Vector2>() : Vector2.zero);
-
-        /// <summary>Camera orbit: the right stick while paddling, or anywhere while the stance button is held.</summary>
-        public Vector2 CameraNudge
-            => camNudge == null || (RideContext && !LookHeld) ? Vector2.zero : camNudge.ReadValue<Vector2>();
-
-        public bool StallHeld => OverrideEnabled ? OverrideStall : (stall != null && stall.IsPressed());
-        public bool SprintHeld => OverrideEnabled ? OverrideSprint : (sprint != null && sprint.IsPressed());
+        public bool StallHeld => stall != null && stall.IsPressed();
+        public bool SprintHeld => sprint != null && sprint.IsPressed();
         /// <summary>The rider is crouched, loading a pop: the board stick pulled down, or the mouse jump button held.</summary>
-        public bool Crouched => OverrideEnabled ? OverrideCrouch : (jumpDown || flick.Loaded > 0f);
+        public bool Crouched => jumpDown || flick.Loaded > 0f;
         /// <summary>0..1 — how loaded the crouch is.</summary>
-        public float CrouchCharge => OverrideEnabled ? (OverrideCrouch ? 1f : 0f)
-            : Mathf.Max(flick.Loaded, jumpDown ? Mathf.Clamp01((Now - jumpDownT) / Mathf.Max(0.05f, jumpChargeTime)) : 0f);
+        public float CrouchCharge
+            => Mathf.Max(flick.Loaded, jumpDown ? Mathf.Clamp01((Now - jumpDownT) / Mathf.Max(0.05f, jumpChargeTime)) : 0f);
 
         /// <summary>Hold the stance button to take the camera: the right stick orbits instead of driving the board.</summary>
         public bool LookHeld { get; private set; }
@@ -95,17 +84,15 @@ namespace WavyBoard.InputSys
         public Vector2 Stick { get; private set; }
 
         /// <summary>0..1 — the board stick is pulled down and held: the crouch that loads a pop.</summary>
-        public float Loaded => OverrideEnabled ? 0f : flick.Loaded;
+        public float Loaded => flick.Loaded;
 
         /// <summary>The board stick is parked out on the rim and still: in the air, that is a grab.</summary>
-        public bool StickHeld => !OverrideEnabled && flick.Held;
+        public bool StickHeld => flick.Held;
 
         /// <summary>The gesture recogniser, for the HUD and for tests.</summary>
         public FlickIt Recognizer => flick;
 
         public bool ConsumePump() => Take(ref pumpT);
-        /// <summary>The sprint button pressed (not held): on a fading shoulder it kicks you out of the wave.</summary>
-        public bool ConsumeKickOut() => Take(ref kickOutT);
         public bool ConsumeDuck() => Take(ref duckT);
         public bool ConsumeStance() { bool v = stanceP; stanceP = false; return v; }
         public bool ConsumeReset() { bool v = resetP; resetP = false; return v; }
@@ -150,7 +137,6 @@ namespace WavyBoard.InputSys
             camNudge = surf.FindAction("CameraNudge", true);
             pump = surf.FindAction("Pump", true);
             stall = surf.FindAction("Stall", true);
-            kickOut = surf.FindAction("Pop", true);            // same button as the sprint
             stance = surf.FindAction("Stance", true);
             duck = surf.FindAction("DuckDiveBail", true);
             reset = surf.FindAction("Reset", true);
@@ -168,7 +154,6 @@ namespace WavyBoard.InputSys
             if (surf == null) return;
             float now = Now;
             if (pump.WasPressedThisFrame()) pumpT = now;
-            if (kickOut.WasPressedThisFrame()) kickOutT = now;
             if (duck.WasPressedThisFrame()) duckT = now;
             resetP |= reset.WasPressedThisFrame();
             spawnP |= spawn.WasPressedThisFrame();
@@ -192,7 +177,7 @@ namespace WavyBoard.InputSys
             DetectDevice(gp);
 
             Stick = ReadStick(gp);
-            if (RideContext && !LookHeld && !OverrideEnabled)
+            if (!LookHeld)
             {
                 var r = flick.Feed(Stick, now);
                 if (r.flick != Flick.None) { flick_ = r; flickT = now; }
@@ -226,7 +211,6 @@ namespace WavyBoard.InputSys
         /// </summary>
         Vector2 ReadStick(Gamepad gp)
         {
-            if (OverrideEnabled) return Vector2.zero;
             if (UsingGamepad && gp != null) { mouseStick = Vector2.zero; return gp.rightStick.ReadValue(); }
             // the board action carries the mouse delta already scaled by its binding's processor
             Vector2 d = boardStick != null ? boardStick.ReadValue<Vector2>() : Vector2.zero;

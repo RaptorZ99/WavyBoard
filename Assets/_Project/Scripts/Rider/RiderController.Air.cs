@@ -21,6 +21,7 @@ namespace WavyBoard.Rider
         bool jumpUsedThisAir;
         bool airSettling;                // the player asked to spot the landing: stop turning and square up
         bool airFromTube;                // popped inside a barrel: the lip above is a ceiling
+        float airReturnK = 1f;           // share of the return assist this air gets (0: a kick-out over the back)
 
         Quaternion AirRot => airBase * airTrick;
 
@@ -36,6 +37,7 @@ namespace WavyBoard.Rider
             airWaveId = fromWave ? lastSample.WaveId : -1;
             airD = lastSample.TravelDir;
             airCelerity = fromWave ? rideCelerity : 0f;
+            airReturnK = fromWave ? 1f - KickOutIntent(in lastSample) : 0f;
             if (from == RiderState.Paddle) RideTime = 0f;
             InTube = false; TubeTime = 0f;
             // clear of the water before the first ballistic step (paddling, the board sits in it)
@@ -82,7 +84,7 @@ namespace WavyBoard.Rider
             Vector3 nose = AirRot * Vector3.forward;
             if (nose.x * nose.x + nose.z * nose.z > 1e-4f) yaw = Mathf.Atan2(nose.x, nose.z) * Mathf.Rad2Deg;
 
-            var s = Water.Sample(pos, t);
+            var s = Water.Sample(pos, now);
             lastSample = s;
 
             // popped inside the barrel: the roof stops the flight (off the lip, the rider punts through it)
@@ -126,17 +128,17 @@ namespace WavyBoard.Rider
 
             float cdTarget = Mathf.Max(0.6f, tuning.airLandingFaceShare * s.FaceWidth);
             Vector3 probe = pos + airD * (cdTarget - s.CrestDistance);
-            var sl = Water.Sample(probe, t);
+            var sl = Water.Sample(probe, now);
             if (sl.WaveId != airWaveId) return;
             airLandNormal = sl.Normal;
             AirLandingPoint = new Vector3(probe.x, sl.Height, probe.z);
             airLandEta = TimeToFall(pos.y - sl.Height, vel.y, g);
-            if (tuning.airReturnAssist <= 0f) return;
+            if (tuning.airReturnAssist * airReturnK <= 0f) return;
 
             float eta = Mathf.Clamp(airLandEta, 0.2f, 2.5f);
             float vRelD = Vector3.Dot(vel, airD) - airCelerity;
             float need = (cdTarget - s.CrestDistance) / eta;
-            float k = (1f - Mathf.Exp(-dt * tuning.airReturnRate)) * tuning.airReturnAssist;
+            float k = (1f - Mathf.Exp(-dt * tuning.airReturnRate)) * tuning.airReturnAssist * airReturnK;
             vel += airD * ((need - vRelD) * (need > vRelD ? k : 0.35f * k));
         }
 

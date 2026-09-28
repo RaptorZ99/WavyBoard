@@ -218,7 +218,7 @@ namespace WavyBoard.EditorTools
         public static string Cleanup()
         {
             var go = GameObject.Find(kName);
-            if (go != null) Object.DestroyImmediate(go);
+            if (go != null) { go.GetComponent<SurfWave>()?.ReleaseNow(); Object.DestroyImmediate(go); }
             var marker = GameObject.Find(kName + "_Rider");
             if (marker != null) Object.DestroyImmediate(marker);
             RestoreFraming();

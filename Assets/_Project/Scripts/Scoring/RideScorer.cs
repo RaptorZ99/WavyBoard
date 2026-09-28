@@ -12,6 +12,8 @@ namespace WavyBoard.Scoring
         public float WaveRawPoints { get; private set; }
         public float PendingPoints { get; private set; }
         public float WaveScore { get; private set; }          // 0..10 of the last committed wave
+        /// <summary>Points the last committed wave made (what the HUD keeps showing until the next ride).</summary>
+        public float LastWavePoints { get; private set; }
         public float Best1 { get; private set; }
         public float Best2 { get; private set; }
         public int ChainCount { get; private set; }
@@ -78,7 +80,7 @@ namespace WavyBoard.Scoring
             {
                 case "Pump":
                     break;
-                case "Kick-out":
+                case "Sortie":
                 case "Wave over":
                 case "Over the back":
                     CommitWave(false);
@@ -115,6 +117,7 @@ namespace WavyBoard.Scoring
             if (wipeout) raw *= 0.8f;
             if (raw <= 1f && rider.RideTime < 2f) { ResetWave(); return; }
             WaveScore = 10f * raw / (raw + 900f);
+            LastWavePoints = raw;
             if (WaveScore > Best1) { Best2 = Best1; Best1 = WaveScore; }
             else if (WaveScore > Best2) Best2 = WaveScore;
             LastWaveScoreTime = Time.time;

@@ -30,6 +30,9 @@ namespace WavyBoard.Debugging
         public int LandedOnFace { get; private set; }
         public int WipeoutCount { get; private set; }
         public int TubeFrames { get; private set; }
+        /// <summary>Tubes entered, and come out of still riding.</summary>
+        public int TubeRides { get; private set; }
+        public int TubeExits { get; private set; }
         public int TubeShotFrames { get; private set; }
         public int SideSwitches { get; private set; }
         public float MaxAirPeak { get; private set; }
@@ -49,6 +52,7 @@ namespace WavyBoard.Debugging
         float prevVy, lastCaptureTime = -10f, tubeCaptureAt = -1f, swingCaptureAt = -1f, landCaptureAt = -1f;
         int rideWaveId = -1, maxWaveId;
         float lastCloseLog = -10f;
+        bool wasInTube;
 
         void Start()
         {
@@ -75,7 +79,8 @@ namespace WavyBoard.Debugging
             log.Append(Time.time.ToString("0.00")).Append(' ').Append(what)
                .Append("  [").Append(rider.State).Append(" H=").Append(s.WaveHeight.ToString("0.0"))
                .Append(" cd=").Append(s.CrestDistance.ToString("0.0")).Append(" faceW=").Append(s.FaceWidth.ToString("0.0"))
-               .Append(" vy=").Append(rider.Velocity.y.ToString("0.0")).Append(" face=").Append(rider.FaceSpeed.ToString("0.0"))
+               .Append(" d=").Append(s.PeelDistance.ToString("0.0")).Append(" line=").Append(rider.LineSpeed.ToString("0.0"))
+               .Append("/").Append(rider.PaceTarget.ToString("0.0")).Append(" vy=").Append(rider.Velocity.y.ToString("0.0"))
                .Append(" phase=").Append(s.BreakPhase.ToString("0.00")).Append(" cam=").Append(director != null ? director.ShotName : "-")
                .Append("]\n");
         }
@@ -105,6 +110,9 @@ namespace WavyBoard.Debugging
             if (rider == null) return;
             Frames++;
             if (rider.InTube) TubeFrames++;
+            if (rider.InTube && !wasInTube) TubeRides++;
+            if (!rider.InTube && wasInTube && rider.State == RiderState.Ride) { TubeExits++; Line("OUT OF THE TUBE"); }
+            wasInTube = rider.InTube;
             if (director != null && director.ShotName == "tube") TubeShotFrames++;
             var cam = Camera.main;
             var water = WaterSurfaceComposite.Instance;
@@ -126,7 +134,7 @@ namespace WavyBoard.Debugging
                 if (toRider < 1.2f)
                 {
                     CameraInRider++;
-                    if (Time.time - lastCloseLog > 1f) { lastCloseLog = Time.time; Line("CAMERA CLOSE " + toRider.ToString("0.00") + " m tube=" + rider.InTube + " ww=" + rider.Sample.WhitewaterAmount.ToString("0.00")); }
+                    if (Time.time - lastCloseLog > 1f) { lastCloseLog = Time.time; Line("CAMERA CLOSE " + toRider.ToString("0.00") + " m tube=" + rider.InTube + " ww=" + rider.Sample.WhitewaterAmount.ToString("0.00") + " | " + (director != null ? director.ArmState : "")); }
                 }
             }
             Vector3 toCam = p - rider.RenderPosition;
@@ -189,7 +197,7 @@ namespace WavyBoard.Debugging
         public string Report()
         {
             return $"waves spawned {WavesSpawned} | min crest gap {MinCrestGap:0.0} m | ride wave switches {RideWaveSwitches} | camera to rider min {MinCameraToRider:0.00} m, frames under 1.2 m {CameraInRider}\n"
-                   + $"frames {Frames} | camera in water {CameraInWater} (min clearance {MinCameraClearance:0.00} m) | launches {Launches} | landings {Landings} (clean {CleanLandings}, on the face {LandedOnFace}) | max air peak {MaxAirPeak:0.0} m | wipeouts {WipeoutCount} | tube frames {TubeFrames} (tube shot {TubeShotFrames}) | camera side switches {SideSwitches}\n"
+                   + $"frames {Frames} | camera in water {CameraInWater} (min clearance {MinCameraClearance:0.00} m) | launches {Launches} | landings {Landings} (clean {CleanLandings}, on the face {LandedOnFace}) | max air peak {MaxAirPeak:0.0} m | wipeouts {WipeoutCount} | tubes {TubeRides} (out {TubeExits}) tube frames {TubeFrames} (tube shot {TubeShotFrames}) | camera side switches {SideSwitches}\n"
                    + $"waves {rider.WavesRidden} tricks {rider.TricksLanded} airs {rider.AirsLanded} tube total {rider.TotalTubeTime:0.0}s\n" + log;
         }
     }

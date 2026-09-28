@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
-"""Automated playtest through the Unity CLI: enters Play mode, drives the rider with the autopilot in a given mode,
-forces one wave size, captures the game view now and then, and prints the PlaytestRecorder report.
+"""Automated playtest through the Unity CLI: enters Play mode, hands the rider to the bot (RiderBot, through the
+RiderAutoPilot) with a given plan, forces one wave size, captures the game view now and then, and prints the
+PlaytestRecorder report. It checks what only the real game shows (the camera, the HUD, frame pacing); the gameplay
+itself is covered by the EditMode ride tests (RideTests, run in a second without Play mode).
 
   python3 Tools/playtest.py --mode Airs --scale 1.0 --seconds 60 --captures 6 --name airs_m
 
-Modes: Pocket (tube rides), Airs (climb to the lip, launch, flick a trick), Weave (direction changes: camera swing).
-Screenshots land in Assets/Screenshots~/playtest/<name>_<i>.png. The Editor may be unfocused: the HeadlessPlayTicker
-steps frames explicitly.
+Plans: Pocket (in and out of the tube by the pace), InAndOut (in and out of the tube by pivots: cutback to the curl,
+U-turn in the barrel), Exit (races the curl), Cruise (hands off), Stall, Airs (off the lip with a trick), Carve
+(cutbacks: the camera swing). Screenshots land in Assets/Screenshots~/playtest/<name>_<i>.png. The Editor
+may be unfocused: the HeadlessPlayTicker steps frames explicitly.
 """
 import argparse, json, subprocess, time
 
@@ -53,7 +56,7 @@ var r = UnityEngine.Object.FindFirstObjectByType<WavyBoard.Rider.RiderController
 if (r == null) return "no rider";
 var ap = r.gameObject.GetComponent<WavyBoard.Debugging.RiderAutoPilot>();
 if (ap == null) ap = r.gameObject.AddComponent<WavyBoard.Debugging.RiderAutoPilot>();
-ap.rider = r; ap.spot = r.spot; ap.active = true; ap.mode = WavyBoard.Debugging.RiderAutoPilot.Mode.{a.mode};
+ap.rider = r; ap.plan = WavyBoard.Debugging.RiderBot.Plan.{a.mode}; ap.enabled = true;
 var rec = r.gameObject.GetComponent<WavyBoard.Debugging.PlaytestRecorder>();
 if (rec == null) rec = r.gameObject.AddComponent<WavyBoard.Debugging.PlaytestRecorder>();
 rec.rider = r; rec.captureDir = "{'Assets/Screenshots~/playtest/' + a.name if a.auto else ''}"; rec.maxCaptures = {a.auto};
@@ -70,8 +73,8 @@ print("setup:", ev(setup))
 state = """
 var r = UnityEngine.Object.FindFirstObjectByType<WavyBoard.Rider.RiderController>();
 var s = r.Sample; var d = UnityEngine.Object.FindFirstObjectByType<WavyBoard.CameraRig.CameraDirector>();
-return string.Format("t={0:0.0} {1} ride={2:0.0} tube={3} face={4:0.0} H={5:0.0} cd={6:0.0} phase={7:0.00} cam={8} last={9}",
-  UnityEngine.Time.time, r.State, r.RideTime, r.InTube, r.FaceSpeed, s.WaveHeight, s.CrestDistance, s.BreakPhase, d != null ? d.ShotName : "-", r.LastEvent);
+return string.Format("t={0:0.0} {1} ride={2:0.0} tube={3} line={4:0.0}/{5:0.0} d={6:0.0} H={7:0.0} phase={8:0.00} cam={9} last={10}",
+  UnityEngine.Time.time, r.State, r.RideTime, r.InTube, r.LineSpeed, r.PaceTarget, s.PeelDistance, s.WaveHeight, s.BreakPhase, d != null ? d.ShotName : "-", r.LastEvent);
 """
 t0 = time.time()
 interval = a.seconds / max(1, a.captures)

@@ -81,11 +81,11 @@ namespace WavyBoard.Wave
         /// wave the point is nearest to, in units of that wave's own size — never simply to the newest one (a rider on
         /// the face of a wave must not fall through to the flat in front of the one behind).
         /// </summary>
-        public bool Ownership(float3 worldPos, out float score)
+        public bool Ownership(float3 worldPos, double time, out float score)
         {
             score = float.MaxValue;
             if (!IsAlive) return false;
-            LocalCoords(worldPos, (float)(SamplingTime - SpawnTime), out float s, out float xi);
+            LocalCoords(worldPos, (float)(time - SpawnTime), out float s, out float xi);
             if (s <= Params.sMin || s >= Params.sMax || xi <= Params.xiMin || xi >= Params.xiMax) return false;
             float H = math.max(0.5f, Params.height);
             score = xi >= 0f ? xi / (3.5f * H + 4f) : -xi / (1.6f * H + 4f);
@@ -133,10 +133,14 @@ namespace WavyBoard.Wave
             BuildTopology();
         }
 
-        void OnDestroy()
+        void OnDestroy() => ReleaseNow();
+
+        /// <summary>Frees the native buffers and the mesh now. A wave built outside Play mode (Wave Lab, the ride
+        /// simulation) never gets OnDestroy: its owner calls this before destroying it.</summary>
+        public void ReleaseNow()
         {
             ReleaseBuffers();
-            if (mesh != null) { if (Application.isPlaying) Destroy(mesh); else DestroyImmediate(mesh); }
+            if (mesh != null) { if (Application.isPlaying) Destroy(mesh); else DestroyImmediate(mesh); mesh = null; }
         }
 
         void ReleaseBuffers()
@@ -298,16 +302,6 @@ namespace WavyBoard.Wave
             float3 rel = worldPos - Params.origin;
             s = math.dot(rel, Params.crestDir);
             xi = math.dot(rel, Params.travelDir) - Params.CrestOffset(tw);
-        }
-
-        /// <summary>Time used for CPU sampling: fixed time inside FixedUpdate, render time otherwise.</summary>
-        double SamplingTime => Time.inFixedTimeStep ? Time.fixedTimeAsDouble : Time.timeAsDouble;
-
-        public bool Contains(float3 worldPos)
-        {
-            if (!IsAlive) return false;
-            LocalCoords(worldPos, (float)(SamplingTime - SpawnTime), out float s, out float xi);
-            return s > Params.sMin && s < Params.sMax && xi > Params.xiMin && xi < Params.xiMax;
         }
 
         /// <summary>Evaluates the cross-section at s into buf and returns its inputs and landmarks.</summary>

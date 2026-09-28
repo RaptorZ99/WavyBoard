@@ -1,5 +1,6 @@
 using System.Text;
 using WavyBoard.InputSys;
+using WavyBoard.Ocean;
 using WavyBoard.Rider;
 using WavyBoard.Scoring;
 using WavyBoard.Tricks;
@@ -19,9 +20,10 @@ namespace WavyBoard.UI
     /// read — where the stick is, how loaded the crouch is, and the arc being wound round the rim. Learning a
     /// flick-it scheme without that feedback is learning in the dark.
     ///
-    /// <b>The speed colour.</b> On a breaking wave the one thing that matters is whether you are ahead of the
-    /// break or it is catching you. Rather than print a second number, the speed you already read turns warm
-    /// when the curl is getting on top of you.
+    /// <b>The race with the curl.</b> On a breaking wave the one thing that matters is where you are against the
+    /// break and whether you are gaining on it: a gauge beside the speed puts you on a line from deep in the tube
+    /// (left) to the open shoulder (right), the curl in the middle, with an arrow when you are pulling away from it
+    /// or it is catching you. The speed turns warm when the tube is closing on you.
     ///
     /// Everything is cached; a steady frame allocates nothing.
     /// </summary>
@@ -118,6 +120,7 @@ namespace WavyBoard.UI
             float w = Screen.width, h = Screen.height;
 
             DrawSpeedPanel(h);
+            DrawCurlGauge(h);
             DrawStickRing(h);
             DrawScorePanel(w);
             DrawPopups(w, h);
@@ -144,7 +147,7 @@ namespace WavyBoard.UI
             var s = rider.Sample;
             bool racing = rider.State == RiderState.Ride && s.BreakPhase >= 0.6f;
             Color c = Bone;
-            if (racing) c = s.PeelDistance > -3f ? Teal : Coral;
+            if (racing) c = Closing(in s) ? Coral : Teal;
             var prev = big.normal.textColor;
             big.normal.textColor = c;
             GUI.Label(new Rect(24, h - 118, 300, 60), Mathf.RoundToInt(rider.Speed * 3.6f) + "<size=20> km/h</size>", big);
@@ -152,6 +155,44 @@ namespace WavyBoard.UI
 
             GUI.Label(new Rect(24, h - 58, 510, 26), StateLine(), mid);
             GUI.Label(new Rect(24, h - 32, 510, 22), ZoneLine(), small);
+        }
+
+        /// <summary>The tube around the rider is about to close on him (it closes out at
+        /// <see cref="RiderTuning.tubeCloseoutWipeoutPhase"/>).</summary>
+        bool Closing(in WaterSample s) => rider.InTube && s.BreakPhase > rider.tuning.tubeCloseoutWipeoutPhase - 0.2f;
+
+        /// <summary>
+        /// Where the rider is against the curl, in wave heights: deep in the tube on the left, the open shoulder on
+        /// the right, the curl in the middle; the arrow says who is gaining (his speed along the line against the
+        /// curl's).
+        /// </summary>
+        void DrawCurlGauge(float h)
+        {
+            var s = rider.Sample;
+            if (rider.State != RiderState.Ride || s.WaveId < 0 || s.BreakPhase < 0.6f) return;
+            const float x0 = 268f, x1 = 516f, range = 3f;
+            float y = h - 100f, mid = 0.5f * (x0 + x1);
+            float H = Mathf.Max(1f, s.WaveHeight);
+            float u = Mathf.Clamp01(Mathf.InverseLerp(-range, range, s.PeelDistance / H));
+            float x = Mathf.Lerp(x0, x1, u);
+
+            GUI.color = new Color(0.30f, 0.55f, 0.75f, 0.45f);     // behind the curl: the tube
+            GUI.DrawTexture(new Rect(x0, y, mid - x0, 6f), Texture2D.whiteTexture);
+            GUI.color = new Color(0.50f, 0.82f, 0.78f, 0.35f);     // in front: the open face
+            GUI.DrawTexture(new Rect(mid, y, x1 - mid, 6f), Texture2D.whiteTexture);
+            GUI.color = Bone;                                       // the curl
+            GUI.DrawTexture(new Rect(mid - 1f, y - 6f, 2f, 18f), Texture2D.whiteTexture);
+            GUI.color = Closing(in s) ? Coral : rider.InTube ? Teal : Bone;
+            GUI.DrawTexture(new Rect(x - 6f, y - 3f, 12f, 12f), Texture2D.whiteTexture);
+            GUI.color = Color.white;
+
+            float gain = Vector3.Dot(rider.Velocity, (Vector3)s.CrestDir) - s.PeelSpeed;
+            sb.Clear();
+            sb.Append(rider.InTube ? "<color=#7FD1C4>TUBE</color>" : s.PeelDistance > 1.2f * H ? "ÉPAULE" : "POCHE");
+            if (Vector3.Dot(rider.HeadingDir, (Vector3)s.CrestDir) < -0.3f) sb.Append("   <color=#F2C078>◀ vers le rouleau</color>");
+            else if (gain > 0.4f) sb.Append("   <color=#7FD1C4>▶ tu le distances</color>");
+            else if (gain < -0.4f) sb.Append("   <color=#E8785A>◀ il te rattrape</color>");
+            GUI.Label(new Rect(x0, y + 8f, x1 - x0 + 20f, 22f), sb.ToString(), small);
         }
 
         string StateLine()
@@ -174,7 +215,7 @@ namespace WavyBoard.UI
             {
                 case WaveZone.Lip: return "<color=#F2C078>lèvre</color> — ↓↑ air · ↓↗ el rollo · ↓ puis tour = spin";
                 case WaveZone.Face: return "<color=#F2C078>face</color> — monte vers la lèvre pour t'envoler · ↓↗ snap · quart de tour = cutback";
-                case WaveZone.Tube: return "<color=#F2C078>tube</color> — reste dans la poche (freine pour t'enfoncer) · figures +40 %";
+                case WaveZone.Tube: return "<color=#F2C078>tube</color> — stick G ↑ + pump pour sortir · cale pour rester · cale + tourne = demi-tour";
                 case WaveZone.Air: return "<color=#F2C078>en l'air</color> — enroule = spin · ↓↗ rollo · stick G = tourner · ↑ vise la réception";
                 default: return "stick gauche : tourne et rame · stick droit : ↓ puis ↑ = saut";
             }
@@ -244,7 +285,14 @@ namespace WavyBoard.UI
         {
             if (scorer == null) return;
             sb.Clear();
-            sb.Append("vague <b>").Append(Mathf.RoundToInt(scorer.WaveRawPoints + scorer.PendingPoints)).Append("</b> pts");
+            // the wave being ridden counts up; between waves, the last one stays up with its score
+            var st = rider.State;
+            bool onAWave = st == RiderState.TakeOff || st == RiderState.Ride || st == RiderState.Air;
+            if (onAWave || scorer.LastWaveScoreTime < 0f)
+                sb.Append("vague <b>").Append(Mathf.RoundToInt(scorer.WaveRawPoints + scorer.PendingPoints)).Append("</b> pts");
+            else
+                sb.Append("dernière vague <b>").Append(Mathf.RoundToInt(scorer.LastWavePoints)).Append("</b> pts  ·  note <b>")
+                  .Append(scorer.WaveScore.ToString("0.0")).Append("</b>");
             if (scorer.ChainCount > 0) sb.Append("   chaîne <color=#F2C078>x").Append(scorer.ChainMultiplier.ToString("0.00")).Append("</color>");
             GUI.Label(new Rect(w - 520, 18, 500, 26), sb.ToString(), chip);
 
@@ -290,9 +338,20 @@ namespace WavyBoard.UI
             bool pad = input != null && input.UsingGamepad;
             if (rider.Zone == WaveZone.Lip && rider.FaceSpeed > 2.2f)
                 return input != null && input.Crouched ? "↑  —  envoie !" : (pad ? "stick D ↓ … puis ↑ au sommet" : "souris ↓ … puis ↑ au sommet (ou clic)");
-            if (rider.InTube) return "reste dedans";
             var s = rider.Sample;
-            if (s.BreakPhase >= 0.6f && s.PeelDistance < -3f) return "le rouleau te rattrape — file dans la ligne";
+            string lean = pad ? "stick G ↑" : "Z", pump = pad ? "R2" : "Maj";
+            if (rider.RideTime > 0.9f && rider.RideTime < 6f && Mathf.Abs(Vector3.Dot(rider.HeadingDir, (Vector3)s.CrestDir)) < 0.45f)
+                return "◀ ▶  tourne pour filer le long de la vague";
+            if (Closing(in s)) return "ÇA FERME — " + lean + " + pump (" + pump + ") !";
+            float headingT = Vector3.Dot(rider.HeadingDir, (Vector3)s.CrestDir);
+            // riding back to the curl (a cutback): the way in is to turn round right there
+            if (headingT < -0.5f && s.PeelDistance < 0.6f * Mathf.Max(1f, s.WaveHeight) && s.BreakPhase >= 0.6f)
+                return (pad ? "L2" : "Ctrl") + " + tourne : demi-tour dans le tube !";
+            if (rider.InTube) return null;
+            float gain = Vector3.Dot(rider.Velocity, (Vector3)s.CrestDir) - s.PeelSpeed;
+            if (s.BreakPhase >= 0.6f && s.PeelDistance < 0f && gain < -0.5f && headingT > 0.3f)
+                return "le rouleau te rattrape — " + lean + " et pump (" + pump + ")";
+            if (s.BreakPhase < 0.6f && rider.Power < 0.2f) return "la vague s'éteint — " + (pad ? "L2" : "Ctrl") + " et monte par-dessus l'épaule pour sortir";
             if (rider.FaceSpeed < 1.8f) return "descends la face pour prendre de la vitesse";
             return null;
         }
@@ -363,11 +422,13 @@ namespace WavyBoard.UI
                 { "Invert", "↑ puis ↓ sec" },
                 { "Grab", pad ? "garde le stick tendu" : "garde la souris tendue" },
                 { "Viser la réception", "↑ en l'air" },
-                { "Tourner / ramer / carver", pad ? "stick G" : "ZQSD" },
+                { "Ramer, tourner, carver", pad ? "stick G" : "ZQSD" },
+                { "Filer / freiner dans la ligne", pad ? "stick G ↑ / ↓" : "Z / S" },
                 { "Sprint en rame", pad ? "Croix maintenu" : "Espace maintenu" },
-                { "Pump", pad ? "R2" : "Maj" },
-                { "Caler", pad ? "L2" : "Ctrl" },
-                { "Sortir de la vague", pad ? "Croix (sur l'épaule)" : "Espace (sur l'épaule)" },
+                { "Pump (en rythme, partout)", pad ? "R2" : "Maj" },
+                { "Caler (le tube vient à toi)", pad ? "L2" : "Ctrl" },
+                { "Demi-tour serré (pivot)", pad ? "L2 + stick G ◀ ▶" : "Ctrl + Q / D" },
+                { "Sortir de la vague", pad ? "L2 + monte par-dessus l'épaule" : "Ctrl + monte par-dessus l'épaule" },
                 { "Drop-knee", pad ? "L1 (appui court)" : "A (appui court)" },
                 { "Regarder autour", pad ? "L1 maintenu + stick D" : "A maintenu + souris" },
                 { "Canard", pad ? "Rond, ou ↑ puis ↓ à plat" : "C, ou ↑ puis ↓ à plat" },
