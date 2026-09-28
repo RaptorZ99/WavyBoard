@@ -1,5 +1,4 @@
 using System.Runtime.InteropServices;
-using Biscotte.Ocean;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
@@ -12,111 +11,108 @@ namespace Biscotte.Wave
     {
         public float3 pos;
         public float3 nrm;
-        public float4 col;   // r = sss (translucency glow), g = foam, b = tubeAO, a = whitewater
-        public float2 uv0;   // s/L, xi/lambda
-        public float2 uv1;   // phase, sss
+        public float4 tan;   // xyz: surface direction in which the flow coordinate U grows
+        public float4 col;   // r = thin water, g = foam, b = tube occlusion, a = face
+        public float2 uv0;   // flow coordinates (world metres on the flats, carried along the sheet on the wave)
+        public float2 uv1;   // travel direction D (xz)
     }
 
-    /// <summary>Generates the face grid + lip ribbon vertices for one surf wave (spec §5.3).</summary>
-    [BurstCompile(FloatPrecision.Standard, FloatMode.Fast)]
-    public struct SurfWaveMeshJob : IJobParallelFor
+    /// <summary>Pass 1: one cross-section per row (positions, shading attributes, flow coordinates).</summary>
+    [BurstCompile(FloatPrecision.Standard, FloatMode.Default)]
+    public struct SurfWaveRowJob : IJobParallelFor
     {
         public SurfWaveParams P;
-        [ReadOnly] public NativeArray<float4> Profile;
-        public OceanParams Ambient;
-        public float TimeW;        // wave-relative time
-        public float AmbientTime;  // Storm Breakers time (Time.time)
-        public int Ns, Nxi, Nv;
-        public float GroundDepth;
-        [NativeDisableParallelForRestriction] public NativeArray<SurfVertex> Verts;
+        [ReadOnly] public NativeArray<float4> Sections;
+        [ReadOnly] public NativeArray<float2> Keys;
+        [ReadOnly] public NativeArray<float2> VMap;
+        public float TimeW;
+        public int Ns, Nu;
+        [NativeDisableParallelForRestriction] public NativeArray<float2> Scratch;   // Ns * Nu
+        [NativeDisableParallelForRestriction] public NativeArray<float3> Pos;       // Ns * Nu
+        [NativeDisableParallelForRestriction] public NativeArray<float4> Col;
+        [NativeDisableParallelForRestriction] public NativeArray<float2> Flow;
+
+        public float SAt(int row) => math.lerp(P.sMin, P.sMax, (float)row / (Ns - 1));
+
+        public void Execute(int row)
+        {
+            float s = SAt(row);
+            var ri = SurfWaveMath.Row(P, Sections, s, TimeW, out _);
+            var pts = Scratch.Slice(row * Nu, Nu);
+            WaveProfile.Section(Keys, VMap, ri, pts);
+            var L = WaveProfile.Find(pts);
+
+            float crest = P.CrestOffset(TimeW);
+            float3 basePos = P.origin + P.crestDir * s + P.travelDir * crest;
+
+            // arc length, for the flow coordinates
+            float total = 0f;
+            for (int j = 1; j < Nu; j++) total += math.distance(pts[j], pts[j - 1]);
+            float xFront = crest + pts[0].x, xBack = crest + pts[Nu - 1].x;
+            float2 o = P.origin.xz, D = P.travelDir.xz, T = P.crestDir.xz;
+
+            // a hair of per-wave offset on the flats, so two waves of a set never z-fight where their footprints meet
+            float flatBias = 0.003f * (P.id % 6);
+            float arc = 0f;
+            for (int j = 0; j < Nu; j++)
+            {
+                if (j > 0) arc += math.distance(pts[j], pts[j - 1]);
+                float2 m = VMap[j];
+                float r = m.x + m.y;
+                float2 p = pts[j];
+                float flat = (1f - math.smoothstep(0.6f, 1.6f, r)) + math.smoothstep(12.4f, 13.4f, r);
+                int i = row * Nu + j;
+                // whitewater is a boiling pile, not a smooth hump: lumps that churn and roll forward with the bore
+                float churn = SurfWaveMath.Churn(p.y, ri);
+                float lump = 0f;
+                if (churn > 0.01f)
+                {
+                    float3 q = new float3(s * 0.42f, p.x * 0.42f - TimeW * 1.1f, TimeW * 0.7f);
+                    lump = (noise.snoise(q) * 0.65f + noise.snoise(q * 2.3f + 11.7f) * 0.35f) * churn * 0.1f * ri.xScale;
+                }
+                Pos[i] = basePos + P.travelDir * p.x + new float3(0f, p.y + lump - flatBias * flat, 0f);
+                Col[i] = SurfWaveMath.Attributes(r, p.x, p.y, ri, L, P.celerity);
+                // U: anchored to the world on the front flat, and on the back flat, blended across the wave
+                float uf = xFront - arc;
+                float ub = xBack + (total - arc);
+                float u = math.lerp(uf, ub, math.saturate((r - WaveProfile.F1) / (WaveProfile.B1 - WaveProfile.F1)));
+                Flow[i] = o + D * u + T * s;
+            }
+        }
+    }
+
+    /// <summary>Pass 2: normals and tangents from the grid neighbours, packed into the vertex buffer.</summary>
+    [BurstCompile(FloatPrecision.Standard, FloatMode.Default)]
+    public struct SurfWaveVertexJob : IJobParallelFor
+    {
+        [ReadOnly] public NativeArray<float3> Pos;
+        [ReadOnly] public NativeArray<float4> Col;
+        [ReadOnly] public NativeArray<float2> Flow;
+        public float2 TravelXZ;
+        public int Ns, Nu;
+        [WriteOnly] public NativeArray<SurfVertex> Verts;
 
         public void Execute(int i)
         {
-            int faceCount = Ns * Nxi;
-            if (i < faceCount) Face(i);
-            else Lip(i - faceCount);
-        }
-
-        float SAt(int row) { return -P.sPad + (P.length + 2f * P.sPad) * row / (Ns - 1); }
-
-        float3 World(float s, float xiWorld, float y)
-        {
-            return P.origin + P.crestDir * s + P.travelDir * xiWorld + new float3(0f, y, 0f);
-        }
-
-        void Face(int i)
-        {
-            int row = i / Nxi;
-            int col = i % Nxi;
-            float s = SAt(row);
-            float u = (float)col / (Nxi - 1);
-            // densify near the crest: cubic warp around u0 where xi = 0
-            float u0 = (0f - P.xiMin) / (P.xiMax - P.xiMin);
-            float d = u - u0;
-            float uw = u0 + d * (0.55f + 0.45f * math.abs(d) / math.max(u0, 1f - u0));
-            float xi = math.lerp(P.xiMin, P.xiMax, math.saturate(uw));
-            float crest = P.CrestOffset(TimeW);
-
-            SurfLocal L = SurfWaveMath.Evaluate(P, Profile, s, xi, TimeW);
-
-            // The mesh holds the surf wave shape only, on the UNDEFORMED ambient plane: the Storm Breakers shader
-            // (SurfWaveOcean graph) adds the ambient swell deformation and its normal on the GPU, exactly like the
-            // ambient ocean plane, so both surfaces match without a seam.
-            const float e = 0.2f;
-            float hs1 = SurfWaveMath.HeightAt(P, Profile, s + e, xi, TimeW);
-            float hs0 = SurfWaveMath.HeightAt(P, Profile, s - e, xi, TimeW);
-            float hx1 = SurfWaveMath.HeightAt(P, Profile, s, xi + e, TimeW);
-            float hx0 = SurfWaveMath.HeightAt(P, Profile, s, xi - e, TimeW);
-            float dhs = (hs1 - hs0) / (2f * e);
-            float dhx = (hx1 - hx0) / (2f * e);
-            float3 nW = math.normalize(new float3(0f, 1f, 0f) - P.crestDir * dhs - P.travelDir * dhx);
-
-            // The ambient plane has an alpha-clipped hole under this grid (inset 1 m from the grid border, see OceanAmbient),
-            // so the grid IS the water surface inside. Only the outer ring (overlapping the plane) dips a few cm under it.
-            float edgeDist = math.min(math.min(s + P.sPad, P.length + P.sPad - s), math.min(xi - P.xiMin, P.xiMax - xi));
-            float ring = 1f - math.smoothstep(0f, 1.5f, edgeDist);
-            float y = L.height - 0.04f * ring;
+            int row = i / Nu, j = i % Nu;
+            int r0 = math.max(row - 1, 0), r1 = math.min(row + 1, Ns - 1);
+            int j0 = math.max(j - 1, 0), j1 = math.min(j + 1, Nu - 1);
+            float3 dS = Pos[r1 * Nu + j] - Pos[r0 * Nu + j];
+            float3 dU = Pos[row * Nu + j1] - Pos[row * Nu + j0];
+            float3 n = math.cross(dS, dU);
+            float nl = math.length(n);
+            n = nl > 1e-8f ? n / nl : new float3(0f, 1f, 0f);
+            float ul = math.length(dU);
+            float3 tU = ul > 1e-8f ? -dU / ul : new float3(TravelXZ.x, 0f, TravelXZ.y);
 
             SurfVertex v;
-            v.pos = World(s, crest + xi, y);
-            v.nrm = nW;
-            // translucency glow only on the face (beach side of the crest); the back of the wave stays plain water
-            float frontK = math.saturate(1f + (xi - L.crestShift) / 2f);
-            v.col = new float4(L.sss * frontK, L.foam, L.tubeAO, L.whitewater);
-            v.uv0 = new float2(s / math.max(1f, P.length), xi / P.wavelength);
-            v.uv1 = new float2(L.phase, L.sss);
+            v.pos = Pos[i];
+            v.nrm = n;
+            v.tan = new float4(tU, 1f);
+            v.col = Col[i];
+            v.uv0 = Flow[i];
+            v.uv1 = TravelXZ;
             Verts[i] = v;
-        }
-
-        void Lip(int j)
-        {
-            int perSide = Ns * Nv;
-            int side = j / perSide;      // 0 = top surface, 1 = underside
-            int rem = j % perSide;
-            int row = rem / Nv;
-            int col = rem % Nv;
-            float s = SAt(row);
-            float vv = (float)col / (Nv - 1);
-            float crest = P.CrestOffset(TimeW);
-
-            SurfLocal L = SurfWaveMath.Evaluate(P, Profile, s, 0f, TimeW);
-
-            SurfWaveMath.LipPoint(L, vv, out float2 pt, out float2 nrm2, out float th);
-            float sign = side == 0 ? 1f : -1f;
-            float2 pos2 = pt + nrm2 * (th * 0.5f * sign);
-            float3 nrm = P.travelDir * nrm2.x + new float3(0f, nrm2.y, 0f);
-            nrm = math.normalize(nrm) * sign;
-
-            // the thrown lip is translucent water; foam only where the tip shatters (last part of the curl)
-            float tipFoam = math.smoothstep(0.6f, 1f, vv) * 0.6f * L.lipAmount;
-            SurfVertex v;
-            v.pos = World(s, crest + pos2.x, pos2.y);
-            v.nrm = nrm;
-            v.col = new float4(0.35f, tipFoam, side == 1 ? 0.6f * L.lipAmount : 0f, 0f);
-            v.uv0 = new float2(s / math.max(1f, P.length), 0.5f + vv * 0.2f);
-            v.uv1 = new float2(L.phase, 1f);
-            int baseIndex = Ns * Nxi;
-            Verts[baseIndex + j] = v;
         }
     }
 }
