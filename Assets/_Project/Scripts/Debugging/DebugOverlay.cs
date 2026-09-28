@@ -17,6 +17,7 @@ namespace WavyBoard.Debugging
 
         float fps;
         GUIStyle style;
+        WavyBoard.CameraRig.CameraDirector director;
 
         void Update()
         {
@@ -30,6 +31,7 @@ namespace WavyBoard.Debugging
         void OnGUI()
         {
             if (!visible || rider == null) return;
+            if (director == null) director = FindAnyObjectByType<WavyBoard.CameraRig.CameraDirector>();
             if (style == null)
             {
                 style = new GUIStyle(GUI.skin.label) { fontSize = 13, richText = true };
@@ -47,7 +49,7 @@ namespace WavyBoard.Debugging
                 $"state {rider.State}   zone {rider.Zone}   grip {rider.Engaged:0.00}   ride {rider.RideTime:0.0} s   tube total {rider.TotalTubeTime:0.0} s   DK {rider.DropKnee}\n" +
                 $"stick ({stick})   arc {(input != null ? input.Recognizer.Arc.ToString("0") : "-")}   load {(input != null ? input.Loaded.ToString("0.00") : "-")}\n" +
                 $"trick {rider.Tricks.Current}   yaw {rider.Tricks.Yaw:0}  pitch {rider.Tricks.Pitch:0}  roll {rider.Tricks.Roll:0}   air peak {rider.AirPeak:0.0}\n" +
-                $"last: {rider.LastEvent}   chute: {rider.LastWipeoutReason}";
+                $"last: {rider.LastEvent}   chute: {rider.LastWipeoutReason}   camera: {(director != null ? director.ShotName : "-")}";
             GUI.Box(new Rect(10, 10, 640, 180), "");
             GUI.Label(new Rect(18, 14, 630, 180), txt, style);
         }

@@ -19,7 +19,8 @@
                 { "name": "Pause", "type": "Button", "id": "a1000000-0000-4000-8000-00000000000c", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false },
                 { "name": "Sprint", "type": "Button", "id": "a1000000-0000-4000-8000-00000000000d", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": true },
                 { "name": "DebugOverlay", "type": "Button", "id": "a1000000-0000-4000-8000-00000000000e", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false },
-                { "name": "SpawnWave", "type": "Button", "id": "a1000000-0000-4000-8000-00000000000f", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false }
+                { "name": "SpawnWave", "type": "Button", "id": "a1000000-0000-4000-8000-00000000000f", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false },
+                { "name": "MouseJump", "type": "Button", "id": "a1000000-0000-4000-8000-000000000010", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false }
             ],
             "bindings": [
                 { "name": "", "id": "b1000000-0000-4000-8000-000000000001", "path": "<Gamepad>/leftStick", "interactions": "", "processors": "StickDeadzone(min=0.12,max=0.92)", "groups": "Gamepad", "action": "Move", "isComposite": false, "isPartOfComposite": false },
@@ -59,7 +60,8 @@
                 { "name": "", "id": "b1000000-0000-4000-8000-000000000034", "path": "<Keyboard>/f1", "interactions": "", "processors": "", "groups": "KeyboardMouse", "action": "DebugOverlay", "isComposite": false, "isPartOfComposite": false },
                 { "name": "", "id": "b1000000-0000-4000-8000-000000000035", "path": "<Gamepad>/select", "interactions": "", "processors": "", "groups": "Gamepad", "action": "DebugOverlay", "isComposite": false, "isPartOfComposite": false },
                 { "name": "", "id": "b1000000-0000-4000-8000-000000000036", "path": "<Keyboard>/n", "interactions": "", "processors": "", "groups": "KeyboardMouse", "action": "SpawnWave", "isComposite": false, "isPartOfComposite": false },
-                { "name": "", "id": "b1000000-0000-4000-8000-000000000037", "path": "<Gamepad>/dpad/up", "interactions": "", "processors": "", "groups": "Gamepad", "action": "SpawnWave", "isComposite": false, "isPartOfComposite": false }
+                { "name": "", "id": "b1000000-0000-4000-8000-000000000037", "path": "<Gamepad>/dpad/up", "interactions": "", "processors": "", "groups": "Gamepad", "action": "SpawnWave", "isComposite": false, "isPartOfComposite": false },
+                { "name": "", "id": "b1000000-0000-4000-8000-000000000038", "path": "<Mouse>/leftButton", "interactions": "", "processors": "", "groups": "KeyboardMouse", "action": "MouseJump", "isComposite": false, "isPartOfComposite": false }
             ]
         },
         {

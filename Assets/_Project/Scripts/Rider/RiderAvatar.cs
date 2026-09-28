@@ -234,6 +234,7 @@ namespace WavyBoard.Rider
                 railSlip = Mathf.Clamp01(Mathf.Abs(rider.RailSlip) / Mathf.Max(0.1f, railSlipFull)),
                 vertAccel = vertAccel,
                 landing = landing,
+                crouch = rider.Crouch,
             };
         }
     }

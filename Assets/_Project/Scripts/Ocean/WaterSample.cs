@@ -26,6 +26,9 @@ namespace WavyBoard.Ocean
         public float WaveHeight;      // H(s)
         public bool HasLipRoof;       // a thrown lip hangs above this point (barrel roof)
         public float LipRoofY;        // world height of the lip underside above this point (valid when HasLipRoof)
+        public float FaceTop;         // world height of the top of the rideable face (the lip line; under a curl, the top of the back wall)
+        public bool OnBack;           // the point is past the top of the face: on the back of the wave, or on top of the lip
+        public float SeaLevel;        // world height of the ambient sea under this point (the foot of the wave)
     }
 
     public interface IWaterSurface

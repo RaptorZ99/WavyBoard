@@ -192,6 +192,48 @@ MonoBehaviour:
   m_EditorClassIdentifier: WavyBoard.Runtime::WavyBoard.CameraRig.CameraDirector
   rider: {fileID: 793071093}
   cameraTarget: {fileID: 793071094}
+  rideAngle: 50
+  rideDistance: 3.8
+  rideDistancePerH: 0.75
+  rideDistancePerSpeed: 0.12
+  rideHeight: 1.2
+  rideHeightPerH: 0.32
+  waveAnchoring: 0.45
+  rideLookAhead: 1.4
+  rideLookAheadPerSpeed: 0.2
+  rideLookUpPerH: 0.16
+  sideSwitchSpeed: 1.2
+  sideSwitchDelay: 0.25
+  swingTime: 0.6
+  tubeShot:
+    backPerH: 0.85
+    backMin: 2.2
+    backMax: 4.4
+    heightShare: 0.42
+    maxAboveRider: 1.3
+    lookAhead: 2.6
+    minHeadroom: 1.1
+  tubeFov: 80
+  tubeBlendIn: 0.3
+  tubeBlendOut: 0.55
+  tubeExitHold: 0.35
+  airExtraDistance: 1.4
+  airExtraHeight: -0.3
+  airVerticalAnchoring: 0.85
+  airLookToLanding: 0.3
+  airFov: 4
+  paddleDistance: 5.4
+  paddleHeight: 2.1
+  paddleLookAhead: 3
+  watchRange: 34
+  baseFov: 58
+  speedFov: 12
+  dutchPerLean: 5
+  offsetSmoothTime: 0.22
+  lookSmoothTime: 0.12
+  armRecoverTime: 0.35
+  waterClearance: 0.45
+  shakeAmplitude: 1.6
 --- !u!114 &94001683
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -243,12 +285,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: WavyBoard.Runtime::WavyBoard.InputSys.InputRouter
   actions: {fileID: 0}
   flickBuffer: 0.2
+  pressBuffer: 0.15
+  jumpChargeTime: 0.35
   mouseStickPixels: 220
   mouseStickReturn: 7
   OverrideEnabled: 0
   OverrideMove: {x: 0, y: 0}
   OverrideSprint: 0
   OverrideStall: 0
+  OverrideCrouch: 0
   RideContext: 0
 --- !u!114 &94001685
 MonoBehaviour:
@@ -353,6 +398,32 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &460521436 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 658092387032968701, guid: 23d7847b8455e3140b2e9d063cd9b01b, type: 3}
+  m_PrefabInstance: {fileID: 827097871}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &460521440
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 460521436}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40306677abe22445985e27172e8f50ed, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: WavyBoard.Runtime::WavyBoard.Audio.WindAmbience
+  windDirection: 0
+  windSpeedKmh: 20
+  windHeight: 10
+  cameraSpeedShare: 1
+  pitchFactor: 0.5
+  volumeFactor: 0.1
+  panFactor: 0.5
+  gustAmplitude: 0.5
+  gustFrequency: 0.5
 --- !u!1 &534492915
 GameObject:
   m_ObjectHideFlags: 0
@@ -634,13 +705,7 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 8724866057213124988, guid: 3b024e9de40d2534ca2707a059913461, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 0}
-    - targetCorrespondingSourceObject: {fileID: 3107147802436320017, guid: 3b024e9de40d2534ca2707a059913461, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 0}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 3b024e9de40d2534ca2707a059913461, type: 3}
 --- !u!114 &793071093 stripped
 MonoBehaviour:
@@ -721,10 +786,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: Wind
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 658092387032968699, guid: 23d7847b8455e3140b2e9d063cd9b01b, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 658092387032968701, guid: 23d7847b8455e3140b2e9d063cd9b01b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 460521440}
   m_SourcePrefab: {fileID: 100100000, guid: 23d7847b8455e3140b2e9d063cd9b01b, type: 3}
 --- !u!1 &1366278197
 GameObject:
@@ -1076,6 +1145,11 @@ MonoBehaviour:
   sPad: 10
   xiMin: -44
   xiMax: 30
+  tubeRoom: 1.3
+  smallTubeBoost: 0.45
+  minTubeRoom: 1.2
+  barrelHold: 1.3
+  holdSizeExponent: 1
   breakLead: 16
   spawnFade: 5
   shoalDuration: 7

@@ -15,7 +15,7 @@ namespace WavyBoard.Wave
     /// </summary>
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
     [DefaultExecutionOrder(-100)]
-    public class SurfWave : MonoBehaviour
+    public class SurfWave : MonoBehaviour, IWaterProbe
     {
         [Header("Mesh resolution")]
         [Tooltip("Cross-sections along the crest")] public int Ns = 320;
@@ -34,6 +34,12 @@ namespace WavyBoard.Wave
         NativeArray<float4> col;
         NativeArray<float2> flow;
         NativeArray<SurfVertex> verts;
+        NativeArray<float3> probePts;
+        NativeArray<WaterProbe> probeRes;
+        NativeArray<float2> probeScratch;
+        NativeArray<WaterSample> sampleOut;
+        public const int ProbeCapacity = 64;
+        static readonly int footVertex = WaveProfile.VertexOfControl(WaveProfile.Foot);
         Mesh mesh;
         MeshFilter mf;
         MeshRenderer mr;
@@ -83,6 +89,7 @@ namespace WavyBoard.Wave
 
         void EnsureBuffers()
         {
+            if (keys.IsCreated && mesh != null && mr != null) return;
             mf = GetComponent<MeshFilter>();
             mr = GetComponent<MeshRenderer>();
             if (keys.IsCreated && mesh != null) return;
@@ -102,6 +109,10 @@ namespace WavyBoard.Wave
             col = new NativeArray<float4>(vertexCount, Allocator.Persistent);
             flow = new NativeArray<float2>(vertexCount, Allocator.Persistent);
             verts = new NativeArray<SurfVertex>(vertexCount, Allocator.Persistent);
+            probePts = new NativeArray<float3>(ProbeCapacity, Allocator.Persistent);
+            probeRes = new NativeArray<WaterProbe>(ProbeCapacity, Allocator.Persistent);
+            probeScratch = new NativeArray<float2>(nu, Allocator.Persistent);
+            sampleOut = new NativeArray<WaterSample>(1, Allocator.Persistent);
             BuildTopology();
         }
 
@@ -126,6 +137,10 @@ namespace WavyBoard.Wave
             if (col.IsCreated) col.Dispose();
             if (flow.IsCreated) flow.Dispose();
             if (verts.IsCreated) verts.Dispose();
+            if (probePts.IsCreated) probePts.Dispose();
+            if (probeRes.IsCreated) probeRes.Dispose();
+            if (probeScratch.IsCreated) probeScratch.Dispose();
+            if (sampleOut.IsCreated) sampleOut.Dispose();
         }
 
         void BuildTopology()
@@ -279,123 +294,113 @@ namespace WavyBoard.Wave
             return WaveProfile.Find(slice);
         }
 
-        static float BreakPhase(in WaveProfile.RowInput ri)
-        {
-            float tau = ri.tau;
-            float pre = 0.25f + 0.6f * ri.shoal;
-            float phase;
-            if (tau < WaveProfile.TPre) phase = pre;
-            else if (tau < 0f) phase = math.lerp(pre, 1f, (tau - WaveProfile.TPre) / -WaveProfile.TPre);
-            else if (tau < WaveProfile.TBarrel) phase = 1f + tau / WaveProfile.TBarrel;
-            else if (tau < WaveProfile.TBarrel2) phase = 2f + 0.15f * (tau - WaveProfile.TBarrel) / (WaveProfile.TBarrel2 - WaveProfile.TBarrel);
-            else if (tau < WaveProfile.TMound) phase = 2.15f + 0.85f * (tau - WaveProfile.TBarrel2) / (WaveProfile.TMound - WaveProfile.TBarrel2);
-            else phase = 3f;
-            if (ri.lipless > 0f && tau >= 0f) phase = math.lerp(phase, 1f + 2f * math.saturate(tau / WaveProfile.TCrumbleMound), ri.lipless);
-            return phase;
-        }
-
+        /// <summary>
+        /// Everything gameplay needs about the water at a world point (see <see cref="SurfWaveSampleJob"/>, which holds
+        /// the evaluation): Burst, run synchronously, main thread only.
+        /// </summary>
         public WaterSample Sample(float3 worldPos, double time)
         {
+            EnsureBuffers();
             var ocean = OceanSurface.Instance;
-            float tS = ocean != null ? ocean.SwellTime(time) : 0f;
-            SwellParams swell = ocean != null ? ocean.Params : default;
-            OceanSwell.Sample(swell, worldPos.xz, tS, out float hA, out float3 nA, out float3 vA, out float2 x0);
-
-            float tw = (float)(time - SpawnTime);
-            LocalCoords(new float3(x0.x, 0f, x0.y), tw, out float s, out float xi);
-            var slice = new NativeSlice<float2>(sampleA);
-            var L = EvalRow(s, tw, sampleA, out var ri);
-            float y = WaveProfile.HeightAt(slice, L, xi, out bool hasRoof, out float roofY, out float hit);
-
-            // normal from the analytic surface: across the section on this row, along the crest on two more rows
-            const float e = 0.25f;
-            float yx1 = WaveProfile.HeightAt(slice, L, xi + e, out _, out _, out _);
-            float yx0 = WaveProfile.HeightAt(slice, L, xi - e, out _, out _, out _);
-            var L1 = EvalRow(s + e, tw, sampleB, out _);
-            var L0 = EvalRow(s - e, tw, sampleC, out _);
-            float ys1 = WaveProfile.HeightAt(new NativeSlice<float2>(sampleB), L1, xi, out _, out _, out _);
-            float ys0 = WaveProfile.HeightAt(new NativeSlice<float2>(sampleC), L0, xi, out _, out _, out _);
-            float3 D = Params.travelDir, T = Params.crestDir;
-            float3 nW = math.normalize(new float3(0f, 1f, 0f) - T * ((ys1 - ys0) / (2f * e)) - D * ((yx1 - yx0) / (2f * e)));
-            float3 n = math.normalize(nW + (nA - new float3(0f, 1f, 0f)));
-
-            int hi = math.clamp((int)hit, 0, nu - 1);
-            float2 m = vmap[hi];
-            float4 attr = SurfWaveMath.Attributes(m.x + m.y, xi, y, ri, L, Params.celerity);
-            float phase = BreakPhase(ri);
-            float cd = xi - L.xRef;
-            float faceWidth = math.max(1f, sampleA[WaveProfile.VertexOfControl(WaveProfile.Foot)].x - L.xRef);
-            float waveH = math.max(0f, L.yTop);
-
-            WaterSample r = default;
-            r.Height = hA + y;
-            r.Normal = n;
-            r.BreakPhase = phase;
-            r.TravelDir = D;
-            r.CrestDir = T;
-            r.CrestDistance = cd;
-            r.FaceWidth = faceWidth;
-            r.WaveHeight = waveH;
-            r.WhitewaterAmount = phase >= 2f || ri.lipless > 0.5f ? attr.y : 0f;
-            r.SeabedDepth = 200f;
-            r.WaveId = Params.id;
-            r.PeelDistance = s - PeelS(tw);
-            float pocket = math.saturate(1f - math.abs(cd - 0.35f * faceWidth) / (0.8f * faceWidth));
-            r.Energy = pocket * math.smoothstep(0.35f, 1f, math.min(phase, 1f)) * (1f - math.smoothstep(2.2f, 2.8f, phase))
-                       * math.saturate(waveH / 0.8f);
-            if (L.curl && L.xTip > L.xRef + 0.3f)
+            new SurfWaveSampleJob
             {
-                r.LipWidth = L.xTip - L.xRef;
-                r.LipHeight = math.max(0f, L.yTop - L.yTip);
-            }
-
-            // push of the moving water: the face carries a rider along D; the whitewater shoves him
-            float hNorm = waveH > 0.05f ? math.saturate(y / waveH) : 0f;
-            float push = phase >= 2.3f ? Params.celerity * 0.85f : Params.celerity * (0.55f + 0.45f * hNorm) * math.smoothstep(0.15f, 0.9f, phase);
-            const float dt = 0.05f;
-            var Lf = EvalRow(s, tw + dt, sampleB, out _);
-            float yFuture = WaveProfile.HeightAt(new NativeSlice<float2>(sampleB), Lf, xi - Params.celerity * dt, out _, out _, out _);
-            r.Velocity = D * push + new float3(0f, (yFuture - y) / dt, 0f) + vA * 0.5f;
-
-            // the tube: riding the face under the thrown lip with some headroom, or flying under it
-            if (hasRoof)
-            {
-                r.HasLipRoof = true;
-                r.LipRoofY = hA + roofY;
-                float yRel = worldPos.y - hA;
-                float headroom = roofY - y;
-                bool onFace = math.abs(yRel - y) < 0.8f;
-                if (headroom > 0.35f && (onFace || yRel < roofY))
-                {
-                    r.InTube = true;
-                    r.TubeDepth = math.saturate(1f - cd / math.max(0.05f, r.LipWidth));
-                }
-            }
-            return r;
+                P = Params, Sections = sections, Keys = keys, VMap = vmap,
+                Swell = ocean != null ? ocean.Params : default, SwellT = ocean != null ? ocean.SwellTime(time) : 0f,
+                TimeW = (float)(time - SpawnTime), Point = worldPos, FootVertex = footVertex,
+                Out = sampleOut, A = sampleA, B = sampleB, C = sampleC,
+            }.Run();
+            return sampleOut[0];
         }
+
+        // ------------------------------------------------------------------ camera queries (main thread, any time)
+
+        /// <summary>The inside of the barrel at one crest coordinate: where a camera can sit under the lip.</summary>
+        public struct TubeSlice
+        {
+            public float s;          // crest coordinate
+            public float xWall;      // back wall of the tube (xi, m)
+            public float xTip;       // lip tip (xi, m)
+            public float x;          // the chosen point across the cavity (xi, m)
+            public float yFloor;     // face under it (m above the ambient sea)
+            public float yRoof;      // lip underside above it (m above the ambient sea)
+            public float Headroom => yRoof - yFloor;
+        }
+
+        /// <summary>Crest coordinate, distance from the crest line along D and ambient sea height at a world point.</summary>
+        public void WaveCoords(float3 worldPos, double time, out float s, out float xi, out float ambientHeight)
+        {
+            var ocean = OceanSurface.Instance;
+            float2 x0 = worldPos.xz;
+            ambientHeight = 0f;
+            if (ocean != null)
+            {
+                float tS = ocean.SwellTime(time);
+                x0 = OceanSwell.Undeform(ocean.Params, worldPos.xz, tS);
+                ambientHeight = OceanSwell.Displacement(ocean.Params, x0, tS).y;
+            }
+            LocalCoords(new float3(x0.x, 0f, x0.y), (float)(time - SpawnTime), out s, out xi);
+        }
+
+        /// <summary>True when the world point is inside this wave's water (under the face, inside the lip, under the
+        /// sea next to it). The inside of the tube is air.</summary>
+        public bool IsInsideWater(float3 worldPos, double time) => ProbeOne(worldPos, time).inside;
+
+        /// <summary>One water probe at a world point (Burst).</summary>
+        public WaterProbe ProbeOne(float3 worldPos, double time)
+        {
+            EnsureBuffers();
+            probePts[0] = worldPos;
+            RunProbe(probePts, probeRes, 1, time);
+            return probeRes[0];
+        }
+
+        public int Capacity => ProbeCapacity;
+        public NativeArray<float3> ProbePoints { get { EnsureBuffers(); return probePts; } }
+        public NativeArray<WaterProbe> ProbeResults { get { EnsureBuffers(); return probeRes; } }
+        public void Probe(int count, double time) => RunProbe(probePts, probeRes, count, time);
+
+        /// <summary>Runs a batch of probes against this wave, synchronously, in Burst.</summary>
+        public void RunProbe(NativeArray<float3> points, NativeArray<WaterProbe> results, int count, double time)
+        {
+            var ocean = OceanSurface.Instance;
+            new SurfWaveProbeJob
+            {
+                P = Params, Sections = sections, Keys = keys, VMap = vmap,
+                Swell = ocean != null ? ocean.Params : default, SwellT = ocean != null ? ocean.SwellTime(time) : 0f,
+                TimeW = (float)(time - SpawnTime), Count = math.min(count, math.min(points.Length, results.Length)),
+                Points = points, Results = results, Scratch = probeScratch,
+            }.Run();
+        }
+
+        /// <summary>
+        /// The open barrel at crest coordinate s, if there is one: a thrown lip with at least <paramref name="minHeadroom"/>
+        /// metres under it. The chosen point sits across the cavity toward <paramref name="preferX"/> (the rider's line),
+        /// kept clear of the back wall and of the lip curtain.
+        /// </summary>
+        public bool TryTubeSlice(float s, float preferX, double time, float minHeadroom, out TubeSlice t)
+        {
+            t = default;
+            t.s = s;
+            if (s <= Params.sMin || s >= Params.sMax) return false;
+            var L = EvalRow(s, (float)(time - SpawnTime), sampleB, out _);
+            if (!L.curl || L.xTip < L.xRef + 1f) return false;
+            var slice = new NativeSlice<float2>(sampleB);
+            float margin = 0.2f * (L.xTip - L.xRef);
+            float x = math.clamp(preferX, L.xRef + margin, L.xTip - margin);
+            float yF = WaveProfile.HeightAt(slice, L, x, out bool roof, out float yR, out _);
+            if (!roof || yR - yF < minHeadroom) return false;
+            t.xWall = L.xRef; t.xTip = L.xTip; t.x = x; t.yFloor = yF; t.yRoof = yR;
+            return true;
+        }
+
+        /// <summary>World position of a point given in wave coordinates (s, xi, height above the ambient sea).</summary>
+        public Vector3 WaveToWorld(float s, float xi, float y, double time) => ToWorld(s, xi, y, (float)(time - SpawnTime));
 
         // ------------------------------------------------------------------ peel and VFX helpers (render time)
         /// <summary>Crest coordinate where the curl is pitching right now.</summary>
         public float PeelS() => PeelS(WaveTime);
 
-        public float PeelS(float tw)
-        {
-            float d = tw - Params.firstBreakTime;
-            if (d <= 0f) return 0f;
-            int n = sections.Length;
-            for (int i = 1; i < n; i++)
-            {
-                float s1 = math.lerp(Params.sMin, Params.sMax, (float)i / (n - 1));
-                if (s1 <= 0f) continue;
-                if (sections[i].x >= d)
-                {
-                    float s0 = math.lerp(Params.sMin, Params.sMax, (float)(i - 1) / (n - 1));
-                    float d0 = sections[i - 1].x, d1 = sections[i].x;
-                    return math.max(0f, math.lerp(s0, s1, math.saturate((d - d0) / math.max(1e-4f, d1 - d0))));
-                }
-            }
-            return Params.sMax;
-        }
+        public float PeelS(float tw) => SurfWaveMath.PeelS(Params, sections, tw);
 
         /// <summary>Stage of the crest at s: time since it started to pitch (s, scaled), and how much it crumbles.</summary>
         public float LocalTau(float s, out float lipless)

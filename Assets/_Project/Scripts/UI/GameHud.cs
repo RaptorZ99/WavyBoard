@@ -173,9 +173,9 @@ namespace WavyBoard.UI
             switch (rider.Zone)
             {
                 case WaveZone.Lip: return "<color=#F2C078>lèvre</color> — ↓↑ air · ↓↗ el rollo · ↓ puis tour = spin";
-                case WaveZone.Face: return "<color=#F2C078>face</color> — ↓↗ snap · ↓ puis tour = cutback, spinner";
-                case WaveZone.Tube: return "<color=#F2C078>tube</color> — tout est permis ici, et ça paie 40 % de plus";
-                case WaveZone.Air: return "<color=#F2C078>en l'air</color> — enroule encore · ↑ vise la réception";
+                case WaveZone.Face: return "<color=#F2C078>face</color> — monte vers la lèvre pour t'envoler · ↓↗ snap · quart de tour = cutback";
+                case WaveZone.Tube: return "<color=#F2C078>tube</color> — reste dans la poche (freine pour t'enfoncer) · figures +40 %";
+                case WaveZone.Air: return "<color=#F2C078>en l'air</color> — enroule = spin · ↓↗ rollo · stick G = tourner · ↑ vise la réception";
                 default: return "stick gauche : tourne et rame · stick droit : ↓ puis ↑ = saut";
             }
         }
@@ -283,14 +283,27 @@ namespace WavyBoard.UI
         string Cue()
         {
             if (rider.CanCatchNow) return PaddleCue();
+            if (rider.WaveIncoming) return WaitCue();
             if (rider.Sample.WhitewaterAmount > 0.5f && rider.Engaged < 0.3f) return "mousse — canard pour passer dessous";
             if (rider.State != RiderState.Ride) return null;
-            if (rider.Zone == WaveZone.Lip && rider.FaceSpeed > 2.2f) return "flick ↑  —  envoie";
+            var input = InputRouter.Instance;
+            bool pad = input != null && input.UsingGamepad;
+            if (rider.Zone == WaveZone.Lip && rider.FaceSpeed > 2.2f)
+                return input != null && input.Crouched ? "↑  —  envoie !" : (pad ? "stick D ↓ … puis ↑ au sommet" : "souris ↓ … puis ↑ au sommet (ou clic)");
             if (rider.InTube) return "reste dedans";
             var s = rider.Sample;
             if (s.BreakPhase >= 0.6f && s.PeelDistance < -3f) return "le rouleau te rattrape — file dans la ligne";
             if (rider.FaceSpeed < 1.8f) return "descends la face pour prendre de la vitesse";
             return null;
+        }
+
+        /// <summary>A wave on its way: face the beach and wait for it (paddling now would run away from it).</summary>
+        string WaitCue()
+        {
+            Vector3 f = rider.HeadingDir;
+            return Vector3.Dot(f, (Vector3)rider.Sample.TravelDir) < 0.5f
+                ? "◀ ▶  TOURNE-TOI VERS LA PLAGE — la vague arrive"
+                : "la vague arrive… attends-la";
         }
 
         /// <summary>To catch it you paddle WITH the wave, toward the beach: first turn the board that way.</summary>
@@ -325,7 +338,7 @@ namespace WavyBoard.UI
             bool pad = InputRouter.Instance != null && InputRouter.Instance.UsingGamepad;
             if (!builtOnce || pad != builtPad) BuildLegend(pad);
 
-            const float lw = 440f, lh = 336f;
+            const float lw = 440f, lh = 356f;
             GUI.DrawTexture(new Rect(w - lw - 16, h - lh - 16, lw, lh), panelTex);
             GUI.Label(new Rect(w - lw - 4, h - lh - 8, 200, 22), "  FIGURES  <size=11>(H)</size>", mid);
             GUI.Label(new Rect(w - lw - 4, h - lh + 18, 200, lh), legendLeft, legendLabel);
@@ -340,7 +353,8 @@ namespace WavyBoard.UI
             string stick = pad ? "stick D" : "souris";
             string[,] rows =
             {
-                { "Sauter (pop)", "↓ puis ↑" },
+                { "S'envoler de la lèvre", "monte la face vite, ↓ puis ↑ en haut" },
+                { "Sauter (pop)", pad ? "↓ puis ↑" : "↓ puis ↑, ou clic gauche" },
                 { "El Rollo", "↓ puis ↗ / ↖" },
                 { "Spin 180", "↓, quart de tour, ↑" },
                 { "360, 540, 900…", "continue d'enrouler" },

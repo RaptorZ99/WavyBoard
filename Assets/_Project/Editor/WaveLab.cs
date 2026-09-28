@@ -104,6 +104,55 @@ namespace WavyBoard.EditorTools
             return $"{view}: tw={tw:0.0} peelS={wave.PeelS(tw):0.0} H={H:0.0} c={P.celerity:0.0}\n{wave.VertexStats()}";
         }
 
+        /// <summary>
+        /// The game's tube camera, in edit mode: a stand-in rider in the barrel <paramref name="behindCurl"/> metres behind
+        /// the curl, at <paramref name="acrossShare"/> of the way from the back wall to the lip tip, and the camera framed
+        /// by the same code as in play (<see cref="WavyBoard.CameraRig.SurfCameraMath.TryTubeShot"/>).
+        /// </summary>
+        public static string TubeCam(float peelS, float heightScale, float behindCurl = 6f, float acrossShare = 0.4f, float side = 1f)
+        {
+            var spot = Object.FindAnyObjectByType<SurfSpotConfig>();
+            if (spot == null) return "no SurfSpotConfig in the open scene";
+            var wave = EnsureWave();
+            var ocean = Object.FindAnyObjectByType<OceanSurface>();
+            if (ocean != null) { ocean.Rebake(); ocean.Publish(); }
+            var aim = spot.LineupPosition();
+            var p = spot.BuildParams(999, heightScale, aim);
+            float tw = p.firstBreakTime + spot.BreakDelay(peelS);
+            wave.BuildNow(spot, tw, heightScale, aim);
+            double time = wave.SpawnTime + tw;
+            float s = wave.PeelS(tw) - side * behindCurl;
+            if (!wave.TryTubeSlice(s, 0f, time, 0.5f, out var sl)) return $"no open barrel at s={s:0.0}";
+            float x = Mathf.Lerp(sl.xWall, sl.xTip, acrossShare);
+            Vector3 floor = wave.FacePointWorld(s, x);
+            Vector3 anchor = floor + Vector3.up * 0.45f;
+
+            var marker = GameObject.Find(kName + "_Rider");
+            if (marker == null)
+            {
+                marker = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                marker.name = kName + "_Rider";
+                marker.hideFlags = HideFlags.DontSave;
+                Object.DestroyImmediate(marker.GetComponent<Collider>());
+                marker.transform.localScale = new Vector3(0.5f, 0.45f, 0.5f);
+            }
+            marker.transform.position = floor + Vector3.up * 0.25f;
+
+            var k = WavyBoard.CameraRig.SurfCameraMath.TubeShotSettings.Default;
+            var director = Object.FindAnyObjectByType<WavyBoard.CameraRig.CameraDirector>();
+            if (director != null) k = director.tubeShot;
+            if (!WavyBoard.CameraRig.SurfCameraMath.TryTubeShot(wave, anchor, side, wave.Params.height, time, in k, out Vector3 camPos, out Vector3 lookPos))
+                return $"tube shot refused at s={s:0.0} (headroom {sl.Headroom:0.0} m)";
+            var cam = Camera.main;
+            var brain = cam.GetComponent<Unity.Cinemachine.CinemachineBrain>();
+            if (brain != null) brain.enabled = false;
+            cam.transform.SetPositionAndRotation(camPos, Quaternion.LookRotation(lookPos - camPos, Vector3.up));
+            cam.fieldOfView = director != null ? director.tubeFov : 80f;
+            if (ocean != null) ocean.transform.position = new Vector3(camPos.x, 0f, camPos.z);
+            SceneView.RepaintAll();
+            return $"tube cam: H={wave.Params.height:0.0} s={s:0.0} headroom={sl.Headroom:0.0} wall..tip={sl.xWall:0.0}..{sl.xTip:0.0} rider x={x:0.0} cam-rider {Vector3.Distance(camPos, anchor):0.0} m";
+        }
+
         /// <summary>Samples the gameplay surface along a line across the wave at crest coordinate s (for graphs).</summary>
         public static string Transect(float s, float peelS, float heightScale, float xiFrom = -12f, float xiTo = 16f, float step = 0.5f)
         {
@@ -144,6 +193,8 @@ namespace WavyBoard.EditorTools
         {
             var go = GameObject.Find(kName);
             if (go != null) Object.DestroyImmediate(go);
+            var marker = GameObject.Find(kName + "_Rider");
+            if (marker != null) Object.DestroyImmediate(marker);
             var cam = Camera.main;
             if (cam != null)
             {

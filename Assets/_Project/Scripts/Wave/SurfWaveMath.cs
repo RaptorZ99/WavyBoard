@@ -66,6 +66,42 @@ namespace WavyBoard.Wave
             return r;
         }
 
+        /// <summary>Crest coordinate where the curl is pitching at wave time tw.</summary>
+        public static float PeelS(in SurfWaveParams p, in NativeArray<float4> sections, float tw)
+        {
+            float d = tw - p.firstBreakTime;
+            if (d <= 0f) return 0f;
+            int n = sections.Length;
+            for (int i = 1; i < n; i++)
+            {
+                float s1 = math.lerp(p.sMin, p.sMax, (float)i / (n - 1));
+                if (s1 <= 0f) continue;
+                if (sections[i].x >= d)
+                {
+                    float s0 = math.lerp(p.sMin, p.sMax, (float)(i - 1) / (n - 1));
+                    float d0 = sections[i - 1].x, d1 = sections[i].x;
+                    return math.max(0f, math.lerp(s0, s1, math.saturate((d - d0) / math.max(1e-4f, d1 - d0))));
+                }
+            }
+            return p.sMax;
+        }
+
+        /// <summary>Stage of the break at a point of the crest: 0 swell, 1 pitching, 2 barrel, 3 whitewater.</summary>
+        public static float BreakPhase(in WaveProfile.RowInput ri)
+        {
+            float tau = ri.tau;
+            float pre = 0.25f + 0.6f * ri.shoal;
+            float phase;
+            if (tau < WaveProfile.TPre) phase = pre;
+            else if (tau < 0f) phase = math.lerp(pre, 1f, (tau - WaveProfile.TPre) / -WaveProfile.TPre);
+            else if (tau < WaveProfile.TBarrel) phase = 1f + tau / WaveProfile.TBarrel;
+            else if (tau < WaveProfile.TBarrel2) phase = 2f + 0.15f * (tau - WaveProfile.TBarrel) / (WaveProfile.TBarrel2 - WaveProfile.TBarrel);
+            else if (tau < WaveProfile.TMound) phase = 2.15f + 0.85f * (tau - WaveProfile.TBarrel2) / (WaveProfile.TMound - WaveProfile.TBarrel2);
+            else phase = 3f;
+            if (ri.lipless > 0f && tau >= 0f) phase = math.lerp(phase, 1f + 2f * math.saturate(tau / WaveProfile.TCrumbleMound), ri.lipless);
+            return phase;
+        }
+
         /// <summary>How much of a point is churning whitewater (0..1): the broken wave, everything that stands up.</summary>
         public static float Churn(float y, in WaveProfile.RowInput ri)
         {

@@ -21,14 +21,16 @@ namespace WavyBoard.VFX
             splash = ParticleFactory.Create(transform, "Splash", sprayMaterial, 400, 0.8f, stretched: true, stretchSpeed: 0.05f);
         }
 
-        void OnEnable() { if (rider != null) rider.OnEvent += OnEvent; }
-        void OnDisable() { if (rider != null) rider.OnEvent -= OnEvent; }
+        void OnEnable() { if (rider != null) { rider.OnEvent += OnEvent; rider.OnLanded += OnLanded; } }
+        void OnDisable() { if (rider != null) { rider.OnEvent -= OnEvent; rider.OnLanded -= OnLanded; } }
+
+        void OnLanded(float impact, bool clean) => Splash(clean ? 40 : 55, 0.9f + Mathf.Clamp01(impact / 10f) * 0.6f);
 
         void LateUpdate()
         {
             if (rider == null) return;
             float dt = Time.deltaTime;
-            Vector3 pos = rider.Position;
+            Vector3 pos = rider.RenderPosition;
             Vector3 F = rider.BoardForward, R = rider.BoardRight;
             var ep = new ParticleSystem.EmitParams();
 
@@ -68,11 +70,16 @@ namespace WavyBoard.VFX
         {
             int count = 0; float power = 1f;
             if (e.StartsWith("Wipeout")) { count = 70; power = 1.6f; }
-            else if (e == "Air landed!" || e == "Sketchy landing") { count = 45; power = 1.2f; }
-            else if (e == "Landed" || e == "Splash" || e == "Take-off" || e == "Duck dive") { count = 25; power = 0.9f; }
+            else if (e == "Envol") { count = 30; power = 1f; }
+            else if (e == "Take-off" || e == "Duck dive") { count = 25; power = 0.9f; }
+            Splash(count, power);
+        }
+
+        void Splash(int count, float power)
+        {
             if (count == 0) return;
             var ep = new ParticleSystem.EmitParams();
-            Vector3 pos = rider.Position;
+            Vector3 pos = rider.RenderPosition;
             for (int i = 0; i < count; i++)
             {
                 ep.position = pos + Random.insideUnitSphere * 0.5f;

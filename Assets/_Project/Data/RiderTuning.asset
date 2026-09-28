@@ -32,32 +32,65 @@ MonoBehaviour:
   pushGain: 0.8
   pushTau: 0.9
   dragCoefficient: 0.012
+  quadraticDrag: 0.025
+  planingDamping: 0.25
+  stallDamping: 2.2
   stallDragMultiplier: 3.2
-  yawRateMax: 140
+  slopeGravityGain: 1.7
+  climbGravityScale: 0.38
+  climbDragScale: 0.55
+  faceFlow: 0.3
+  carveDrive: 1.2
+  trimDrive: 1.5
+  yawRateMax: 150
   leanMax: 55
   gripTau: 0.22
-  alignTau: 0.35
+  alignTau: 0.3
   maxSpeed: 16
   minRideSpeedBeforeStall: 1.5
   stallWipeoutTime: 1.6
+  lipLaunchMinVy: 2
+  lipLaunchMinVyCrouched: 0.6
+  lipLaunchLift: 0.8
+  crestPull: 6
+  tubeWallHeadroom: 1.15
   pumpWindowMin: 0.3
   pumpWindowMax: 1.3
   pumpGainFactor: 0.08
   pumpGainFlat: 0.4
   pumpPenalty: 0.97
   pumpMaxPerDescent: 3
+  pumpBoost: 1.4
+  pumpEnergyFloor: 0.7
   popVerticalSpeed: 2.5
+  popSpeedGain: 0.25
+  jumpTapShare: 0.6
+  jumpLipScale: 1
+  jumpFaceScale: 0.7
+  jumpTubeScale: 0.5
+  jumpFlatScale: 0.55
+  jumpCoyoteTime: 0.22
   popWindowCrestDistance: 8
   ejectVerticalSpeed: 1.8
+  airGravityScale: 0.8
   airDrag: 0.02
-  spinRate: 360
-  flipRate: 300
+  airReturnAssist: 0.9
+  airReturnRate: 3.5
+  airLandingFaceShare: 0.35
+  airAutoLevelRate: 2.4
+  airLandingAssistTime: 0.35
   grabRateMultiplier: 0.8
-  rolloDuration: 0.7
   landAlignMin: 0.82
   landSketchyMin: 0.7
+  landYawMax: 45
   maxAirTime: 3.5
+  airSpinRate: 380
+  airTuckSpeedup: 1.8
+  airTuckDrop: 1.2
+  airSettleRate: 6
+  airLevelToSurface: 0.65
   wipeoutDuration: 2.6
   wipeoutDrift: 0.7
-  tubeCloseoutWipeoutPhase: 2.75
+  tubeCloseoutWipeoutPhase: 2.35
+  whitewaterWipeoutSpeed: 3
   autoReturnToLineup: 1

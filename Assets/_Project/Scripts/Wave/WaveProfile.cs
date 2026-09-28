@@ -364,6 +364,24 @@ namespace WavyBoard.Wave
             return y;
         }
 
+        /// <summary>
+        /// True when the point (x, y) of the section plane is inside the water: a vertical ray going up from it crosses
+        /// the curve an odd number of times. Under the face = 1 crossing (water); inside the tube = ceiling + top of the
+        /// lip = 2 (air); inside the thrown lip = 1 (water). Only meaningful between the two ends of the curve.
+        /// </summary>
+        public static bool IsInside(NativeSlice<float2> pts, float x, float y)
+        {
+            int crossings = 0;
+            for (int k = 0; k < pts.Length - 1; k++)
+            {
+                float2 p = pts[k], q = pts[k + 1];
+                if ((p.x > x) == (q.x > x)) continue;   // half-open test: a vertex shared by two segments counts once
+                float yc = p.y + (q.y - p.y) * (x - p.x) / (q.x - p.x);
+                if (yc > y) crossings++;
+            }
+            return (crossings & 1) == 1;
+        }
+
         /// <summary>y where the polyline pts[a..b] crosses x (decreasing x when !increasing).</summary>
         static float Cross(NativeSlice<float2> pts, int a, int b, float x, bool increasing, out float index)
         {

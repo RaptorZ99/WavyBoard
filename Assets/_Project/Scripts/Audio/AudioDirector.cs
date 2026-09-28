@@ -32,10 +32,12 @@ namespace WavyBoard.Audio
                 if (listenerFilter == null) listenerFilter = cam.gameObject.AddComponent<AudioLowPassFilter>();
                 listenerFilter.cutoffFrequency = 22000f;
             }
-            if (rider != null) rider.OnEvent += OnEvent;
+            if (rider != null) { rider.OnEvent += OnEvent; rider.OnLanded += OnLanded; }
         }
 
-        void OnDestroy() { if (rider != null) rider.OnEvent -= OnEvent; }
+        void OnDestroy() { if (rider != null) { rider.OnEvent -= OnEvent; rider.OnLanded -= OnLanded; } }
+
+        void OnLanded(float impact, bool clean) => PlaySplash(Mathf.Clamp(0.45f + impact / 14f, 0.45f, 1f));
 
         AudioSource AddSource(string name, AudioClip clip, bool loop, float volume)
         {
@@ -68,12 +70,16 @@ namespace WavyBoard.Audio
 
         void OnEvent(string e)
         {
-            if (splashClips == null || splashClips.Length == 0) return;
             float vol = 0f;
             if (e.StartsWith("Wipeout")) vol = 1f;
-            else if (e == "Air landed!" || e == "Sketchy landing") vol = 0.8f;
-            else if (e == "Landed" || e == "Splash" || e == "Take-off" || e == "Duck dive") vol = 0.5f;
-            if (vol <= 0f) return;
+            else if (e == "Envol") vol = 0.4f;
+            else if (e == "Take-off" || e == "Duck dive") vol = 0.5f;
+            PlaySplash(vol);
+        }
+
+        void PlaySplash(float vol)
+        {
+            if (vol <= 0f || splashClips == null || splashClips.Length == 0) return;
             var clip = splashClips[Random.Range(0, splashClips.Length)];
             oneShot.pitch = Random.Range(0.9f, 1.1f);
             oneShot.PlayOneShot(clip, vol * masterVolume);

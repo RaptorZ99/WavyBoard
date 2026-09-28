@@ -24,6 +24,7 @@ namespace WavyBoard.Rider
         public float railSlip;      // 0..1 lateral slide on the face: the outer arm braces
         public float vertAccel;     // m/s^2, + = pushed up; a drop or an impact (negative) compresses the body
         public float landing;       // 0..1 pulse right after landing an air / dropping in
+        public float crouch;        // 0..1 crouched on the board, loading a pop (board stick pulled down)
     }
 
     /// <summary>
@@ -177,7 +178,7 @@ namespace WavyBoard.Rider
             float steer = Mathf.Clamp(i.steer, -1f, 1f);
             float speedK = Mathf.Clamp01((i.speed - 4f) / 8f);
             float slip = Mathf.Clamp01(i.railSlip);
-            float press = Mathf.Clamp01(Mathf.Clamp01(-i.vertAccel / 12f) + Mathf.Clamp01(i.landing));   // impact / drop: body compresses
+            float press = Mathf.Clamp01(Mathf.Clamp01(-i.vertAccel / 12f) + Mathf.Clamp01(i.landing) + 0.8f * Mathf.Clamp01(i.crouch));   // impact / drop / loading a pop: body compresses
             float lift = Mathf.Clamp01(i.vertAccel / 12f);                                                 // pushed up over a bump: body extends
             bool right = lean > 0f;
 
@@ -235,7 +236,7 @@ namespace WavyBoard.Rider
             float lean = Mathf.Clamp(i.lean, -1f, 1f);
             float steer = Mathf.Clamp(i.steer, -1f, 1f);
             float speedK = Mathf.Clamp01((i.speed - 4f) / 8f);
-            float press = Mathf.Clamp01(Mathf.Clamp01(-i.vertAccel / 12f) + Mathf.Clamp01(i.landing));
+            float press = Mathf.Clamp01(Mathf.Clamp01(-i.vertAccel / 12f) + Mathf.Clamp01(i.landing) + 0.8f * Mathf.Clamp01(i.crouch));
             float pump = Mathf.Clamp01(i.pump);
             float crouch = Mathf.Clamp01(0.15f * speedK + 0.3f * press + 0.4f * pump);   // sinks into the knees at speed, on impacts and pumps
             SetLeg(m, true, fb: -0.35f - 0.1f * crouch, io: 0.05f, low: -0.95f, foot: -0.7f);
