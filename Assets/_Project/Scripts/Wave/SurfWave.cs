@@ -33,6 +33,16 @@ namespace Biscotte.Wave
         bool jobScheduled;
         int vertexCount;
         float maxTravel;
+        Vector3 aimLocal;          // where the rider takes off, relative to the origin
+        float minBreakOffset;      // where along D the first point of the crest breaks
+
+        /// <summary>World point this wave is aimed at: where a rider has to be to take off.</summary>
+        public Vector3 AimPoint => (Vector3)Params.origin + aimLocal;
+
+        /// <summary>Seconds until the first point of the crest starts to shoal. Until then the wave is a round swell,
+        /// uniform along D, and where it will break can still move without anything visible changing.</summary>
+        public float SwellLead
+            => (minBreakOffset - Params.crestStartOffset) / Mathf.Max(0.5f, Params.celerity) - Params.shoalTime - WaveTime;
 
         static readonly VertexAttributeDescriptor[] k_Layout =
         {
@@ -159,20 +169,37 @@ namespace Biscotte.Wave
             mf.sharedMesh = mesh;
         }
 
-        public void Spawn(SurfSpotConfig spot, float heightScale, int id)
+        public void Spawn(SurfSpotConfig spot, float heightScale, int id) => Spawn(spot, heightScale, id, spot.LineupPosition());
+
+        /// <summary>Spawns a wave aimed at a rider at <paramref name="aim"/>: it breaks just in front of him.</summary>
+        public void Spawn(SurfSpotConfig spot, float heightScale, int id, Vector3 aim)
         {
             if (jobScheduled) { handle.Complete(); jobScheduled = false; }
             Spot = spot;
-            Params = spot.BuildParams(id);
+            Params = spot.BuildParamsAround(id, aim);
+            aimLocal = spot.LineupLocal();
             maxTravel = spot.maxTravel;
             if (!profile.IsCreated) profile = new NativeArray<float4>(96, Allocator.Persistent);
             spot.FillProfile(profile, heightScale);
+            minBreakOffset = float.MaxValue;
+            for (int i = 0; i < profile.Length; i++) minBreakOffset = Mathf.Min(minBreakOffset, profile[i].x);
             SpawnTime = Time.timeAsDouble;
             IsAlive = true;
             mr.enabled = true;
             transform.position = Vector3.zero;
             transform.rotation = Quaternion.identity;
             WaterSurfaceComposite.Instance?.Register(this);
+        }
+
+        /// <summary>
+        /// Moves where the wave will break without moving the water: dS metres along the crest (the whole wave slides
+        /// sideways) and dD metres along its travel (the break line moves while the crest stays put, so it simply
+        /// breaks dD / c later). Only meant for a wave that is still a round swell (<see cref="SwellLead"/> &gt; 0).
+        /// </summary>
+        public void Retarget(float dS, float dD)
+        {
+            Params.origin += Params.crestDir * dS + Params.travelDir * dD;
+            Params.crestStartOffset -= dD;
         }
 
         public void Despawn()

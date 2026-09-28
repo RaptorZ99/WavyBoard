@@ -61,10 +61,14 @@ namespace Biscotte.Wave
         public float3 CrestDir => math.normalize(math.cross(new float3(0f, 1f, 0f), TravelDir));
         public float3 Origin => transform.position;
 
-        public Vector3 LineupPosition()
+        public Vector3 LineupPosition() => (Vector3)Origin + LineupLocal();
+
+        /// <summary>Where the rider waits relative to s = 0 of the crest line: along the crest, just seaward of the
+        /// break line.</summary>
+        public Vector3 LineupLocal()
         {
             float f = SampleKey(lineupS).breakOffset;
-            return (Vector3)(Origin + CrestDir * lineupS + TravelDir * (f - lineupBack));
+            return (Vector3)(CrestDir * lineupS + TravelDir * (f - lineupBack));
         }
 
         public Key SampleKey(float s)
@@ -104,6 +108,17 @@ namespace Biscotte.Wave
                 shoalTime = shoalTime, pitchTime = pitchTime, collapseTime = collapseTime, decayTime = decayTime,
                 spawnFadeTime = spawnFadeTime, endTaper = endTaper, sPad = sPad, xiMin = xiMin, xiMax = xiMax, id = id
             };
+        }
+
+        /// <summary>A wave built around a rider: it comes in from out at sea and breaks just in front of him, wherever
+        /// he is. The spot's own position only matters for the first set.</summary>
+        public SurfWaveParams BuildParamsAround(int id, Vector3 rider)
+        {
+            var p = BuildParams(id);
+            float3 o = (float3)rider - (float3)LineupLocal();
+            o.y = Origin.y;
+            p.origin = o;
+            return p;
         }
 
         void OnDrawGizmos()

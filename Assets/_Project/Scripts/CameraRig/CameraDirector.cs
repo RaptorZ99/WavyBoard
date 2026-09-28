@@ -105,10 +105,10 @@ namespace Biscotte.CameraRig
 
             float dt = Time.deltaTime;
 
-            // player camera nudge: right stick (rate) or mouse delta (pre-scaled), recenters after a short idle; the stick
-            // rotates the board in the air instead (AirRotate), so no nudge there
+            // player camera nudge: right stick (rate) or mouse delta (pre-scaled), recenters after a short idle. On a
+            // wave the stick is the board (flick tricks), so the router only hands it over while L1 / Q is held.
             var input = InputRouter.Instance;
-            Vector2 raw = (input != null && rider.State != RiderState.Air) ? input.CameraNudge : Vector2.zero;
+            Vector2 raw = input != null ? input.CameraNudge : Vector2.zero;
             if (raw.sqrMagnitude > 0.0004f)
             {
                 orbit += input.UsingGamepad ? raw * (150f * dt) : raw * 2.5f;

@@ -23,6 +23,13 @@ namespace Biscotte.Ocean
         static void ResetStatics() { Instance = null; }
 
         void OnEnable() { Instance = this; }
+
+        void Start()
+        {
+            // the waves are generated around the player, so the ocean has to be too: slide its tile grid along
+            if (Application.isPlaying && controller != null && controller.GetComponent<OceanFollow>() == null)
+                controller.gameObject.AddComponent<OceanFollow>();
+        }
         void OnDisable()
         {
             if (Instance == this) Instance = null;

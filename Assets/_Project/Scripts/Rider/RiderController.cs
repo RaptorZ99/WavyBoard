@@ -1,5 +1,6 @@
 using Biscotte.InputSys;
 using Biscotte.Ocean;
+using Biscotte.Tricks;
 using Biscotte.Wave;
 using Unity.Mathematics;
 using UnityEngine;
@@ -53,6 +54,34 @@ namespace Biscotte.Rider
         public Vector3 BoardRight { get; private set; } = Vector3.right;
         public event System.Action<string> OnEvent;
 
+        // ---- flick tricks (right stick)
+        /// <summary>Where on the wave the rider is: the same gesture is a different manoeuvre in each zone.</summary>
+        public WaveZone Zone { get; private set; }
+        public TrickRunner Tricks => tricks;
+        public bool Grabbing { get; private set; }
+        public int TricksLanded { get; private set; }
+        /// <summary>The last gesture read off the right stick, for the HUD.</summary>
+        public Flick LastGesture { get; private set; }
+        public float LastGestureTime { get; private set; } = -10f;
+        public int LastGestureQuarters { get; private set; }
+        /// <summary>0..1: how much of the rider the wave is carrying (0 paddling, 1 fully in the pocket).</summary>
+        public float Engaged { get; private set; }
+        /// <summary>Speed on the face, relative to the moving water (m/s): what tricks ask for.</summary>
+        public float FaceSpeed => State == RiderState.Paddle ? vel.magnitude : relVel.magnitude;
+        /// <summary>A wave face is arriving behind a paddling rider: paddle now and it takes you.</summary>
+        public bool CanCatchNow
+        {
+            get
+            {
+                var s = lastSample;
+                return State == RiderState.Paddle && s.WaveHeight > 0.4f && s.BreakPhase < tuning.takeoffMaxPhase
+                       && s.CrestDistance > 0f && s.CrestDistance < s.FaceWidth + 12f;
+            }
+        }
+        /// <summary>A manoeuvre was completed: name and points. Airs are named at the landing from the rotation
+        /// actually turned; manoeuvres drawn on the water score when they finish, still riding.</summary>
+        public event System.Action<string, float> OnTrick;
+
         Vector3 pos, vel, relVel;
         float yaw;
         float stateTime;
@@ -65,10 +94,14 @@ namespace Biscotte.Rider
         int pumpsThisDescent;
         bool wasDescending;
         float stallTimer;
-        float rolloTimer;
         Vector3 wipeoutSpin;
         float rideCelerity = 7f;
         float lastLandedTime = -10f;
+        readonly TrickRunner tricks = new TrickRunner();
+        float surfaceRoll;             // visual roll of a flat roll / snap played on the water
+        string surfaceTrick = "";      // manoeuvre being drawn on the water; it scores when it finishes
+        float surfacePoints, surfaceTimer;
+        bool airSettling;              // the player asked to spot the landing: stop turning and square up
 
         IWaterSurface Water => WaterSurfaceComposite.Instance;
         InputRouter In => InputRouter.Instance;
@@ -86,6 +119,9 @@ namespace Biscotte.Rider
                 initialYaw = transform.eulerAngles.y;
             }
             Respawn();
+            // the rider is the centre of the world: every wave is generated around him
+            var sched = FindAnyObjectByType<WaveSetScheduler>();
+            if (sched != null && sched.aimAt == null) sched.aimAt = transform;
         }
 
         public void SetLineup(Vector3 p, float yawDeg) { lineup = p; initialYaw = yawDeg; }
@@ -97,9 +133,18 @@ namespace Biscotte.Rider
             yaw = initialYaw;
             airRot = Quaternion.Euler(0f, yaw, 0f);
             visualRot = airRot;
-            InTube = false; TubeTime = 0f; AirTime = 0f; RideTime = 0f; stallTimer = 0f; rolloTimer = 0f;
+            InTube = false; TubeTime = 0f; AirTime = 0f; RideTime = 0f; stallTimer = 0f;
+            tricks.Reset(); surfaceRoll = 0f; surfaceTrick = ""; surfacePoints = 0f; surfaceTimer = 0f; airSettling = false;
             Enter(RiderState.Paddle);
             ApplyTransform(0f);
+        }
+
+        /// <summary>Back in the line-up without being teleported: the waves come to the rider wherever he is, so the
+        /// line-up is simply here, lying on the board facing the beach.</summary>
+        void RecoverHere()
+        {
+            lineup = new Vector3(pos.x, lastSample.Height - tuning.paddleDraft, pos.z);
+            Respawn();
         }
 
         Vector3 Heading() => Quaternion.Euler(0f, yaw, 0f) * Vector3.forward;
@@ -108,13 +153,21 @@ namespace Biscotte.Rider
         {
             State = s;
             stateTime = 0f;
-            if (s == RiderState.Air) { AirTime = 0f; airRot = visualRot; AirSpin = 0f; AirFlip = 0f; AirRoll = 0f; AirPeak = 0f; GrabHeldInAir = false; PopEnergy = lastSample.Energy; }
+            if (s == RiderState.Air)
+            {
+                AirTime = 0f; airRot = visualRot; AirSpin = 0f; AirFlip = 0f; AirRoll = 0f; AirPeak = 0f; GrabHeldInAir = false; PopEnergy = lastSample.Energy;
+                tricks.ResetAccumulation(); airSettling = false;
+                // clear of the water before the first ballistic step (paddling, the board sits in it), or the landing
+                // test fires straight away and the hop never happens
+                pos.y = Mathf.Max(pos.y, lastSample.Height + 0.12f);
+            }
             if (s == RiderState.Ride)
             {
                 RideTime = 0f; PumpsThisRide = 0;
                 float carryK = CarryFactor(in lastSample);
                 relVel = vel - (Vector3)lastSample.TravelDir * (rideCelerity * carryK);
             }
+            if (s == RiderState.Wipeout || s == RiderState.KickOut) { tricks.StopTracks(); surfaceTrick = ""; surfaceTimer = 0f; }
             if (s == RiderState.Wipeout) { wipeoutSpin = new Vector3(UnityEngine.Random.Range(-240f, 240f), UnityEngine.Random.Range(-120f, 120f), UnityEngine.Random.Range(-300f, 300f)); }
         }
 
@@ -133,10 +186,16 @@ namespace Biscotte.Rider
             stateTime += dt;
             PumpFlash = Mathf.Max(0f, PumpFlash - dt * 3f);
 
-            if (In.ConsumeReset()) { Respawn(); return; }
+            if (In.ConsumeReset()) { RecoverHere(); return; }
             if (In.ConsumeStance() && (State == RiderState.Ride || State == RiderState.Paddle)) { DropKnee = !DropKnee; Event(DropKnee ? "Drop-knee" : "Prone"); }
 
             lastSample = Water.Sample(pos, t);
+            In.RideContext = true;   // the right stick is the board, everywhere, always (hold L1 / Q to look around)
+            // a grab is the stick parked out on the rim in mid-air, the way a skater's hand holds the board
+            Grabbing = State == RiderState.Air && In.StickHeld;
+            Zone = ComputeZone();
+            bool carried = State == RiderState.TakeOff || State == RiderState.Ride || State == RiderState.Air;
+            Engaged = carried ? Mathf.Max(0.35f, CarryFactor(in lastSample)) : 0f;
 
             switch (State)
             {
@@ -179,7 +238,9 @@ namespace Biscotte.Rider
             pos.y = Mathf.Lerp(pos.y, targetY, 1f - Mathf.Exp(-dt * 12f));
 
             if (In.ConsumeDuck()) { Enter(RiderState.DuckDive); Event("Duck dive"); return; }
-            if (In.ConsumePop()) { /* sprint paddle is held elsewhere */ }
+            In.ConsumeKickOut();   // same button as the sprint: a press while paddling means nothing
+            // the right stick is the board here too: hops, flat rolls, and the duck dive
+            if (HandleGesture(dt, Heading(), (Vector3)lastSample.Normal)) return;
             if (CanTakeOff())
             {
                 rideCelerity = FindCelerity(lastSample.WaveId);
@@ -381,25 +442,12 @@ namespace Biscotte.Rider
             relVel -= n2 * Vector3.Dot(relVel, n2);
             vel = carry + relVel;
 
-            // pop / El Rollo off the lip, kick-out on the shoulder. Pressing Rollo at the lip launches the air with the roll
-            // already started, so a fast bottom turn -> lip -> Rollo reads as one move.
-            bool popPressed = In.ConsumePop();
-            bool rolloPressed = In.ConsumeRollo();
-            if (popPressed || rolloPressed)
-            {
-                float speedNow = vel.magnitude;
-                bool nearLip = Mathf.Abs(s2.CrestDistance) < tuning.popWindowCrestDistance && s2.CrestDistance > -2.5f && s2.BreakPhase >= 0.6f && s2.BreakPhase < 2.3f;
-                if (nearLip && speedNow >= tuning.popMinSpeed)
-                {
-                    float vUp = (tuning.popVerticalSpeed + tuning.popSpeedGain * speedNow) * board.popMultiplier;
-                    vel += Vector3.up * vUp + (Vector3)n2 * 1.0f;
-                    Enter(RiderState.Air);
-                    if (rolloPressed) { rolloTimer = tuning.rolloDuration; Event("El Rollo"); }
-                    else Event("Pop");
-                    return;
-                }
-                if (popPressed && s2.Energy < 0.35f && s2.BreakPhase < 1.2f) { Enter(RiderState.KickOut); Event("Kick-out"); return; }
-            }
+            // kick-out on the shoulder; every trick is on the right stick
+            if (In.ConsumeKickOut() && s2.Energy < 0.35f && s2.BreakPhase < 1.2f) { Enter(RiderState.KickOut); Event("Kick-out"); return; }
+
+            // flick tricks: the right stick traces the gesture, the zone decides what it means
+            Zone = ComputeZone();
+            if (HandleGesture(dt, F, n2)) return;
 
             // tube
             InTube = s2.InTube;
@@ -431,55 +479,86 @@ namespace Biscotte.Rider
             vel -= vel * (vel.magnitude * tuning.airDrag * dt);
             pos += vel * dt;
 
-            Vector2 rot = In.AirRotate;
-            float mul = In.GrabHeld ? tuning.grabRateMultiplier : 1f;
-            float spin = rot.x * tuning.spinRate * mul;
-            float flip = -rot.y * tuning.flipRate * mul;
-            if (In.ConsumeRollo() && rolloTimer <= 0f && AirRoll < 90f && stateTime < 0.8f) { rolloTimer = tuning.rolloDuration; Event("El Rollo"); }
-            float roll = 0f;
-            if (rolloTimer > 0f) { roll = 360f / tuning.rolloDuration; rolloTimer -= dt; }
-            airRot = airRot * Quaternion.Euler(flip * dt, spin * dt, roll * dt);
-            yaw += spin * dt;
-            AirSpin += spin * dt; AirFlip += flip * dt; AirRoll += roll * dt;
-            GrabHeldInAir |= In.GrabHeld;
+            // right stick: flicked rotations (see TrickCatalog); left stick: your own spin, for as long as you hold it
+            AirGesture();
+            Vector3 d = tricks.Tick(dt);
+            float mul = Grabbing ? tuning.grabRateMultiplier : 1f;
+            float spin = In.Move.x * tuning.airSpinRate * mul * dt;
+            d.x += spin;
+            tricks.AddYaw(spin);
+            airRot = airRot * Quaternion.Euler(d.y, d.x, d.z);
+            yaw += d.x;
+            AirSpin += d.x; AirFlip += d.y; AirRoll += d.z;
+            GrabHeldInAir |= Grabbing;
+            tricks.Grabbed |= Grabbing;
+            if (airSettling && !tricks.Busy) SquareUp(dt);
 
             var s = Water.Sample(pos, t);
             lastSample = s;
             AirPeak = Mathf.Max(AirPeak, pos.y - s.Height);
-            if (pos.y <= s.Height + 0.05f) { Land(s); return; }
+            if (AirTime > 0.08f && pos.y <= s.Height + 0.05f) { Land(s); return; }
             if (AirTime > tuning.maxAirTime) { Wipeout("fell"); }
         }
 
+        /// <summary>
+        /// Three things decide a landing, the three a judge looks at: is the board flat to the water (align), is it
+        /// pointing where it is travelling (yaw error — coming down sideways is what really hurts), and had the
+        /// rotation finished. Together they give an execution multiplier rather than a pass/fail, so a scrappy
+        /// landing costs points instead of the wave. Forgiving off the wave, strict on a face: a hop in the line-up
+        /// should never punish you for messing about.
+        /// </summary>
         void Land(WaterSample s)
         {
-            Vector3 boardUp = airRot * Vector3.up;
-            float align = Vector3.Dot(boardUp, (Vector3)s.Normal);
-            rolloTimer = 0f;
-            if (s.BreakPhase < 0f)
+            Vector3 n = s.Normal;
+            float align = Vector3.Dot(airRot * Vector3.up, n);
+            Vector3 travel = Vector3.ProjectOnPlane(vel, n);
+            Vector3 nose = Vector3.ProjectOnPlane(airRot * Vector3.forward, n);
+            float yawErr = travel.sqrMagnitude > 1f && nose.sqrMagnitude > 1e-4f ? Vector3.Angle(nose, travel) : 0f;
+            bool stillSpinning = tricks.Busy;
+            tricks.StopTracks();
+            airSettling = false;
+
+            bool onWave = s.BreakPhase >= 0f;
+            float yawMax = Mathf.Max(5f, tuning.landYawMax);
+            float need = onWave ? (stillSpinning ? tuning.landAlignMin + 0.08f : tuning.landAlignMin) : tuning.landSketchyMin;
+            if (align < tuning.landSketchyMin * 0.75f && vel.y < -9f) { Wipeout("réception ratée"); return; }
+            if (onWave && AirTime > 0.35f && yawErr > yawMax * 2f && align < tuning.landAlignMin) { Wipeout("posé en travers"); return; }
+            if (onWave && align < tuning.landSketchyMin) { Wipeout("réception ratée"); return; }
+
+            bool clean = align >= need && yawErr <= yawMax && !stillSpinning;
+            float quality = Mathf.SmoothStep(need, 0.995f, align) * (1f - Mathf.Clamp01(yawErr / yawMax));
+            float execution = clean ? Mathf.Clamp(0.8f + 0.7f * quality, 0.8f, 1.5f) : 0.6f;
+            vel = Vector3.ProjectOnPlane(vel, n) * (clean ? Mathf.Lerp(0.88f, 0.96f, quality) : 0.72f);
+            if (onWave)
             {
-                if (vel.y > -7f) { pos.y = s.Height - tuning.paddleDraft; vel = Vector3.zero; Enter(RiderState.Paddle); Event("Splash"); In.Rumble(0.4f, 0.2f, 0.15f); }
-                else Wipeout("flat landing");
-                return;
-            }
-            if (align >= tuning.landAlignMin)
-            {
-                vel = Vector3.ProjectOnPlane(vel, s.Normal) * 0.9f;
                 pos.y = s.Height + tuning.rideDraft;
                 AirsLanded++;
                 lastLandedTime = Time.time;
                 Enter(RiderState.Ride);
-                Event(AirTime > 0.6f ? "Air landed!" : "Landed");
-                In.Rumble(0.5f, 0.3f, 0.15f);
             }
-            else if (align >= tuning.landSketchyMin)
+            else
             {
-                vel = Vector3.ProjectOnPlane(vel, s.Normal) * 0.7f;
-                pos.y = s.Height + tuning.rideDraft;
-                Enter(RiderState.Ride);
-                Event("Sketchy landing");
-                In.Rumble(0.7f, 0.4f, 0.2f);
+                pos.y = s.Height - tuning.paddleDraft;
+                vel.y = 0f;
+                Enter(RiderState.Paddle);
             }
-            else Wipeout("bad landing");
+            ScoreAir(execution, !clean);
+            In.Rumble(clean ? 0.5f : 0.7f, 0.3f, 0.15f);
+        }
+
+        /// <summary>Names the air after what was actually turned and scores it.</summary>
+        void ScoreAir(float execution, bool sketchy)
+        {
+            if (AirTime > 0.25f && tricks.PendingPoints > 0f)
+            {
+                string name = tricks.NameRun();
+                float pts = tricks.PendingPoints * execution * (0.85f + 0.35f * Mathf.Clamp01(AirPeak / 3f));
+                TricksLanded++;
+                OnTrick?.Invoke(name, pts);
+                Event(sketchy ? name + " (sale)" : name);
+            }
+            else Event("Posé");
+            tricks.ResetAccumulation();
         }
 
         // ------------------------------------------------------------------ Wipeout / Kick-out
@@ -506,7 +585,7 @@ namespace Biscotte.Rider
             visualRot = visualRot * Quaternion.Euler(wipeoutSpin * dt);
             if (stateTime >= tuning.wipeoutDuration)
             {
-                if (tuning.autoReturnToLineup) { Respawn(); Event("Back to the lineup"); return; }
+                if (tuning.autoReturnToLineup) { RecoverHere(); Event("Back to the lineup"); return; }
                 pos.y = s.Height - tuning.paddleDraft;
                 vel = Vector3.zero;
                 yaw = initialYaw;
@@ -528,9 +607,155 @@ namespace Biscotte.Rider
             pos.y = Mathf.Lerp(pos.y, lastSample.Height - tuning.paddleDraft, 1f - Mathf.Exp(-dt * 8f));
             if (stateTime >= 1.6f)
             {
-                if (tuning.autoReturnToLineup) { Respawn(); Event("Back to the lineup"); }
+                if (tuning.autoReturnToLineup) { RecoverHere(); Event("Back to the lineup"); }
                 else Enter(RiderState.Paddle);
             }
+        }
+
+        // ------------------------------------------------------------------ Flick tricks
+        WaveZone ComputeZone()
+        {
+            var s = lastSample;
+            switch (State)
+            {
+                case RiderState.Air: return WaveZone.Air;
+                case RiderState.TakeOff:
+                case RiderState.Ride:
+                    if (InTube) return WaveZone.Tube;
+                    bool nearLip = Mathf.Abs(s.CrestDistance) < tuning.popWindowCrestDistance && s.CrestDistance > -2.5f
+                                   && s.BreakPhase >= 0.6f && s.BreakPhase < 2.3f;
+                    return nearLip ? WaveZone.Lip : WaveZone.Face;
+                default: return WaveZone.Flat;
+            }
+        }
+
+        /// <summary>
+        /// Plays the surface part of running manoeuvres and reads a new gesture on the face. Returns true when the
+        /// gesture launched an air (the ride step must stop there).
+        /// </summary>
+        bool HandleGesture(float dt, Vector3 F, Vector3 n)
+        {
+            if (tricks.Busy)
+            {
+                Vector3 d = tricks.Tick(dt);
+                yaw += d.x;
+                surfaceRoll += d.z;
+            }
+            else surfaceRoll = Mathf.MoveTowards(surfaceRoll, 0f, 540f * dt);
+            TickSurfaceTrick(dt);
+
+            var g = In.ConsumeFlick();
+            if (g.flick == Flick.None) return false;
+            NoteGesture(g);
+            float faceSpeed = FaceSpeed;
+            if (!TrickCatalog.Resolve(g, Zone, faceSpeed, Grabbing, out TrickDef def, out float needed))
+            {
+                Event(needed > 0f && faceSpeed < needed
+                    ? "trop lent — " + faceSpeed.ToString("0.0") + " / " + needed.ToString("0.0") + " m/s"
+                    : "pas ici");
+                return false;
+            }
+            switch (def.kind)
+            {
+                case TrickKind.Air:
+                {
+                    float speed = vel.magnitude;
+                    float vUp = (tuning.popVerticalSpeed + tuning.popSpeedGain * speed) * board.popMultiplier * def.popScale;
+                    vel += Vector3.up * vUp + n * 1.0f;
+                    Enter(RiderState.Air);
+                    tricks.Begin(def);
+                    Event(def.name);
+                    In.Rumble(0.25f, 0.45f, 0.09f);
+                    return true;
+                }
+                case TrickKind.Stall:
+                    if (Zone == WaveZone.Flat) { Enter(RiderState.DuckDive); Event("Canard"); return true; }
+                    relVel *= 0.82f;
+                    Event(def.name);
+                    return false;
+                case TrickKind.Drive:
+                    relVel += F * def.driveBoost;
+                    BeginSurfaceTrick(def);
+                    return false;
+                case TrickKind.Settle:
+                case TrickKind.Tuck:
+                    return false;   // these only mean anything in the air
+                default:
+                    tricks.Begin(def);
+                    if (def.driveBoost > 0f) relVel += F * def.driveBoost;
+                    BeginSurfaceTrick(def);
+                    return false;
+            }
+        }
+
+        void NoteGesture(in FlickResult g)
+        {
+            LastGesture = g.flick;
+            LastGestureQuarters = g.quarters;
+            LastGestureTime = Time.time;
+        }
+
+        /// <summary>Arms a manoeuvre on the water; it scores when it finishes, and only if the rider is still up.</summary>
+        void BeginSurfaceTrick(in TrickDef def)
+        {
+            surfaceTrick = def.name;
+            surfacePoints = def.points;
+            surfaceTimer = Mathf.Max(0.05f, def.duration);
+            Event(def.name);
+        }
+
+        void TickSurfaceTrick(float dt)
+        {
+            if (surfaceTimer <= 0f) return;
+            surfaceTimer -= dt;
+            if (surfaceTimer > 0f) return;
+            if (State == RiderState.Ride && surfacePoints > 0f)
+            {
+                TricksLanded++;
+                OnTrick?.Invoke(surfaceTrick, surfacePoints);
+            }
+            surfaceTrick = ""; surfacePoints = 0f; surfaceTimer = 0f;
+        }
+
+        /// <summary>A gesture in the air: add a rotation, tuck it in, or spot the landing.</summary>
+        void AirGesture()
+        {
+            var g = In.ConsumeFlick();
+            if (g.flick == Flick.None) return;
+            NoteGesture(g);
+            if (!TrickCatalog.Resolve(g, WaveZone.Air, 0f, Grabbing, out TrickDef def)) return;
+            switch (def.kind)
+            {
+                case TrickKind.Settle:
+                    tricks.StopTracks();
+                    airSettling = true;
+                    Event("Réception");
+                    break;
+                case TrickKind.Tuck:
+                    tricks.Speed = tuning.airTuckSpeedup;
+                    vel.y -= tuning.airTuckDrop;
+                    airSettling = false;
+                    Event(def.name);
+                    break;
+                default:
+                    tricks.Begin(def);
+                    airSettling = false;
+                    Event(def.name);
+                    break;
+            }
+        }
+
+        /// <summary>Spotting the landing: the board squares up to the water it is about to meet.</summary>
+        void SquareUp(float dt)
+        {
+            Vector3 horiz = new Vector3(vel.x, 0f, vel.z);
+            Vector3 fwd = horiz.sqrMagnitude > 0.25f ? horiz.normalized : Heading();
+            Vector3 upT = Vector3.Slerp(Vector3.up, (Vector3)lastSample.Normal, tuning.airLevelToSurface).normalized;
+            Vector3 f2 = Vector3.ProjectOnPlane(fwd, upT);
+            if (f2.sqrMagnitude < 1e-4f) return;
+            float k = 1f - Mathf.Exp(-dt * tuning.airSettleRate);
+            airRot = Quaternion.Slerp(airRot, Quaternion.LookRotation(f2.normalized, upT), k);
+            yaw = Mathf.LerpAngle(yaw, Mathf.Atan2(fwd.x, fwd.z) * Mathf.Rad2Deg, k);
         }
 
         // ------------------------------------------------------------------ Visuals
@@ -548,7 +773,7 @@ namespace Biscotte.Rider
                 case RiderState.Wipeout: target = visualRot; break;
                 case RiderState.Ride:
                 case RiderState.TakeOff:
-                    target = Quaternion.LookRotation(F, n) * Quaternion.AngleAxis(-Lean * tuning.leanMax * Mathf.Clamp01(Speed / 6f), Vector3.forward);
+                    target = Quaternion.LookRotation(F, n) * Quaternion.AngleAxis(-Lean * tuning.leanMax * Mathf.Clamp01(Speed / 6f) + surfaceRoll, Vector3.forward);
                     break;
                 default:
                     target = Quaternion.LookRotation(F, n);

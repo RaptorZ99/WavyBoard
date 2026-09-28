@@ -52,12 +52,12 @@ namespace Biscotte.Debugging
                 case RiderState.Paddle:
                 case RiderState.DuckDive:
                 {
-                    // wait at the lineup facing the beach; paddle hard when a wave face arrives behind us
-                    Vector3 toLineup = spot.LineupPosition() - rider.Position; toLineup.y = 0f;
-                    bool waveComing = s.BreakPhase >= 0.15f && s.CrestDistance > 0f && s.CrestDistance < 15f && s.BreakPhase < 1.9f;
-                    Vector3 desired = waveComing ? D : (toLineup.magnitude > 5f ? toLineup.normalized : D);
+                    // wait where we are facing the beach (the waves come to the rider); paddle hard with the wave as its
+                    // crest closes in, so it is standing by the time it reaches us
+                    bool waveComing = s.WaveHeight > 0.4f && s.CrestDistance > 0f && s.CrestDistance < 22f && s.BreakPhase < 1.9f;
+                    Vector3 desired = D;
                     float turn = SignedAngle(heading, desired);
-                    float fwd = waveComing ? 1f : (toLineup.magnitude > 5f ? 0.7f : 0f);
+                    float fwd = waveComing ? 1f : 0f;
                     input.OverrideMove = new Vector2(Mathf.Clamp(turn / 30f, -1f, 1f), fwd);
                     input.OverrideSprint = waveComing;
                     input.OverrideStall = false;
@@ -83,14 +83,13 @@ namespace Biscotte.Debugging
                     if (Time.time >= nextPump) { input.InjectPump(); nextPump = Time.time + pumpInterval; }
                     if (doAirs && s.CrestDistance < 3f && s.BreakPhase > 0.9f && s.BreakPhase < 1.8f && rider.Speed > 6f && Time.time - lastAirTime > 4f)
                     {
-                        input.InjectPop();
+                        input.InjectFlick(new Biscotte.Tricks.FlickResult { flick = Biscotte.Tricks.Flick.Up, charge = 0.5f, snap = 0.8f, sign = 1f });
                         lastAirTime = Time.time;
                     }
                     break;
                 }
                 case RiderState.Air:
                     input.OverrideMove = Vector2.zero;
-                    input.OverrideAirRotate = Vector2.zero;
                     break;
                 default:
                     input.OverrideMove = Vector2.zero;

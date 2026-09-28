@@ -16,6 +16,8 @@ namespace Biscotte.Scoring
         public float Best2 { get; private set; }
         public float SessionPoints { get; private set; }
         public int ChainCount { get; private set; }
+        /// <summary>Multiplier the current chain of linked manoeuvres pays.</summary>
+        public float ChainMultiplier => Mathf.Min(2f, Mathf.Pow(1.1f, ChainCount));
         public string LastTrick { get; private set; } = "";
         public float LastTrickPoints { get; private set; }
         public float LastTrickTime { get; private set; } = -10f;
@@ -27,8 +29,27 @@ namespace Biscotte.Scoring
         float tubeAccum;
         bool wasInTube;
 
-        void OnEnable() { if (rider != null) rider.OnEvent += OnRiderEvent; }
-        void OnDisable() { if (rider != null) rider.OnEvent -= OnRiderEvent; }
+        void OnEnable()
+        {
+            if (rider == null) return;
+            rider.OnEvent += OnRiderEvent;
+            rider.OnTrick += OnTrick;
+        }
+
+        void OnDisable()
+        {
+            if (rider == null) return;
+            rider.OnEvent -= OnRiderEvent;
+            rider.OnTrick -= OnTrick;
+        }
+
+        /// <summary>A completed manoeuvre (air, or one drawn on the water). Repeating the same one pays less.</summary>
+        void OnTrick(string name, float basePts)
+        {
+            int rep = repeats.TryGetValue(name, out var r) ? r : 0;
+            repeats[name] = rep + 1;
+            Commit(name, basePts * Mathf.Pow(0.7f, rep), chain: true);
+        }
 
         void Update()
         {
@@ -57,11 +78,6 @@ namespace Biscotte.Scoring
         {
             switch (e)
             {
-                case "Air landed!":
-                case "Landed":
-                case "Sketchy landing":
-                    EvaluateAir(e == "Sketchy landing" ? 0.6f : 1f);
-                    break;
                 case "Pump":
                     break;
                 case "Kick-out":
@@ -77,38 +93,13 @@ namespace Biscotte.Scoring
             }
         }
 
-        void EvaluateAir(float execution)
-        {
-            if (rider.AirTime < 0.35f) return;                     // tiny hop, not a trick
-            float spin = Mathf.Abs(rider.AirSpin);
-            float flip = Mathf.Abs(rider.AirFlip);
-            float roll = Mathf.Abs(rider.AirRoll);
-            int spinSteps = Mathf.RoundToInt(spin / 180f);
-            string name; float basePts;
-            bool rollo = roll >= 270f;
-            if (rollo && spinSteps >= 2) { name = "ARS"; basePts = 340f; }
-            else if (rollo) { name = "El Rollo"; basePts = 200f; }
-            else if (flip >= 250f) { name = rider.AirFlip < 0f ? "Backflip" : "Frontflip"; basePts = 320f; }
-            else if (flip >= 90f) { name = "Invert"; basePts = 220f; }
-            else if (spinSteps >= 1) { name = (rider.AirSpin > 0f ? "Air Reverse " : "Air Forward ") + (spinSteps * 180); basePts = 120f + 80f * spinSteps; }
-            else { name = "Air"; basePts = 90f; }
-            if (rider.GrabHeldInAir) { name = "Grab " + name; basePts *= 1.15f; }
-            float amplitude = 0.8f + 0.4f * Mathf.Clamp01(rider.AirPeak / 2.5f);
-            float critical = 0.8f + 0.8f * Mathf.Clamp01(rider.PopEnergy);
-            int rep = repeats.TryGetValue(name, out var r) ? r : 0;
-            float variety = Mathf.Pow(0.7f, rep);
-            repeats[name] = rep + 1;
-            float pts = basePts * execution * amplitude * critical * variety;
-            Commit(name, pts, chain: true);
-        }
-
         void Commit(string name, float pts, bool chain)
         {
             if (chain)
             {
                 if (chainTimer > 0f) ChainCount = Mathf.Min(ChainCount + 1, 7);
                 chainTimer = 2.5f;
-                pts *= Mathf.Min(2f, Mathf.Pow(1.1f, ChainCount));
+                pts *= ChainMultiplier;
             }
             WaveRawPoints += pts;
             PendingPoints = Mathf.Max(0f, PendingPoints - pts);

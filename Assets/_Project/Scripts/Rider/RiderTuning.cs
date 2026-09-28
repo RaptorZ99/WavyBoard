@@ -71,18 +71,28 @@ namespace Biscotte.Rider
         public float popVerticalSpeed = 2.5f;
         [Tooltip("Extra vertical speed per m/s of ride speed when popping off the lip (hit the lip fast = big air)")]
         public float popSpeedGain = 0.25f;
-        [Tooltip("Minimum ride speed to pop / El Rollo off the lip")]
-        public float popMinSpeed = 3.5f;
+        [Tooltip("Distance (m) from the crest within which the rider is at the lip: flicks there launch airs")]
         public float popWindowCrestDistance = 8f;
         public float ejectVerticalSpeed = 1.8f;
         public float airDrag = 0.02f;
-        public float spinRate = 360f;             // deg/s while stick held
-        public float flipRate = 300f;
         public float grabRateMultiplier = 0.8f;
-        public float rolloDuration = 0.7f;
         public float landAlignMin = 0.82f;
         public float landSketchyMin = 0.7f;
+        [Tooltip("Degrees between the nose and the direction of travel beyond which a landing is not clean")]
+        public float landYawMax = 45f;
         public float maxAirTime = 3.5f;
+
+        [Header("Flick tricks (right stick)")]
+        [Tooltip("Spin (deg/s) the left stick adds in the air, on top of the flicked rotations")]
+        public float airSpinRate = 360f;
+        [Tooltip("Tuck gesture: time scale on the rotations still playing")]
+        public float airTuckSpeedup = 1.8f;
+        [Tooltip("Tuck gesture: vertical speed (m/s) lost, you drop sooner")]
+        public float airTuckDrop = 1.2f;
+        [Tooltip("Settle gesture: rate (1/s) the board squares up to the water for the landing")]
+        public float airSettleRate = 6f;
+        [Tooltip("Settle gesture: 0 = level with the horizon, 1 = flat to the face under you")]
+        [Range(0f, 1f)] public float airLevelToSurface = 0.65f;
 
         [Header("Wipeout")]
         public float wipeoutDuration = 2.6f;
@@ -94,7 +104,7 @@ namespace Biscotte.Rider
         public float whitewaterWipeoutSpeed = 3f;
 
         [Header("Prototype")]
-        [Tooltip("After a wipeout or kick-out, respawn at the lineup instead of paddling back (no channel yet).")]
+        [Tooltip("After a wipeout or kick-out, reset straight to the line-up pose where you are (the waves come to you)\ninstead of recovering from wherever the wave left you.")]
         public bool autoReturnToLineup = true;
     }
 }
