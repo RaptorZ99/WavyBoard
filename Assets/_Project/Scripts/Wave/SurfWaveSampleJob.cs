@@ -82,7 +82,6 @@ namespace WavyBoard.Wave
             r.WaveHeight = waveH;
             float whitewater = phase >= 2f || ri.lipless > 0.5f ? attr.y : 0f;
             r.WhitewaterAmount = whitewater;
-            r.SeabedDepth = 200f;
             r.WaveId = P.id;
             r.PeelDistance = s - SurfWaveMath.PeelS(P, Sections, tw);
             float pocket = math.saturate(1f - math.abs(cd - 0.35f * faceWidth) / (0.8f * faceWidth));

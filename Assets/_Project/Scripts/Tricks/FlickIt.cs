@@ -35,8 +35,6 @@ namespace WavyBoard.Tricks
         public float charge;
         /// <summary>0..1, how hard the flick was.</summary>
         public float snap;
-        /// <summary>Signed sweep traced on the rim before firing (deg, + = clockwise).</summary>
-        public float arcDeg;
         /// <summary>Sweep quantised to quarter turns, 0..4. This is what picks 180 / 360 / 540 out of one gesture.</summary>
         public int quarters;
         /// <summary>+1 = the manoeuvre goes to the rider's right, -1 to the left. Set from the side of the rim the
@@ -120,16 +118,9 @@ namespace WavyBoard.Tricks
 
         /// <summary>0..1 — the stick is pulled down and held: the crouch. Doubles as the stall input on the water.</summary>
         public float Loaded { get; private set; }
-        /// <summary>The stick is out of the deadzone right now.</summary>
-        public bool Active { get; private set; }
-        /// <summary>The stick is moving fast enough to be a flick. Below this it is just a push, and the camera
-        /// can safely have it.</summary>
-        public bool Fast { get; private set; }
         /// <summary>The stick has been parked out on the rim, still, for <see cref="holdTime"/>: in the air that is
         /// a grab, and which way it points chooses which one.</summary>
         public bool Held { get; private set; }
-        /// <summary>Direction the held stick points, normalised. Meaningless while <see cref="Held"/> is false.</summary>
-        public Vector2 HoldDir { get; private set; }
         /// <summary>Signed sweep since the last gesture fired (deg).</summary>
         public float Arc => arc;
         /// <summary>Signed sweep since the stick last left the centre (deg): the whole wind, for the HUD.</summary>
@@ -140,7 +131,7 @@ namespace WavyBoard.Tricks
             hasPrev = false; fired = false; visitedBottom = false; visitedTop = false;
             arc = 0f; totalArc = 0f; sideAcc = 0f; chargeAcc = 0f; downSince = -1f; peakSpeed = 0f; outSince = -1f;
             lastSign = 1f;
-            Loaded = 0f; Active = false; Fast = false; Held = false; HoldDir = Vector2.zero;
+            Loaded = 0f; Held = false;
         }
 
         /// <summary>Feeds one stick sample. Returns a gesture the moment one fires.</summary>
@@ -148,7 +139,6 @@ namespace WavyBoard.Tricks
         {
             var none = new FlickResult { flick = Flick.None };
             float mag = stick.magnitude;
-            Active = mag >= deadzone;
 
             if (!hasPrev) { prev = stick; prevT = now; hasPrev = true; return none; }
             float dt = Mathf.Max(1e-4f, now - prevT);
@@ -156,7 +146,6 @@ namespace WavyBoard.Tricks
             float speed = d.magnitude / dt;
             float vy = d.y / dt;
             peakSpeed = Mathf.Max(peakSpeed, speed);
-            Fast = speed >= flickSpeed * 0.6f;
 
             // Whether the stick had ALREADY been at the bottom when this frame started. The frame that snaps past
             // the down trigger is itself below the crouch line, so asking after the update would make the
@@ -178,7 +167,6 @@ namespace WavyBoard.Tricks
             {
                 if (outSince < 0f) outSince = now;
                 Held = now - outSince >= holdTime;
-                if (Held) HoldDir = stick / Mathf.Max(1e-4f, mag);
             }
             else { outSince = -1f; Held = false; }
 
@@ -264,7 +252,6 @@ namespace WavyBoard.Tricks
                 flick = f,
                 charge = chargeAcc,
                 snap = Mathf.Clamp01((peakSpeed - flickSpeed) / Mathf.Max(1f, snapSpeedRef - flickSpeed)),
-                arcDeg = totalArc,
                 quarters = quartersOverride >= 0 ? quartersOverride
                          : Mathf.Clamp(Mathf.RoundToInt(Mathf.Abs(totalArc) / 90f), 0, 4),
                 sign = side,

@@ -5,12 +5,7 @@
         "Unity.Burst",
         "Unity.Mathematics",
         "Unity.Collections",
-        "Unity.Cinemachine",
-        "Unity.InputSystem",
-        "Unity.Splines",
-        "Unity.RenderPipelines.Universal.Runtime",
-        "Unity.RenderPipelines.Core.Runtime",
-        "Unity.TextMeshPro"
+        "Unity.InputSystem"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

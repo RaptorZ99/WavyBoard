@@ -1,3 +1,5 @@
+// Test tooling (Tools/playtest.py): editor and development builds only, never in the released game.
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 using System.Text;
 using WavyBoard.CameraRig;
 using WavyBoard.Ocean;
@@ -36,6 +38,9 @@ namespace WavyBoard.Debugging
         /// <summary>Times the water under a riding rider switched to another wave (falling through to the one behind).</summary>
         public int RideWaveSwitches { get; private set; }
         public int WavesSpawned { get; private set; }
+        /// <summary>Closest the camera came to the rider while riding (m), and frames it was in his body (under 1.2 m).</summary>
+        public float MinCameraToRider { get; private set; } = float.MaxValue;
+        public int CameraInRider { get; private set; }
 
         readonly StringBuilder log = new StringBuilder(4096);
         CameraDirector director;
@@ -43,6 +48,7 @@ namespace WavyBoard.Debugging
         int captures;
         float prevVy, lastCaptureTime = -10f, tubeCaptureAt = -1f, swingCaptureAt = -1f, landCaptureAt = -1f;
         int rideWaveId = -1, maxWaveId;
+        float lastCloseLog = -10f;
 
         void Start()
         {
@@ -113,6 +119,16 @@ namespace WavyBoard.Debugging
             var s = water.Sample(p, (float)t);
             float clear = s.HasLipRoof && p.y < s.LipRoofY ? Mathf.Min(p.y - s.Height, s.LipRoofY - p.y) : p.y - s.Height;
             MinCameraClearance = Mathf.Min(MinCameraClearance, clear);
+            if (rider.State == RiderState.Ride || rider.State == RiderState.Air)
+            {
+                float toRider = Vector3.Distance(p, rider.RenderPosition + Vector3.up * 0.45f);
+                MinCameraToRider = Mathf.Min(MinCameraToRider, toRider);
+                if (toRider < 1.2f)
+                {
+                    CameraInRider++;
+                    if (Time.time - lastCloseLog > 1f) { lastCloseLog = Time.time; Line("CAMERA CLOSE " + toRider.ToString("0.00") + " m tube=" + rider.InTube + " ww=" + rider.Sample.WhitewaterAmount.ToString("0.00")); }
+                }
+            }
             Vector3 toCam = p - rider.RenderPosition;
             float side = Mathf.Sign(Vector3.Dot(toCam, (Vector3)rider.Sample.CrestDir));
             if (rider.State == RiderState.Ride && side != lastSide) { SideSwitches++; lastSide = side; swingCaptureAt = Time.time + 0.45f; }
@@ -172,9 +188,10 @@ namespace WavyBoard.Debugging
 
         public string Report()
         {
-            return $"waves spawned {WavesSpawned} | min crest gap {MinCrestGap:0.0} m | ride wave switches {RideWaveSwitches}\n"
+            return $"waves spawned {WavesSpawned} | min crest gap {MinCrestGap:0.0} m | ride wave switches {RideWaveSwitches} | camera to rider min {MinCameraToRider:0.00} m, frames under 1.2 m {CameraInRider}\n"
                    + $"frames {Frames} | camera in water {CameraInWater} (min clearance {MinCameraClearance:0.00} m) | launches {Launches} | landings {Landings} (clean {CleanLandings}, on the face {LandedOnFace}) | max air peak {MaxAirPeak:0.0} m | wipeouts {WipeoutCount} | tube frames {TubeFrames} (tube shot {TubeShotFrames}) | camera side switches {SideSwitches}\n"
                    + $"waves {rider.WavesRidden} tricks {rider.TricksLanded} airs {rider.AirsLanded} tube total {rider.TotalTubeTime:0.0}s\n" + log;
         }
     }
 }
+#endif

@@ -32,8 +32,6 @@ namespace WavyBoard.Wave
     /// <summary>The per-crest-coordinate description of a wave: (break delay after the peak, height, heaviness, lipless).</summary>
     public static class SurfWaveMath
     {
-        public const float NeverBreaks = 1e5f;
-
         public static float4 SampleSections(in NativeArray<float4> sec, in SurfWaveParams p, float s)
         {
             int n = sec.Length;

@@ -15,12 +15,8 @@ namespace WavyBoard.Rider
         public float duckDiveDuration = 1.3f;
 
         [Header("Take-off")]
-        public float takeoffMinPhase = 0.5f;
         public float takeoffMaxPhase = 1.9f;
-        public float takeoffMinSlope = 0.22f;
-        public float takeoffMinEnergy = 0.3f;
         public float takeoffMinForwardSpeed = 1.2f;
-        public float takeoffInitialCelerityFactor = 0.55f;
         public float takeoffDuration = 0.45f;
         [Tooltip("0..1: how much a rising face pulls a paddling rider along and lines him up (arcade feel)")]
         public float takeoffAssist = 0.8f;
@@ -28,10 +24,6 @@ namespace WavyBoard.Rider
         [Header("Ride")]
         public float gravity = 9.81f;
         public float rideDraft = 0.05f;
-        public float pushGain = 0.8f;
-        public float pushTau = 0.9f;
-        [Tooltip("Legacy (unused since the 2026-09-08 speed tuning): see quadraticDrag / planingDamping")]
-        public float dragCoefficient = 0.012f;
         [Tooltip("Quadratic drag on the relative speed (1/m): sets the terminal speed of a drop (~11 m/s on a 45 deg face)")]
         public float quadraticDrag = 0.025f;
         [Tooltip("Linear planing damping (1/s): low = the board keeps its speed across the face")]
@@ -98,7 +90,6 @@ namespace WavyBoard.Rider
         public float jumpCoyoteTime = 0.22f;
         [Tooltip("Distance (m) from the crest within which the rider is at the lip: flicks there launch airs")]
         public float popWindowCrestDistance = 8f;
-        public float ejectVerticalSpeed = 1.8f;
 
         [Header("Air")]
         [Tooltip("Gravity scale in the air (< 1 = more hang time for tricks)")]

@@ -50,7 +50,6 @@ namespace WavyBoard.Tricks
         public float popScale;     // Air only: multiplier on the launch impulse
         public float driveBoost;   // m/s handed straight to the board along its forward axis (Drive, and bottom turns)
 
-        public bool IsAir => kind == TrickKind.Air;
         public bool HasRotation => yawDeg != 0f || pitchDeg != 0f || rollDeg != 0f;
     }
 

@@ -89,8 +89,6 @@ namespace WavyBoard.Tools
 
             var cam = Camera.main;
             if (cam == null) return "no main camera";
-            var brain = cam.GetComponent<Unity.Cinemachine.CinemachineBrain>();
-            if (brain != null) brain.enabled = false;
             Vector3 center = root.transform.position + new Vector3((cases.Length - 1) * spacing * 0.5f, 0.3f, 0f);
             Vector3 camPos;
             switch (view)
@@ -112,12 +110,6 @@ namespace WavyBoard.Tools
         {
             var existing = GameObject.Find(kRoot);
             if (existing != null) Object.DestroyImmediate(existing);
-            var cam = Camera.main;
-            if (cam != null)
-            {
-                var brain = cam.GetComponent<Unity.Cinemachine.CinemachineBrain>();
-                if (brain != null) brain.enabled = true;
-            }
             return "pose test removed";
         }
     }

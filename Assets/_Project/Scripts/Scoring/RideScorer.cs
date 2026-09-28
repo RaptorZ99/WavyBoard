@@ -14,7 +14,6 @@ namespace WavyBoard.Scoring
         public float WaveScore { get; private set; }          // 0..10 of the last committed wave
         public float Best1 { get; private set; }
         public float Best2 { get; private set; }
-        public float SessionPoints { get; private set; }
         public int ChainCount { get; private set; }
         /// <summary>Multiplier the current chain of linked manoeuvres pays.</summary>
         public float ChainMultiplier => Mathf.Min(2f, Mathf.Pow(1.1f, ChainCount));
@@ -22,7 +21,6 @@ namespace WavyBoard.Scoring
         public float LastTrickPoints { get; private set; }
         public float LastTrickTime { get; private set; } = -10f;
         public float LastWaveScoreTime { get; private set; } = -10f;
-        public List<string> WaveTricks { get; } = new List<string>();
 
         readonly Dictionary<string, int> repeats = new Dictionary<string, int>();
         float chainTimer;
@@ -106,7 +104,6 @@ namespace WavyBoard.Scoring
             LastTrick = name;
             LastTrickPoints = pts;
             LastTrickTime = Time.time;
-            WaveTricks.Add(name);
         }
 
         void CommitWave(bool wipeout)
@@ -118,7 +115,6 @@ namespace WavyBoard.Scoring
             if (wipeout) raw *= 0.8f;
             if (raw <= 1f && rider.RideTime < 2f) { ResetWave(); return; }
             WaveScore = 10f * raw / (raw + 900f);
-            SessionPoints += raw;
             if (WaveScore > Best1) { Best2 = Best1; Best1 = WaveScore; }
             else if (WaveScore > Best2) Best2 = WaveScore;
             LastWaveScoreTime = Time.time;
@@ -128,7 +124,7 @@ namespace WavyBoard.Scoring
         void ResetWave()
         {
             WaveRawPoints = 0f; ChainCount = 0; chainTimer = 0f;
-            WaveTricks.Clear(); repeats.Clear();
+            repeats.Clear();
         }
     }
 }

@@ -23,8 +23,6 @@ namespace WavyBoard.Tricks
 
         /// <summary>Name of the manoeuvre currently being played (the last one started).</summary>
         public string Current { get; private set; } = "";
-        /// <summary>Base points of the manoeuvre currently being played.</summary>
-        public float CurrentPoints { get; private set; }
         /// <summary>True while at least one rotation track is still playing.</summary>
         public bool Busy { get; private set; }
 
@@ -44,7 +42,7 @@ namespace WavyBoard.Tricks
         public void Reset()
         {
             for (int i = 0; i < MaxTracks; i++) tracks[i] = default;
-            Current = ""; CurrentPoints = 0f; Busy = false; Speed = 1f;
+            Current = ""; Busy = false; Speed = 1f;
             ResetAccumulation();
         }
 
@@ -58,7 +56,6 @@ namespace WavyBoard.Tricks
         public bool Begin(in TrickDef d)
         {
             Current = d.name;
-            CurrentPoints = d.points;
             PendingPoints += d.points;
             if (!d.HasRotation) return true;
             for (int i = 0; i < MaxTracks; i++)
@@ -109,14 +106,6 @@ namespace WavyBoard.Tricks
             for (int i = 0; i < MaxTracks; i++) tracks[i].used = false;
             Busy = false;
             Speed = 1f;
-        }
-
-        /// <summary>How far the flat spin is from the nearest half turn (deg, signed). Near zero means the board is
-        /// already square to where it started, which is what a clean landing wants.</summary>
-        public float YawOffHalfTurn()
-        {
-            float half = Mathf.Round(Yaw / 180f) * 180f;
-            return Yaw - half;
         }
 
         /// <summary>The name the completed rotation earns, from what was actually turned.</summary>

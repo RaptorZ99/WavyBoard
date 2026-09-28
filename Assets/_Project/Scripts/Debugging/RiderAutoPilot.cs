@@ -1,3 +1,5 @@
+// Test tooling (Tools/playtest.py): editor and development builds only, never in the released game.
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
 using WavyBoard.InputSys;
 using WavyBoard.Rider;
 using WavyBoard.Tricks;
@@ -167,3 +169,4 @@ namespace WavyBoard.Debugging
         static float SignedAngle(Vector3 from, Vector3 to) => Vector3.SignedAngle(from, to, Vector3.up);
     }
 }
+#endif

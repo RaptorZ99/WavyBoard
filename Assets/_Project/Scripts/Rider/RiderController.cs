@@ -25,8 +25,6 @@ namespace WavyBoard.Rider
         public BoardSpec board;
         public SurfSpotConfig spot;
         public Transform visualRoot;
-        public Transform boardRoot;
-        public Transform cameraTarget;
 
         public RiderState State { get; private set; }
         /// <summary>Physics position (fixed step).</summary>
@@ -49,20 +47,13 @@ namespace WavyBoard.Rider
         public int WavesRidden { get; private set; }
         public int Wipeouts { get; private set; }
         public float RideTime { get; private set; }
-        public float BestRideTime { get; private set; }
         public bool DropKnee { get; private set; }
         public float PumpFlash { get; private set; }
-        public int PumpsThisRide { get; private set; }
         public int AirsLanded { get; private set; }
         public string LastWipeoutReason { get; private set; } = "";
-        public float AirSpin { get; private set; }     // accumulated yaw degrees during the current/last air
-        public float AirFlip { get; private set; }     // accumulated pitch degrees
-        public float AirRoll { get; private set; }     // accumulated roll degrees (El Rollo)
         public float AirPeak { get; private set; }     // max height above the surface during the air
-        public float PopEnergy { get; private set; }   // pocket energy at take-off of the air
         public bool GrabHeldInAir { get; private set; }
         public float RailSlip { get; private set; }    // lateral slip speed on the face (spray)
-        public Vector3 RelVelocity => relVel;
         public Vector3 BoardForward { get; private set; } = Vector3.forward;
         public Vector3 BoardRight { get; private set; } = Vector3.right;
         /// <summary>0..1 — the rider is crouched on the board, loading a jump.</summary>
@@ -124,7 +115,6 @@ namespace WavyBoard.Rider
         bool wasDescending;
         float stallTimer;
         float rideCelerity = 7f;
-        float lastLandedTime = -10f;
         readonly TrickRunner tricks = new TrickRunner();
 
         IWaterSurface Water => WaterSurfaceComposite.Instance;
@@ -147,8 +137,6 @@ namespace WavyBoard.Rider
             var sched = FindAnyObjectByType<WaveSetScheduler>();
             if (sched != null && sched.aimAt == null) sched.aimAt = transform;
         }
-
-        public void SetLineup(Vector3 p, float yawDeg) { lineup = p; initialYaw = yawDeg; }
 
         public void Respawn()
         {
@@ -182,7 +170,7 @@ namespace WavyBoard.Rider
             if (s == RiderState.Air) BeginAir(from);
             if (s == RiderState.Ride)
             {
-                if (from != RiderState.Air) { RideTime = 0f; PumpsThisRide = 0; }
+                if (from != RiderState.Air) RideTime = 0f;
                 float carryK = CarryFactor(in lastSample);
                 relVel = vel - (Vector3)lastSample.TravelDir * (rideCelerity * carryK);
             }
@@ -354,7 +342,6 @@ namespace WavyBoard.Rider
         {
             LastWipeoutReason = reason;
             Wipeouts++;
-            if (RideTime > BestRideTime) BestRideTime = RideTime;
             InTube = false; TubeTime = 0f;
             Enter(RiderState.Wipeout);
             Event("Wipeout: " + reason);
@@ -386,7 +373,6 @@ namespace WavyBoard.Rider
             if (stateTime < dt * 1.5f)
             {
                 WavesRidden++;
-                if (RideTime > BestRideTime) BestRideTime = RideTime;
                 InTube = false; TubeTime = 0f;
             }
             vel = Vector3.Lerp(vel, Vector3.zero, 1f - Mathf.Exp(-dt * 1.5f));

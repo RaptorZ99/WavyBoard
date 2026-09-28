@@ -2,7 +2,6 @@ using WavyBoard.InputSys;
 using WavyBoard.Ocean;
 using WavyBoard.Rider;
 using WavyBoard.Wave;
-using Unity.Cinemachine;
 using UnityEngine;
 
 namespace WavyBoard.CameraRig
@@ -27,14 +26,12 @@ namespace WavyBoard.CameraRig
     /// camera out of the water: the line from the rider to the camera is tested against the wave's water volume (the
     /// inside of a tube is air), the camera comes in at once when the water gets in the way and eases back out.
     ///
-    /// The camera is driven directly (the Cinemachine brain on it is disabled while this runs).
+    /// The main camera is driven directly.
     /// </summary>
     [DefaultExecutionOrder(500)]
     public class CameraDirector : MonoBehaviour
     {
         public RiderController rider;
-        [Tooltip("Legacy pivot (the rider still updates it); the director reads the rider directly")]
-        public Transform cameraTarget;
 
         [Header("Ride: in front of the face, trailing the rider along the line")]
         [Tooltip("Angle (deg) from straight in front of the face round to behind the rider")]
@@ -86,6 +83,8 @@ namespace WavyBoard.CameraRig
         public float lookSmoothTime = 0.12f;
         [Tooltip("Seconds the camera takes to ease back out after the water pushed it in")]
         public float armRecoverTime = 0.35f;
+        [Tooltip("Never closer to the rider than this (m): when the water blocks the shot, the camera looks for a clear\nangle (higher, then out in front of the face) instead of diving into him")]
+        public float minArmLength = 1.8f;
         public float waterClearance = 0.45f;
         [Tooltip("Degrees of shake at full trauma")]
         public float shakeAmplitude = 1.6f;
@@ -99,6 +98,8 @@ namespace WavyBoard.CameraRig
         Vector3 tubeOffset, tubeLook;
         Vector3 offset, offsetVel, look, lookVel;
         float arm = 10f, armVel;
+        Vector3 avoidOffset, avoidVel;
+        float avoidW, avoidWVel;
         float fov, fovVel, dutch;
         Vector2 orbit; float orbitIdle;
         float trauma;
@@ -110,8 +111,6 @@ namespace WavyBoard.CameraRig
         {
             cam = Camera.main;
             if (cam == null) { Debug.LogError("CameraDirector: no Main Camera"); enabled = false; return; }
-            var brain = cam.GetComponent<CinemachineBrain>();
-            if (brain != null) brain.enabled = false;
             cam.nearClipPlane = 0.1f;
             cam.farClipPlane = 4000f;
             fov = baseFov;
@@ -292,7 +291,18 @@ namespace WavyBoard.CameraRig
                 var ps = water.ProbeOne(pivot, time);
                 if (!ps.hasRoof && pivot.y < ps.height + 0.3f) pivot.y = ps.height + 0.3f;
             }
-            Vector3 desired = pivot + offset;
+            // a wall of water between the rider and the shot (the foam of a closed section, the lip): find a clear angle
+            // nearby rather than pulling in onto the rider
+            float want = offset.magnitude;
+            float direct = water != null ? SurfCameraMath.FreeLength(water, pivot, pivot + offset, time) : want;
+            bool blocked = direct < Mathf.Min(want, minArmLength) || direct < 0.6f * want;
+            if (blocked && water != null)
+            {
+                Vector3 clear = ClearOffset(water, pivot, offset, time);
+                avoidOffset = avoidW < 0.01f ? clear : Vector3.SmoothDamp(avoidOffset, clear, ref avoidVel, 0.2f);
+            }
+            avoidW = Mathf.SmoothDamp(avoidW, blocked ? 1f : 0f, ref avoidWVel, blocked ? 0.12f : 0.45f);
+            Vector3 desired = pivot + Vector3.Lerp(offset, avoidOffset, avoidW);
             float len = Vector3.Distance(pivot, desired);
             float free = water != null ? SurfCameraMath.FreeLength(water, pivot, desired, time) : len;
             if (!initialised) arm = free;
@@ -324,6 +334,45 @@ namespace WavyBoard.CameraRig
             cam.transform.SetPositionAndRotation(camPos, rot);
             cam.fieldOfView = fov;
             initialised = true;
+        }
+
+        /// <summary>
+        /// A clear camera offset near a blocked one, same distance: tilted up over the obstacle, along the tube (under a
+        /// lip that is the only way out), out in front of the face, then high above the rider. The first fully clear one
+        /// wins, else the clearest.
+        /// </summary>
+        Vector3 ClearOffset(WaterSurfaceComposite water, Vector3 pivot, Vector3 blockedOffset, double time)
+        {
+            float len = Mathf.Max(minArmLength, blockedOffset.magnitude);
+            Vector3 flat = new Vector3(blockedOffset.x, 0f, blockedOffset.z);
+            Vector3 flatDir = flat.sqrMagnitude > 1e-4f ? flat.normalized : D;
+            float el = Mathf.Asin(Mathf.Clamp(blockedOffset.normalized.y, -1f, 1f));
+            Vector3 best = blockedOffset;
+            float bestShare = -1f;
+            for (int i = 0; i < 7; i++)
+            {
+                Vector3 cand;
+                switch (i)
+                {
+                    case 0: cand = Tilt(flatDir, el + 25f * Mathf.Deg2Rad) * len; break;
+                    case 1: cand = Tilt(flatDir, el + 50f * Mathf.Deg2Rad) * len; break;
+                    case 2: cand = Tilt(-side * T, 12f * Mathf.Deg2Rad) * len; break;    // along the tube, behind him
+                    case 3: cand = Tilt(side * T, 12f * Mathf.Deg2Rad) * len; break;     // along the tube, ahead, looking back
+                    case 4: cand = Tilt(D, 30f * Mathf.Deg2Rad) * len; break;            // out in front of the face
+                    case 5: cand = Tilt(D, 55f * Mathf.Deg2Rad) * len; break;
+                    default: cand = Tilt(flatDir, 75f * Mathf.Deg2Rad) * len; break;     // high above him
+                }
+                float share = SurfCameraMath.FreeLength(water, pivot, pivot + cand, time) / len;
+                if (share >= 0.95f) return cand;
+                if (share > bestShare) { bestShare = share; best = cand; }
+            }
+            return best;
+        }
+
+        static Vector3 Tilt(Vector3 flatDir, float elevation)
+        {
+            elevation = Mathf.Min(elevation, 80f * Mathf.Deg2Rad);
+            return flatDir * Mathf.Cos(elevation) + Vector3.up * Mathf.Sin(elevation);
         }
 
         /// <summary>Last guard: above the water, and under the lip when the camera is inside a barrel.</summary>

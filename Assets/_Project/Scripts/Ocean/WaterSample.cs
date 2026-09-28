@@ -18,7 +18,6 @@ namespace WavyBoard.Ocean
         public bool InTube;
         public float TubeDepth;       // 0..1
         public float WhitewaterAmount;
-        public float SeabedDepth;
         public int WaveId;            // -1 ambient
         public float LipWidth;        // wv (0 when no lip)
         public float LipHeight;       // hv

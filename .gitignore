@@ -120,13 +120,3 @@ InitTestScene*.unity*
 
 # WavyBoard: screenshots taken by the Pipeline capture_game_view command (folder ignored by Unity thanks to the ~ suffix)
 /[Aa]ssets/Screenshots~/
-
-# WavyBoard: Poly Haven scans (~850 MB, CC0) are NOT versioned; re-download with Tools/fetch_polyhaven.ps1.
-# The .meta files ARE versioned so asset GUIDs stay stable. The sky HDRI used by the scenes is kept.
-/Assets/ThirdParty/PolyHaven/**/*.jpg
-/Assets/ThirdParty/PolyHaven/**/*.png
-/Assets/ThirdParty/PolyHaven/**/*.exr
-/Assets/ThirdParty/PolyHaven/**/*.gltf
-/Assets/ThirdParty/PolyHaven/**/*.bin
-/Assets/ThirdParty/PolyHaven/**/*.hdr
-!/Assets/ThirdParty/PolyHaven/hdris/secluded_beach/secluded_beach_4k.hdr

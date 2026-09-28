@@ -3,13 +3,7 @@
     "rootNamespace": "WavyBoard.EditorTools",
     "references": [
         "WavyBoard.Runtime",
-        "Unity.Burst",
-        "Unity.Mathematics",
-        "Unity.Collections",
-        "Unity.Cinemachine",
-        "Unity.InputSystem",
-        "Unity.RenderPipelines.Universal.Runtime",
-        "Unity.RenderPipelines.Core.Runtime"
+        "Unity.Mathematics"
     ],
     "includePlatforms": [
         "Editor"

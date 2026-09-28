@@ -95,11 +95,7 @@ namespace WavyBoard.EditorTools
 
             var cam = Camera.main;
             if (cam == null) return "no main camera";
-            var brain = cam.GetComponent<Unity.Cinemachine.CinemachineBrain>();
-            if (brain != null) brain.enabled = false;
-            cam.transform.SetPositionAndRotation(camPos, Quaternion.LookRotation(look - camPos, up));
-            cam.fieldOfView = fov;
-            if (ocean != null) ocean.transform.position = new Vector3(camPos.x, 0f, camPos.z);
+            Frame(cam, ocean, camPos, Quaternion.LookRotation(look - camPos, up), fov);
             SceneView.RepaintAll();
             return $"{view}: tw={tw:0.0} peelS={wave.PeelS(tw):0.0} H={H:0.0} c={P.celerity:0.0}\n{wave.VertexStats()}";
         }
@@ -144,11 +140,7 @@ namespace WavyBoard.EditorTools
             if (!WavyBoard.CameraRig.SurfCameraMath.TryTubeShot(wave, anchor, side, wave.Params.height, time, in k, out Vector3 camPos, out Vector3 lookPos))
                 return $"tube shot refused at s={s:0.0} (headroom {sl.Headroom:0.0} m)";
             var cam = Camera.main;
-            var brain = cam.GetComponent<Unity.Cinemachine.CinemachineBrain>();
-            if (brain != null) brain.enabled = false;
-            cam.transform.SetPositionAndRotation(camPos, Quaternion.LookRotation(lookPos - camPos, Vector3.up));
-            cam.fieldOfView = director != null ? director.tubeFov : 80f;
-            if (ocean != null) ocean.transform.position = new Vector3(camPos.x, 0f, camPos.z);
+            Frame(cam, ocean, camPos, Quaternion.LookRotation(lookPos - camPos, Vector3.up), director != null ? director.tubeFov : 80f);
             SceneView.RepaintAll();
             return $"tube cam: H={wave.Params.height:0.0} s={s:0.0} headroom={sl.Headroom:0.0} wall..tip={sl.xWall:0.0}..{sl.xTip:0.0} rider x={x:0.0} cam-rider {Vector3.Distance(camPos, anchor):0.0} m";
         }
@@ -175,6 +167,40 @@ namespace WavyBoard.EditorTools
             return sb.ToString();
         }
 
+        // The shots move the scene's camera and ocean: their pose is kept for the session and put back by Cleanup,
+        // so taking pictures never leaves the scene modified.
+        const string kSaved = "WavyBoard.WaveLab.Saved";
+
+        static void Frame(Camera cam, OceanSurface ocean, Vector3 pos, Quaternion rot, float fov)
+        {
+            if (!SessionState.GetBool(kSaved, false))
+            {
+                SessionState.SetBool(kSaved, true);
+                SessionState.SetVector3(kSaved + ".camPos", cam.transform.position);
+                SessionState.SetVector3(kSaved + ".camRot", cam.transform.eulerAngles);
+                SessionState.SetFloat(kSaved + ".fov", cam.fieldOfView);
+                SessionState.SetVector3(kSaved + ".ocean", ocean != null ? ocean.transform.position : Vector3.zero);
+            }
+            cam.transform.SetPositionAndRotation(pos, rot);
+            cam.fieldOfView = fov;
+            if (ocean != null) ocean.transform.position = new Vector3(pos.x, 0f, pos.z);
+        }
+
+        static void RestoreFraming()
+        {
+            if (!SessionState.GetBool(kSaved, false)) return;
+            SessionState.SetBool(kSaved, false);
+            var cam = Camera.main;
+            if (cam != null)
+            {
+                cam.transform.SetPositionAndRotation(SessionState.GetVector3(kSaved + ".camPos", cam.transform.position),
+                                                     Quaternion.Euler(SessionState.GetVector3(kSaved + ".camRot", cam.transform.eulerAngles)));
+                cam.fieldOfView = SessionState.GetFloat(kSaved + ".fov", cam.fieldOfView);
+            }
+            var ocean = Object.FindAnyObjectByType<OceanSurface>();
+            if (ocean != null) ocean.transform.position = SessionState.GetVector3(kSaved + ".ocean", ocean.transform.position);
+        }
+
         static SurfWave EnsureWave()
         {
             var go = GameObject.Find(kName);
@@ -195,12 +221,7 @@ namespace WavyBoard.EditorTools
             if (go != null) Object.DestroyImmediate(go);
             var marker = GameObject.Find(kName + "_Rider");
             if (marker != null) Object.DestroyImmediate(marker);
-            var cam = Camera.main;
-            if (cam != null)
-            {
-                var brain = cam.GetComponent<Unity.Cinemachine.CinemachineBrain>();
-                if (brain != null) brain.enabled = true;
-            }
+            RestoreFraming();
             return "wave lab cleaned up";
         }
     }

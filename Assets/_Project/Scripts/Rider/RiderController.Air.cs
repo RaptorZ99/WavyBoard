@@ -27,8 +27,7 @@ namespace WavyBoard.Rider
         void BeginAir(RiderState from)
         {
             airFromTube = InTube;
-            AirTime = 0f; AirSpin = 0f; AirFlip = 0f; AirRoll = 0f; AirPeak = 0f; GrabHeldInAir = false;
-            PopEnergy = lastSample.Energy;
+            AirTime = 0f; AirPeak = 0f; GrabHeldInAir = false;
             tricks.ResetAccumulation();
             airSettling = false; jumpUsedThisAir = false; Crouch = 0f;
             airBase = bodyTarget; airTrick = Quaternion.identity;
@@ -77,7 +76,6 @@ namespace WavyBoard.Rider
             d.x += spin;
             tricks.AddYaw(spin);
             airTrick = airTrick * Quaternion.Euler(d.y, d.x, d.z);
-            AirSpin += d.x; AirFlip += d.y; AirRoll += d.z;
             GrabHeldInAir |= Grabbing;
             tricks.Grabbed |= Grabbing;
             AirAttitude(dt, Mathf.Abs(In.Move.x) > 0.2f);
@@ -214,7 +212,6 @@ namespace WavyBoard.Rider
                 vel = frame + slide;
                 pos.y = s.Height + tuning.rideDraft;
                 AirsLanded++;
-                lastLandedTime = Time.time;
                 Enter(RiderState.Ride);
                 if (tailFirst) BeginRevert(nose, travel, n);
             }

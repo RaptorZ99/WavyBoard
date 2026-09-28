@@ -42,7 +42,7 @@ namespace WavyBoard.CameraRig
             float back = Mathf.Clamp(k.backPerH * waveHeight, k.backMin, k.backMax);
             for (int i = 0; i < 5; i++, back *= 0.75f)
             {
-                if (back < 1.2f) break;
+                if (back < 2f) break;   // closer than this, the rider's own body fills the frame
                 if (!wave.TryTubeSlice(s - side * back, xi, time, k.minHeadroom, out var sl)) continue;
                 float y = sl.yFloor + k.heightShare * sl.Headroom;
                 y = Mathf.Min(y, riderY + k.maxAboveRider);

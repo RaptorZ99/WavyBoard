@@ -2,7 +2,6 @@ using System.Collections;
 using WavyBoard.Tricks;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.DualShock;
 
 namespace WavyBoard.InputSys
 {
@@ -46,10 +45,10 @@ namespace WavyBoard.InputSys
         float mouseStickReturn = 7f;
 
         InputActionMap surf;
-        InputAction move, boardStick, camNudge, pump, stall, kickOut, stance, duck, reset, pause, sprint, dbg, spawn, mouseJump;
+        InputAction move, boardStick, camNudge, pump, stall, kickOut, stance, duck, reset, sprint, dbg, spawn, mouseJump;
 
         // latched presses (set in Update, consumed by gameplay)
-        bool stanceP, resetP, spawnP, dbgP, pauseP;
+        bool stanceP, resetP, spawnP, dbgP;
         float pumpT = -99f, kickOutT = -99f, duckT = -99f, jumpReleaseT = -99f;
         float jumpDownT = -99f, jumpReleaseCharge;
         bool jumpDown;
@@ -69,11 +68,6 @@ namespace WavyBoard.InputSys
         public Vector2 OverrideMove;
         public bool OverrideSprint, OverrideStall, OverrideCrouch;
         public void InjectPump() { pumpT = Now; }
-        public void InjectKickOut() { kickOutT = Now; }
-        public void InjectDuck() { duckT = Now; }
-        public void InjectStance() { stanceP = true; }
-        /// <summary>A pop released with this charge (0 = a tap, 1 = fully loaded), like the mouse button.</summary>
-        public void InjectJump(float charge) { jumpReleaseT = Now; jumpReleaseCharge = Mathf.Clamp01(charge); }
         /// <summary>Applies a gesture as if the stick had traced it (autopilot, tests).</summary>
         public void InjectFlick(FlickResult r) { flick_ = r; flickT = Now; }
 
@@ -88,7 +82,6 @@ namespace WavyBoard.InputSys
 
         public bool StallHeld => OverrideEnabled ? OverrideStall : (stall != null && stall.IsPressed());
         public bool SprintHeld => OverrideEnabled ? OverrideSprint : (sprint != null && sprint.IsPressed());
-        public bool PumpHeld => pump != null && pump.IsPressed();
         /// <summary>The rider is crouched, loading a pop: the board stick pulled down, or the mouse jump button held.</summary>
         public bool Crouched => OverrideEnabled ? OverrideCrouch : (jumpDown || flick.Loaded > 0f);
         /// <summary>0..1 — how loaded the crouch is.</summary>
@@ -118,7 +111,6 @@ namespace WavyBoard.InputSys
         public bool ConsumeReset() { bool v = resetP; resetP = false; return v; }
         public bool ConsumeSpawn() { bool v = spawnP; spawnP = false; return v; }
         public bool ConsumeDebug() { bool v = dbgP; dbgP = false; return v; }
-        public bool ConsumePause() { bool v = pauseP; pauseP = false; return v; }
 
         /// <summary>The mouse jump button was released (recently): returns true once, with the charge it was loaded with.</summary>
         public bool ConsumeJump(out float charge)
@@ -135,12 +127,6 @@ namespace WavyBoard.InputSys
             return flick_;
         }
 
-        /// <summary>Drops every buffered press (state changes that must not inherit a stale one).</summary>
-        public void ClearPresses()
-        {
-            pumpT = kickOutT = duckT = jumpReleaseT = flickT = -99f;
-        }
-
         bool Take(ref float t)
         {
             bool v = Now - t <= pressBuffer;
@@ -149,7 +135,6 @@ namespace WavyBoard.InputSys
         }
 
         public bool UsingGamepad { get; private set; }
-        public bool IsDualSense { get; private set; }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics() { Instance = null; }
@@ -169,7 +154,6 @@ namespace WavyBoard.InputSys
             stance = surf.FindAction("Stance", true);
             duck = surf.FindAction("DuckDiveBail", true);
             reset = surf.FindAction("Reset", true);
-            pause = surf.FindAction("Pause", true);
             sprint = surf.FindAction("Sprint", true);
             dbg = surf.FindAction("DebugOverlay", true);
             spawn = surf.FindAction("SpawnWave", true);
@@ -189,7 +173,6 @@ namespace WavyBoard.InputSys
             resetP |= reset.WasPressedThisFrame();
             spawnP |= spawn.WasPressedThisFrame();
             dbgP |= dbg.WasPressedThisFrame();
-            pauseP |= pause.WasPressedThisFrame();
 
             // mouse jump: pressing crouches, releasing pops with whatever charge was built
             if (mouseJump != null && mouseJump.WasPressedThisFrame()) { jumpDown = true; jumpDownT = now; }
@@ -207,7 +190,6 @@ namespace WavyBoard.InputSys
 
             var gp = Gamepad.current;
             DetectDevice(gp);
-            IsDualSense = gp is DualSenseGamepadHID || gp is DualShockGamepad;
 
             Stick = ReadStick(gp);
             if (RideContext && !LookHeld && !OverrideEnabled)
@@ -267,11 +249,6 @@ namespace WavyBoard.InputSys
             gp.SetMotorSpeeds(low, high);
             yield return new WaitForSecondsRealtime(duration);
             gp.SetMotorSpeeds(0f, 0f);
-        }
-
-        public void SetLightBar(Color c)
-        {
-            if (Gamepad.current is DualShockGamepad ds) ds.SetLightBarColor(c);
         }
     }
 }

@@ -61,9 +61,6 @@ namespace WavyBoard.Wave
         [Tooltip("How fast (m/s) a wave slides along its crest to follow the rider. Along its travel it follows\nfreely: moving the break line of a round swell changes nothing you can see.")]
         public float slideSpeed = 5f;
 
-        /// <summary>Size of the set being spawned (for the HUD).</summary>
-        public string CurrentSetName { get; private set; } = "";
-
         readonly List<SurfWave> pool = new List<SurfWave>();
         float nextSetTime;
         int nextId = 1;
@@ -114,7 +111,6 @@ namespace WavyBoard.Wave
                 r -= Mathf.Max(0f, s.weight);
                 if (r > 0f) continue;
                 setScale = s.scale;
-                CurrentSetName = s.name;
                 return;
             }
             setScale = 1f;

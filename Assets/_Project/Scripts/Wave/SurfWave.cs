@@ -25,7 +25,6 @@ namespace WavyBoard.Wave
         public bool IsAlive { get; private set; }
         public double SpawnTime { get; private set; }
         public float WaveTime => (float)(Time.timeAsDouble - SpawnTime);
-        public float FixedWaveTime => (float)(Time.fixedTimeAsDouble - SpawnTime);
         public SurfSpotConfig Spot { get; private set; }
 
         NativeArray<float4> sections;
@@ -72,8 +71,6 @@ namespace WavyBoard.Wave
         /// <summary>Seconds until the wave starts to stand up. Until then it is a uniform round swell and where it will
         /// break can still move without anything visible changing.</summary>
         public float SwellLead => Params.ShoalEnd - Params.shoalDuration - WaveTime;
-
-        public float CrestPositionAlongD => Params.CrestOffset(WaveTime);
 
         /// <summary>World position of the crest line along D right now (dot with the travel direction).</summary>
         public float CrestAlongD => math.dot(Params.origin, Params.travelDir) + Params.CrestOffset(WaveTime);

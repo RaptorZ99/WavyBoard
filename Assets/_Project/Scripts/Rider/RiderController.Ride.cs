@@ -84,7 +84,7 @@ namespace WavyBoard.Rider
                 {
                     float energyK = Mathf.Lerp(tuning.pumpEnergyFloor, 1f, Mathf.Clamp01(s0.Energy));
                     relVel += F * (tuning.pumpGainFactor * (relSpeed + c) + tuning.pumpGainFlat) * tuning.pumpBoost * energyK * (DropKnee ? 0.7f : 1f);
-                    pumpsThisDescent++; PumpsThisRide++; PumpFlash = 1f;
+                    pumpsThisDescent++; PumpFlash = 1f;
                     Event("Pump");
                 }
                 else relVel *= tuning.pumpPenalty;

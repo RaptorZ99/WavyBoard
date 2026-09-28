@@ -121,7 +121,6 @@ namespace WavyBoard.Ocean
             WaterSample s = default;
             s.WaveId = -1;
             s.BreakPhase = -1f;
-            s.SeabedDepth = 200f;
             s.TravelDir = new float3(0f, 0f, 1f);
             s.CrestDir = new float3(1f, 0f, 0f);
             var ocean = OceanSurface.Instance;
@@ -146,14 +145,5 @@ namespace WavyBoard.Ocean
         /// <summary>True when the world point is under water: inside a surf wave (the inside of a tube is air), or under
         /// the ambient sea. Same precedence as <see cref="Sample(float3, double)"/>.</summary>
         public bool IsInsideWater(float3 worldPos, double time) => ProbeOne(worldPos, time).inside;
-
-        /// <summary>Ambient-only height (fast path for camera / VFX).</summary>
-        public float AmbientHeight(float3 worldPos)
-        {
-            var ocean = OceanSurface.Instance;
-            return ocean != null ? ocean.Height(worldPos, Time.timeAsDouble) : 0f;
-        }
-
-        public float HeightAt(float3 worldPos, float time) => Sample(worldPos, time).Height;
     }
 }

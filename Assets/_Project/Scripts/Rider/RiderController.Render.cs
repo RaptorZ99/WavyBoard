@@ -69,7 +69,6 @@ namespace WavyBoard.Rider
         {
             transform.position = renderPos;
             if (visualRoot != null) visualRoot.rotation = visualRot;
-            if (cameraTarget != null) cameraTarget.SetPositionAndRotation(renderPos + Vector3.up * 0.35f, Quaternion.Euler(0f, yaw, 0f));
         }
 
         /// <summary>Puts the drawn pose exactly on the physics pose (spawn, reset).</summary>
