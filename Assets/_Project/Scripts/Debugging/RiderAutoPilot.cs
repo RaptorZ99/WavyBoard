@@ -1,10 +1,10 @@
-using Biscotte.InputSys;
-using Biscotte.Ocean;
-using Biscotte.Rider;
-using Biscotte.Wave;
+using WavyBoard.InputSys;
+using WavyBoard.Ocean;
+using WavyBoard.Rider;
+using WavyBoard.Wave;
 using UnityEngine;
 
-namespace Biscotte.Debugging
+namespace WavyBoard.Debugging
 {
     /// <summary>
     /// Scripted rider for automated tests and demo captures: paddles for the next wave, takes off,
@@ -83,7 +83,7 @@ namespace Biscotte.Debugging
                     if (Time.time >= nextPump) { input.InjectPump(); nextPump = Time.time + pumpInterval; }
                     if (doAirs && s.CrestDistance < 3f && s.BreakPhase > 0.9f && s.BreakPhase < 1.8f && rider.Speed > 6f && Time.time - lastAirTime > 4f)
                     {
-                        input.InjectFlick(new Biscotte.Tricks.FlickResult { flick = Biscotte.Tricks.Flick.Up, charge = 0.5f, snap = 0.8f, sign = 1f });
+                        input.InjectFlick(new WavyBoard.Tricks.FlickResult { flick = WavyBoard.Tricks.Flick.Up, charge = 0.5f, snap = 0.8f, sign = 1f });
                         lastAirTime = Time.time;
                     }
                     break;

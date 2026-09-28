@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Biscotte.Tricks
+namespace WavyBoard.Tricks
 {
     /// <summary>
     /// Plays the manoeuvres the rider starts. Every rotation runs as its own track with a smoothstep profile

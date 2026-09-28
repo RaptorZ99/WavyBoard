@@ -1,13 +1,13 @@
-using Biscotte.InputSys;
-using Biscotte.Rider;
-using Biscotte.Wave;
+using WavyBoard.InputSys;
+using WavyBoard.Rider;
+using WavyBoard.Wave;
 using UnityEngine;
 
-namespace Biscotte.Debugging
+namespace WavyBoard.Debugging
 {
     /// <summary>
     /// Developer panel, hidden by default: F1 (or Select) toggles it, N (or D-pad up) brings a wave in.
-    /// Numbers only — the player-facing HUD is <see cref="Biscotte.UI.GameHud"/>, and the two never overlap.
+    /// Numbers only — the player-facing HUD is <see cref="WavyBoard.UI.GameHud"/>, and the two never overlap.
     /// </summary>
     public class DebugOverlay : MonoBehaviour
     {

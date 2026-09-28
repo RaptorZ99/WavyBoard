@@ -3,7 +3,7 @@ Usage: python polyhaven_dl.py <out_dir> <spec> [--dry]
  spec lines: type:id:res[:fmt]   e.g. hdris:secluded_beach:4k:hdr | textures:coast_sand_02:2k:jpg | models:coast_rocks_03:2k:gltf
 """
 import sys, json, os, urllib.request, hashlib
-UA={"User-Agent":"Mozilla/5.0 (BiscotteSurf asset fetch)"}
+UA={"User-Agent":"Mozilla/5.0 (WavyBoardSurf asset fetch)"}
 def _open(url):
     return urllib.request.urlopen(urllib.request.Request(url, headers=UA))
 def _retrieve(url, dest):

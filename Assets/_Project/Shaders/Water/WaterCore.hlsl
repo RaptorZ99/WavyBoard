@@ -1,7 +1,7 @@
-#ifndef BISCOTTE_WATER_CORE_INCLUDED
-#define BISCOTTE_WATER_CORE_INCLUDED
+#ifndef WAVYBOARD_WATER_CORE_INCLUDED
+#define WAVYBOARD_WATER_CORE_INCLUDED
 
-// Shared by every pass of Biscotte/Water: the ambient sea (Gerstner swell, same formulas as Scripts/Ocean/OceanSwell.cs)
+// Shared by every pass of WavyBoard/Water: the ambient sea (Gerstner swell, same formulas as Scripts/Ocean/OceanSwell.cs)
 // and the vertex transform of the two water meshes. The ambient ocean mesh and the surf wave mesh go through the SAME
 // displacement and the SAME shading, so where the surf wave flattens out at its borders the two surfaces are one.
 

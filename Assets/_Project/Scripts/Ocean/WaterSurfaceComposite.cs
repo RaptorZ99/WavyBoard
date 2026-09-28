@@ -1,9 +1,9 @@
 using System.Collections.Generic;
-using Biscotte.Wave;
+using WavyBoard.Wave;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace Biscotte.Ocean
+namespace WavyBoard.Ocean
 {
     /// <summary>Single entry point to query the water: surf waves take precedence inside their footprint, the ambient sea elsewhere.</summary>
     [DefaultExecutionOrder(-200)]

@@ -1,11 +1,11 @@
-using Biscotte.InputSys;
-using Biscotte.Ocean;
-using Biscotte.Rider;
+using WavyBoard.InputSys;
+using WavyBoard.Ocean;
+using WavyBoard.Rider;
 using Unity.Cinemachine;
 using Unity.Cinemachine.TargetTracking;
 using UnityEngine;
 
-namespace Biscotte.CameraRig
+namespace WavyBoard.CameraRig
 {
     /// <summary>Builds and drives the Cinemachine 3 rig: ride / tube / lineup cameras, speed FOV, dutch on carve (spec §9).</summary>
     public class CameraDirector : MonoBehaviour

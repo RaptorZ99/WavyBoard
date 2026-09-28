@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Biscotte.Rider
+namespace WavyBoard.Rider
 {
     /// <summary>Inputs of the procedural pose solver (plain data so editor tools can preview poses without a running rider).</summary>
     public struct PoseInput

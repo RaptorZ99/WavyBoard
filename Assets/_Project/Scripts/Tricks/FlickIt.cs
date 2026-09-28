@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Biscotte.Tricks
+namespace WavyBoard.Tricks
 {
     /// <summary>What the right stick just did with the board.</summary>
     public enum Flick

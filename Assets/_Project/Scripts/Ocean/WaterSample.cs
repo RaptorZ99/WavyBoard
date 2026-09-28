@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Unity.Mathematics;
 
-namespace Biscotte.Ocean
+namespace WavyBoard.Ocean
 {
     /// <summary>Everything gameplay needs to know about the water at one point. See spec §3.4.</summary>
     public struct WaterSample
@@ -31,6 +31,6 @@ namespace Biscotte.Ocean
     public interface IWaterSurface
     {
         WaterSample Sample(float3 worldPos, float time);
-        IReadOnlyList<Biscotte.Wave.SurfWave> ActiveSurfWaves { get; }
+        IReadOnlyList<WavyBoard.Wave.SurfWave> ActiveSurfWaves { get; }
     }
 }

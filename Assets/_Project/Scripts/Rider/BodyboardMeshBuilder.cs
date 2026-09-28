@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Biscotte.Rider
+namespace WavyBoard.Rider
 {
     /// <summary>Procedural placeholder bodyboard (rounded nose, crescent tail, thick rails). Replaced by the Blender model via BoardSpec.boardModel.</summary>
     public static class BodyboardMeshBuilder

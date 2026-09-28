@@ -1,7 +1,7 @@
-using Biscotte.Rider;
+using WavyBoard.Rider;
 using UnityEngine;
 
-namespace Biscotte.Audio
+namespace WavyBoard.Audio
 {
     /// <summary>Ambience loop, procedural board hiss and whitewater rumble, splash one-shots, tube low-pass (spec §14 v1).</summary>
     public class AudioDirector : MonoBehaviour

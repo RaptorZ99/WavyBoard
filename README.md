@@ -1,4 +1,4 @@
-# Biscotte — jeu de bodyboard (Unity 6.6, URP)
+# WavyBoard — jeu de bodyboard (Unity 6.6, URP)
 
 Prototype jouable : océan, vagues qui déferlent (tube), rider en bodyboard (rame, take-off, ride, pump, air, wipeout), caméra dynamique.
 Clavier/souris et manette (PS5 DualSense ou Xbox).
@@ -6,7 +6,7 @@ Clavier/souris et manette (PS5 DualSense ou Xbox).
 ## Ouvrir le projet
 
 1. Installer **Git LFS** (https://git-lfs.com) puis `git lfs install` **avant** de cloner (les textures/sons/FBX sont en LFS).
-2. `git clone https://github.com/ForgeOfficial/Biscotte.git`
+2. `git clone https://github.com/ForgeOfficial/WavyBoard.git`
 3. Installer **Unity 6000.6.0f1** (Unity Hub > Installs > 6000.6.0f1, module *Windows Build Support (Mono)* suffit).
 4. Ouvrir le dossier du projet dans Unity Hub. Le premier import prend quelques minutes.
 5. (Optionnel, décor) Télécharger les scans Poly Haven (~850 Mo, CC0), exclus du dépôt :
@@ -35,8 +35,8 @@ Attends la série (une vague toutes les ~12 s, séries toutes les ~40 s), rame v
 
 ## Structure
 
-- `Docs/BISCOTTE_SPEC.md` : spécification complète (design, architecture, plan). `Docs/AGENT_PLAYBOOK.md` : pilotage par agents IA.
-- `Assets/_Project` : code du jeu (`Biscotte.Runtime`), shader d'eau, scènes, données.
+- `Docs/WAVYBOARD_SPEC.md` : spécification complète (design, architecture, plan). `Docs/AGENT_PLAYBOOK.md` : pilotage par agents IA.
+- `Assets/_Project` : code du jeu (`WavyBoard.Runtime`), shader d'eau, scènes, données.
 - `Assets/ThirdParty` : contenus gratuits (Storm Breakers CC0, Kenney CC0, Quaternius CC0, Poly Haven CC0, polices OFL) — voir `Docs/ASSETS_MANIFEST.md`.
 - `Tools/` : scripts de construction de scène (`unity command run_script`) et de téléchargement.
 

@@ -154,7 +154,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4444a145412d87243a999aa606d41599, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Biscotte.Runtime::Biscotte.Audio.AudioDirector
+  m_EditorClassIdentifier: WavyBoard.Runtime::WavyBoard.Audio.AudioDirector
   rider: {fileID: 793071093}
   ambienceLoop: {fileID: 8300000, guid: 1cfff517dcedc32408d24c424230d7f8, type: 3}
   splashClips:
@@ -174,7 +174,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 155fe672eb65e6040b5e5213690ff47d, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Biscotte.Runtime::Biscotte.Debugging.DebugOverlay
+  m_EditorClassIdentifier: WavyBoard.Runtime::WavyBoard.Debugging.DebugOverlay
   rider: {fileID: 793071093}
   scheduler: {fileID: 94001683}
   visible: 0
@@ -189,7 +189,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 226050d4023236446bded1ce2a26bbed, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Biscotte.Runtime::Biscotte.CameraRig.CameraDirector
+  m_EditorClassIdentifier: WavyBoard.Runtime::WavyBoard.CameraRig.CameraDirector
   rider: {fileID: 793071093}
   cameraTarget: {fileID: 793071094}
 --- !u!114 &94001683
@@ -203,7 +203,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a4a8d41ce6c7c0e4b8bd367246aa4fa0, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Biscotte.Runtime::Biscotte.Wave.WaveSetScheduler
+  m_EditorClassIdentifier: WavyBoard.Runtime::WavyBoard.Wave.WaveSetScheduler
   spot: {fileID: 1921486755}
   wavePrefab: {fileID: 4680083090893444784, guid: fdbf8f8359943474fa5e4027f49bc903, type: 3}
   poolSize: 4
@@ -240,7 +240,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 966844f7a23e2674180ffb8eaf2169f2, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Biscotte.Runtime::Biscotte.InputSys.InputRouter
+  m_EditorClassIdentifier: WavyBoard.Runtime::WavyBoard.InputSys.InputRouter
   actions: {fileID: 0}
   flickBuffer: 0.2
   mouseStickPixels: 220
@@ -261,7 +261,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dfad6382b032a9d41a3b9108b165bce0, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Biscotte.Runtime::Biscotte.Ocean.WaterSurfaceComposite
+  m_EditorClassIdentifier: WavyBoard.Runtime::WavyBoard.Ocean.WaterSurfaceComposite
 --- !u!114 &94001687
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -273,7 +273,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 663102630}
   m_Name: 
-  m_EditorClassIdentifier: Biscotte.Runtime::Biscotte.Core.WaveClockDriver
+  m_EditorClassIdentifier: WavyBoard.Runtime::WavyBoard.Core.WaveClockDriver
 --- !u!4 &94001688
 Transform:
   m_ObjectHideFlags: 0
@@ -300,7 +300,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b8fcb815643bc408f821df1172bf39bb, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Biscotte.Runtime::Biscotte.UI.GameHud
+  m_EditorClassIdentifier: WavyBoard.Runtime::WavyBoard.UI.GameHud
   rider: {fileID: 793071093}
   scorer: {fileID: 793071095}
   showControls: 1
@@ -542,7 +542,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 500bd961abf70e94188e2e14f2db27fc, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Biscotte.Runtime::Biscotte.CameraRig.OceanReflectionProbeDriver
+  m_EditorClassIdentifier: WavyBoard.Runtime::WavyBoard.CameraRig.OceanReflectionProbeDriver
   refreshInterval: 2
   height: 6
 --- !u!4 &630909410
@@ -573,8 +573,8 @@ MonoScript:
   m_Type: 0
   m_ExecutionOrder: 0
   m_ClassName: WaveClockDriver
-  m_Namespace: Biscotte.Core
-  m_AssemblyName: Biscotte.Runtime
+  m_Namespace: WavyBoard.Core
+  m_AssemblyName: WavyBoard.Runtime
 --- !u!1001 &793071092
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -652,7 +652,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d9755b4bc21397e4d991a72ebf732c75, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Biscotte.Runtime::Biscotte.Rider.RiderController
+  m_EditorClassIdentifier: WavyBoard.Runtime::WavyBoard.Rider.RiderController
 --- !u!4 &793071094 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3115280968747338250, guid: 3b024e9de40d2534ca2707a059913461, type: 3}
@@ -668,7 +668,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 373393ea0b233b343b4ace41b048554e, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Biscotte.Runtime::Biscotte.Scoring.RideScorer
+  m_EditorClassIdentifier: WavyBoard.Runtime::WavyBoard.Scoring.RideScorer
 --- !u!1001 &827097871
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -926,7 +926,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c1eaa5bd347da43e3848c4e4dc3093df, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Biscotte.Runtime::Biscotte.Ocean.OceanSurface
+  m_EditorClassIdentifier: WavyBoard.Runtime::WavyBoard.Ocean.OceanSurface
   components:
   - wavelength: 78
     amplitude: 0.32
@@ -1066,7 +1066,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: de3f82c32d53b1245bca2ec81fb79ae1, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Biscotte.Runtime::Biscotte.Wave.SurfSpotConfig
+  m_EditorClassIdentifier: WavyBoard.Runtime::WavyBoard.Wave.SurfSpotConfig
   travelYawDeg: 0
   height: 3.4
   celerity: 7.5

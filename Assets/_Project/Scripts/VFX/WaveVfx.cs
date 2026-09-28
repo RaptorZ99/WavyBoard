@@ -1,7 +1,7 @@
-using Biscotte.Wave;
+using WavyBoard.Wave;
 using UnityEngine;
 
-namespace Biscotte.VFX
+namespace WavyBoard.VFX
 {
     /// <summary>
     /// The white water that geometry cannot carry, emitted along the curl: spray blown back off the crest as it

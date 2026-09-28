@@ -2,7 +2,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace Biscotte.Ocean
+namespace WavyBoard.Ocean
 {
     /// <summary>
     /// The ambient sea: owns the swell (<see cref="SwellParams"/>), publishes it to the water shader every frame, and

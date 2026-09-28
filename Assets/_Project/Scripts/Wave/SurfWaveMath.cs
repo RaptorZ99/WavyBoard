@@ -1,7 +1,7 @@
 using Unity.Collections;
 using Unity.Mathematics;
 
-namespace Biscotte.Wave
+namespace WavyBoard.Wave
 {
     /// <summary>Blittable description of one surf wave. Times are wave-relative (0 at spawn), distances in metres.</summary>
     public struct SurfWaveParams

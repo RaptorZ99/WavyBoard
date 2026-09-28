@@ -1,8 +1,8 @@
 using System.Collections.Generic;
-using Biscotte.Rider;
+using WavyBoard.Rider;
 using UnityEngine;
 
-namespace Biscotte.Scoring
+namespace WavyBoard.Scoring
 {
     /// <summary>Names and scores tricks, tube time and waves (spec §2.6-2.7, simplified v1).</summary>
     public class RideScorer : MonoBehaviour

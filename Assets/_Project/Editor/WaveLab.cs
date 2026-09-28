@@ -1,17 +1,17 @@
-using Biscotte.Ocean;
-using Biscotte.Wave;
+using WavyBoard.Ocean;
+using WavyBoard.Wave;
 using UnityEditor;
 using UnityEngine;
 
-namespace Biscotte.EditorTools
+namespace WavyBoard.EditorTools
 {
     /// <summary>
     /// Edit-mode wave photography: builds one surf wave at a chosen moment of its peel in the open scene and parks the
     /// main camera on a named shot, so `unity command capture_game_view` shows it without entering Play mode.
     ///
-    ///   unity command eval --code 'return Biscotte.EditorTools.WaveLab.Shot("channel", 40f, 1.2f);'
+    ///   unity command eval --code 'return WavyBoard.EditorTools.WaveLab.Shot("channel", 40f, 1.2f);'
     ///   unity command capture_game_view --save_path Assets/Screenshots~/wave_channel.png
-    ///   unity command eval --code 'return Biscotte.EditorTools.WaveLab.Cleanup();'
+    ///   unity command eval --code 'return WavyBoard.EditorTools.WaveLab.Cleanup();'
     ///
     /// Shots: channel (side view from the channel, like the classic Teahupoo photo), tube (inside the barrel, looking
     /// out), mouth (in front of the tube, looking in), back (from the sea side), top (aerial of the peel), rider (the
@@ -22,9 +22,9 @@ namespace Biscotte.EditorTools
         const string kName = "WaveLab";
         const string kPrefab = "Assets/_Project/Prefabs/SurfWave.prefab";
 
-        [MenuItem("Biscotte/Wave Lab/Channel shot")] static void MenuChannel() => Debug.Log(Shot("channel", 40f, 1.2f));
-        [MenuItem("Biscotte/Wave Lab/Tube shot")] static void MenuTube() => Debug.Log(Shot("tube", 40f, 1.2f));
-        [MenuItem("Biscotte/Wave Lab/Clean up")] static void MenuCleanup() => Debug.Log(Cleanup());
+        [MenuItem("WavyBoard/Wave Lab/Channel shot")] static void MenuChannel() => Debug.Log(Shot("channel", 40f, 1.2f));
+        [MenuItem("WavyBoard/Wave Lab/Tube shot")] static void MenuTube() => Debug.Log(Shot("tube", 40f, 1.2f));
+        [MenuItem("WavyBoard/Wave Lab/Clean up")] static void MenuCleanup() => Debug.Log(Cleanup());
 
         /// <summary>Builds the wave with its curl at crest coordinate <paramref name="peelS"/> and frames the shot.</summary>
         public static string Shot(string view, float peelS, float heightScale, float swellTime = 12f)

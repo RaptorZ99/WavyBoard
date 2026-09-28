@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Biscotte.Core
+namespace WavyBoard.Core
 {
     /// <summary>Single time source for all water/wave math. RenderTime for meshes/VFX, FixedTime for physics.</summary>
     public static class WaveClock

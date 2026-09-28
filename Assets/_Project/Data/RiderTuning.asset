@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 94d3a61c88b19d249966d28305099ba9, type: 3}
   m_Name: RiderTuning
-  m_EditorClassIdentifier: Biscotte.Runtime::Biscotte.Rider.RiderTuning
+  m_EditorClassIdentifier: WavyBoard.Runtime::WavyBoard.Rider.RiderTuning
   paddleSpeed: 2
   paddleSprintSpeed: 2.9
   paddleTurnRate: 100

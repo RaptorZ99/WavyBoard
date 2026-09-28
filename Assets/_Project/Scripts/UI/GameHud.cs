@@ -1,12 +1,12 @@
 using System.Text;
-using Biscotte.InputSys;
-using Biscotte.Rider;
-using Biscotte.Scoring;
-using Biscotte.Tricks;
+using WavyBoard.InputSys;
+using WavyBoard.Rider;
+using WavyBoard.Scoring;
+using WavyBoard.Tricks;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace Biscotte.UI
+namespace WavyBoard.UI
 {
     /// <summary>
     /// The whole player-facing HUD, in one place: speed and grip bottom left, the board stick's own read-out beside

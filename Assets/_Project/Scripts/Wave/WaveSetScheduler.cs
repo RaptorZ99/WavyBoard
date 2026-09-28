@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-namespace Biscotte.Wave
+namespace WavyBoard.Wave
 {
     /// <summary>
     /// Spawns sets of surf waves from a pool. Every set has its own size (small, medium, big, bomb), the waves of a set

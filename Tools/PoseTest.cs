@@ -1,16 +1,16 @@
-using Biscotte.Rider;
+using WavyBoard.Rider;
 using UnityEditor;
 using UnityEngine;
 
-namespace Biscotte.Tools
+namespace WavyBoard.Tools
 {
     /// <summary>
     /// Edit-mode preview of the procedural rider poses: a row of mannequins (each on a bodyboard) posed with RiderPose
     /// for several states, camera parked in front. Run Setup, then `capture_game_view`, then Cleanup.
-    ///   unity command run_script --file Tools/PoseTest.cs --entry Biscotte.Tools.PoseTest.Setup --timeout_ms 120000 --timeout 200
+    ///   unity command run_script --file Tools/PoseTest.cs --entry WavyBoard.Tools.PoseTest.Setup --timeout_ms 120000 --timeout 200
     ///   unity command capture_game_view --save_path Screenshots~/poses.png
-    ///   unity command run_script --file Tools/PoseTest.cs --entry Biscotte.Tools.PoseTest.SetupSide  (side view)
-    ///   unity command run_script --file Tools/PoseTest.cs --entry Biscotte.Tools.PoseTest.Cleanup
+    ///   unity command run_script --file Tools/PoseTest.cs --entry WavyBoard.Tools.PoseTest.SetupSide  (side view)
+    ///   unity command run_script --file Tools/PoseTest.cs --entry WavyBoard.Tools.PoseTest.Cleanup
     /// </summary>
     public static class PoseTest
     {

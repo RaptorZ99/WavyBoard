@@ -1,4 +1,4 @@
-Shader "Biscotte/Water"
+Shader "WavyBoard/Water"
 {
     // One water shader for the whole sea: the ambient ocean mesh (OceanSurface) and every surf wave mesh (SurfWave,
     // keyword _WAVE_MESH). Opaque: the translucency of the lip and of the upper face is scattering light, not

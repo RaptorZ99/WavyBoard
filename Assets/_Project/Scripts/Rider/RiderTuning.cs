@@ -1,8 +1,8 @@
 using UnityEngine;
 
-namespace Biscotte.Rider
+namespace WavyBoard.Rider
 {
-    [CreateAssetMenu(menuName = "Biscotte/Rider Tuning", fileName = "RiderTuning")]
+    [CreateAssetMenu(menuName = "WavyBoard/Rider Tuning", fileName = "RiderTuning")]
     public class RiderTuning : ScriptableObject
     {
         [Header("Paddle")]

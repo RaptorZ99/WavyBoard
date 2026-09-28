@@ -1,5 +1,5 @@
 using UnityEditor;
-namespace Biscotte.Tools
+namespace WavyBoard.Tools
 {
     public static class RefreshAssets
     {

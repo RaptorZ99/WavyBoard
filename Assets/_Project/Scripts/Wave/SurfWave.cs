@@ -1,11 +1,11 @@
-using Biscotte.Ocean;
+using WavyBoard.Ocean;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace Biscotte.Wave
+namespace WavyBoard.Wave
 {
     /// <summary>
     /// One breaking wave. The mesh is a grid of cross-sections (<see cref="WaveProfile"/>) rebuilt every frame by two

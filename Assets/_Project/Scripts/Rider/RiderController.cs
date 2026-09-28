@@ -1,11 +1,11 @@
-using Biscotte.InputSys;
-using Biscotte.Ocean;
-using Biscotte.Tricks;
-using Biscotte.Wave;
+using WavyBoard.InputSys;
+using WavyBoard.Ocean;
+using WavyBoard.Tricks;
+using WavyBoard.Wave;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace Biscotte.Rider
+namespace WavyBoard.Rider
 {
     public enum RiderState { Paddle, DuckDive, TakeOff, Ride, Air, Wipeout, KickOut }
 

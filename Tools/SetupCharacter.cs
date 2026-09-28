@@ -1,10 +1,10 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace Biscotte.Tools
+namespace WavyBoard.Tools
 {
     /// <summary>One-off: switch the Quaternius mannequin + animation library to Humanoid rigs and report avatar validity.
-    /// Run: unity command run_script --file Tools/SetupCharacter.cs --entry Biscotte.Tools.SetupCharacter.Main --timeout_ms 300000 --timeout 400</summary>
+    /// Run: unity command run_script --file Tools/SetupCharacter.cs --entry WavyBoard.Tools.SetupCharacter.Main --timeout_ms 300000 --timeout 400</summary>
     public static class SetupCharacter
     {
         public const string MannequinPath = "Assets/ThirdParty/Quaternius/UniversalAnimationLibrary2/Mannequin_F/Mannequin_F.fbx";

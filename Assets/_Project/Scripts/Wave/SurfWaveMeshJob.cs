@@ -4,7 +4,7 @@ using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 
-namespace Biscotte.Wave
+namespace WavyBoard.Wave
 {
     [StructLayout(LayoutKind.Sequential)]
     public struct SurfVertex

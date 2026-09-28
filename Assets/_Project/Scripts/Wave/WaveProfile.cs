@@ -1,7 +1,7 @@
 using Unity.Collections;
 using Unity.Mathematics;
 
-namespace Biscotte.Wave
+namespace WavyBoard.Wave
 {
     /// <summary>
     /// Cross-section of the surf wave: ONE continuous curve from the flat water in front of the wave, up the face, round

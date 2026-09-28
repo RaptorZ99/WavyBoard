@@ -1,4 +1,4 @@
-# BISCOTTE — Spécification d'implémentation (source de vérité)
+# WAVYBOARD — Spécification d'implémentation (source de vérité)
 
 Version 1.0 — 2026-09-08 — Unity 6000.6.0f1, URP 17.6.0, Windows 64 bits (clavier/souris + manette PS5 DualSense).
 Documents compagnons : `Docs/AGENT_PLAYBOOK.md` (mécanique CLI), `Docs/ASSETS_MANIFEST.md` (assets), `Docs/USER_ACTIONS.md` (actions humaines), `Docs/RESEARCH_SOURCES.md` (faits et sources), `Docs/research/` (extraits).
@@ -7,7 +7,7 @@ Documents compagnons : `Docs/AGENT_PLAYBOOK.md` (mécanique CLI), `Docs/ASSETS_M
 
 ## 0. Résumé exécutif
 
-**Biscotte** est un jeu de **bodyboard** en 3D, arcade-sim : le joueur rame dans le lineup, lit les séries, choisit sa vague, décolle en position allongée (prone), génère de la vitesse en pompant sur la face, carve, rentre dans le tube, s'envoie en l'air depuis la lèvre pour des **El Rollo, ARS, backflips, inverts, 360** et enchaîne des manœuvres notées comme en compétition (section critique, engagement, variété, fluidité). Les conditions (taille de houle, période, direction, vent, marée) changent la forme des vagues sur trois spots (beach break, slab de récif, pointe).
+**WavyBoard** est un jeu de **bodyboard** en 3D, arcade-sim : le joueur rame dans le lineup, lit les séries, choisit sa vague, décolle en position allongée (prone), génère de la vitesse en pompant sur la face, carve, rentre dans le tube, s'envoie en l'air depuis la lèvre pour des **El Rollo, ARS, backflips, inverts, 360** et enchaîne des manœuvres notées comme en compétition (section critique, engagement, variété, fluidité). Les conditions (taille de houle, période, direction, vent, marée) changent la forme des vagues sur trois spots (beach break, slab de récif, pointe).
 
 Piliers : **(1) la vague est le personnage principal** (lisible, prévisible, belle) ; **(2) le feel** (vitesse, rail, pumping, tube) ; **(3) l'expression** (tricks, style, score) ; **(4) fluide et beau sur PC modeste** (60 fps 1080p sur GPU intégré, 120+ fps sur GPU dédié).
 
@@ -46,7 +46,7 @@ Le plan (§19) est découpé en 9 phases (P0→P8) avec tâches identifiées, cr
 - Direction artistique **réaliste stylisée** : eau et lumière réalistes (HDRI, PBR), personnage stylisé-propre (mannequin Quaternius/Universal Base Characters), UI moderne épurée (Kenney UI + polices Bebas Neue/Righteous/Nunito).
 - Vue **troisième personne** dynamique (caméra derrière/latérale selon la trajectoire) ; pas de vue FPS en v1.
 - Solo, hors ligne. Pas de multijoueur, pas de sauvegarde cloud.
-- Nom de code « Biscotte » conservé pour la v1.
+- Nom de code « WavyBoard » conservé pour la v1.
 
 ---
 
@@ -75,7 +75,7 @@ Boucle **méta** (v1 minimale) : meilleurs scores par spot/conditions, défis (t
 ### 2.3 Spots (contenu v1)
 | Spot | Type | Vague | Difficulté | Spécificités |
 |---|---|---|---|---|
-| **Baie Biscotte** | Beach break, fond sableux | A-frame gauche/droite, 1–2 m, peel angle 55–70°, sections molles + une section tube courte | Débutant | Apprentissage, vagues fréquentes, mousses faciles à duck-diver |
+| **Baie WavyBoard** | Beach break, fond sableux | A-frame gauche/droite, 1–2 m, peel angle 55–70°, sections molles + une section tube courte | Débutant | Apprentissage, vagues fréquentes, mousses faciles à duck-diver |
 | **La Dalle** | Slab de récif | Droite creuse, 1,5–3 m, peel angle 35–50°, intensité de tube élevée (vortex ratio 2,5–3), ledge | Expert | Tubes longs, lèvre épaisse, wipeouts punitifs (rochers = respawn) |
 | **Pointe Longue** | Point break | Gauche longue 200 m, 1–2,5 m, sections alternées (mur rapide → rampe → épaule) | Intermédiaire | Cutbacks, airs sur rampe, enchaînements |
 | **Le Shorebreak** (P7, si temps) | Shore break (wedge) | Vagues courtes très creuses 1–2 m qui cassent sur le sable | Expert | Signature bodyboard : tubes ultra courts, inverts/backflips |
@@ -184,7 +184,7 @@ Pas de multijoueur, pas de personnalisation poussée, pas de carrière scénaris
 - **Composition** : `WaterSample` = ambiant (OceanMath, port Burst de Storm Breakers) + Σ SurfWaves actives (chaque SurfWave a une empreinte 2D ; à l'intérieur, la SurfWave **remplace** l'ambiant avec fondu sur 6 m aux bords).
 
 ### 3.2 Modules, namespaces, responsabilités
-| Namespace (`Biscotte.*`) | Classes clés | Responsabilité |
+| Namespace (`WavyBoard.*`) | Classes clés | Responsabilité |
 |---|---|---|
 | `Core` | `GameBootstrap`, `GameStateMachine`, `WaveClock`, `ServiceRegistry`, `SaveSystem`, `Localization`, `DebugSettings` | Cycle de vie, services, temps, sauvegarde JSON, localisation |
 | `Ocean` | `OceanAmbient` (wrapper de `StormBreakers.OceanController`), `OceanMath` (port Burst de `Ocean.OceanDeformation`), `WaterSurfaceComposite : IWaterSurface`, `WaterSample` | Océan ambiant et point d'entrée unique d'échantillonnage |
@@ -194,7 +194,7 @@ Pas de multijoueur, pas de personnalisation poussée, pas de carrière scénaris
 | `Scoring` | `WaveScorer`, `JudgePanel`, `SessionScore`, `ScoreEvents` | Notation |
 | `Session` | `SessionManager`, `HeatRules`, `FreeSurfRules`, `ChallengeTracker`, `ResultsData` | Modes |
 | `CameraRig` | `CameraDirector`, `RideCameraTuning`, `CameraFX` | Cinemachine 3 |
-| `InputSys` | `BiscotteActions` (généré), `InputRouter`, `GlyphProvider`, `Haptics`, `RebindService` | Entrées, glyphes, vibrations |
+| `InputSys` | `WavyBoardActions` (généré), `InputRouter`, `GlyphProvider`, `Haptics`, `RebindService` | Entrées, glyphes, vibrations |
 | `UI` | `HudController`, `MenuFlow`, `OptionsController`, `ScorePopup`, `ConditionsEditorView`, `ResultsView` | UI Toolkit |
 | `Audio` | `AudioDirector`, `OceanAudio`, `RiderAudio`, `UiAudio`, `MixerSnapshots` | Audio |
 | `VFX` | `WaveVfxBinder`, `RiderVfx`, `VfxBudget` | Liaison VFX Graph ↔ données de vague |
@@ -204,14 +204,14 @@ Pas de multijoueur, pas de personnalisation poussée, pas de carrière scénaris
 ### 3.3 Dossiers
 ```
 Assets/_Project/
-  Scripts/            (asmdef Biscotte.Runtime) — un sous-dossier par namespace
-  Editor/             (asmdef Biscotte.Editor)
-  Tests/EditMode/     (asmdef Biscotte.Tests.EditMode)   Tests/PlayMode/ (Biscotte.Tests.PlayMode)
+  Scripts/            (asmdef WavyBoard.Runtime) — un sous-dossier par namespace
+  Editor/             (asmdef WavyBoard.Editor)
+  Tests/EditMode/     (asmdef WavyBoard.Tests.EditMode)   Tests/PlayMode/ (WavyBoard.Tests.PlayMode)
   Shaders/            SurfWaveWater.shadergraph, Foam.shadersubgraph, WaveSSS.shadersubgraph, Underwater.shadergraph, HLSL/ (SurfWaveMath.hlsl si port GPU)
   VFX/                LipSpray.vfx, ImpactFoam.vfx, FaceFoam.vfx, RiderSpray.vfx, Splash.vfx, Whitewater.vfx
   Prefabs/            Rider.prefab, Board_*.prefab, SurfWave.prefab, Ocean.prefab, Cameras.prefab, Managers.prefab
   Scenes/             Boot.unity, MainMenu.unity, Playground.unity (dev), Spot_Baie.unity, Spot_Dalle.unity, Spot_Pointe.unity (+ _Env additives)
-  Settings/           BuildProfiles/, Quality/, Volumes/, Input/BiscotteActions.inputactions, Audio/BiscotteMixer.mixer
+  Settings/           BuildProfiles/, Quality/, Volumes/, Input/WavyBoardActions.inputactions, Audio/WavyBoardMixer.mixer
   Data/               Spots/, Conditions/, Tuning/, Tricks/, Boards/, Localization/
   Art/                Materials/, Textures/, Models/, Animations/, Characters/, Terrain/
   Audio/              Ambience/, Rider/, UI/
@@ -225,7 +225,7 @@ Docs/                 cette spec et compagnons
 
 ### 3.4 Interfaces et structures partagées (contrat)
 ```csharp
-namespace Biscotte.Ocean
+namespace WavyBoard.Ocean
 {
     public struct WaterSample
     {
@@ -282,7 +282,7 @@ static void ResetStatics() { StormBreakers.Ocean.ConstructStaticData(); /* + nos
 et vérifier que `OceanController` se ré-exécute à chaque Play (il le fait dans `Start`). Consigner dans `PATCHES.txt` si une modification de SB est nécessaire.
 
 ### 4.3 Résultat du smoke test (2026-09-08)
-Import sur 6000.6 : compilation OK (asmdef `StormBreakers.Runtime`, 33 types), 8 Shader Graphs sans erreur, 3 VFX importés, aucun log d'erreur à l'import. La scène `Epic Surfing` a été ouverte et jouée (capture `Build/shots/smoke_stormbreakers_surfing.png`) : océan, houle et déferlantes rendus correctement dans URP 17.6. Seules exceptions : les **scripts d'exemple** de SB (`CameraController`, `InputRotation`, `GameControl`) utilisent l'ancien `UnityEngine.Input` alors que le projet est en « Input System package » seul → `InvalidOperationException` dans les scènes d'exemple uniquement (non utilisées par Biscotte ; consigné dans `PATCHES.txt`). Voir P1 pour les vérifications visuelles restantes (ripples, reflets, particules avec nos HDRI).
+Import sur 6000.6 : compilation OK (asmdef `StormBreakers.Runtime`, 33 types), 8 Shader Graphs sans erreur, 3 VFX importés, aucun log d'erreur à l'import. La scène `Epic Surfing` a été ouverte et jouée (capture `Build/shots/smoke_stormbreakers_surfing.png`) : océan, houle et déferlantes rendus correctement dans URP 17.6. Seules exceptions : les **scripts d'exemple** de SB (`CameraController`, `InputRotation`, `GameControl`) utilisent l'ancien `UnityEngine.Input` alors que le projet est en « Input System package » seul → `InvalidOperationException` dans les scènes d'exemple uniquement (non utilisées par WavyBoard ; consigné dans `PATCHES.txt`). Voir P1 pour les vérifications visuelles restantes (ripples, reflets, particules avec nos HDRI).
 
 ---
 
@@ -466,7 +466,7 @@ Tous les coefficients sont dans `RiderTuning` (SO) ; `BoardSpec` (SO) module `C_
 ---
 
 ## 11. Input (Input System 1.20)
-- Asset `Assets/_Project/Settings/Input/BiscotteActions.inputactions` déclaré **Project-wide** (`Edit > Project Settings > Input System Package > Project-wide Actions`), classe C# générée `BiscotteActions`. Le fichier `Assets/InputSystem_Actions.inputactions` du template est supprimé.
+- Asset `Assets/_Project/Settings/Input/WavyBoardActions.inputactions` déclaré **Project-wide** (`Edit > Project Settings > Input System Package > Project-wide Actions`), classe C# générée `WavyBoardActions`. Le fichier `Assets/InputSystem_Actions.inputactions` du template est supprimé.
 - **Action maps** : `Surf` (Move: Vector2 ; Look: Vector2 ; Pump ; Stall ; Pop ; Rollo ; Grab ; Stance ; DuckDiveBail ; Reset ; Pause ; AirRotate: Vector2 (stick droit / souris delta) ; CameraNudge: Vector2), `UI` (Navigate, Submit, Cancel, Point, Click, ScrollWheel, TabLeft, TabRight), `Debug` (ToggleOverlay, SlowMo, TeleportPeak, NextWave).
 - **Control schemes** : `KeyboardMouse` (requiert Keyboard + Mouse) et `Gamepad` (requiert Gamepad). Bindings gamepad génériques (`<Gamepad>/buttonSouth`…) → couvre DualSense (USB/BT) et Xbox. Processors : stick deadzone 0,12/0,92, `AirRotate` avec `ScaleVector2` pour la souris (sensibilité réglable), `Invert Y` option.
 - **Détection de périphérique** : `InputUser`/`PlayerInput` non utilisés (solo) ; `InputRouter` écoute `InputSystem.onActionChange`/`onEvent` pour déterminer le **dernier périphérique actif** → `GlyphProvider` choisit le jeu Kenney : `PlayStation` si `device is DualSenseGamepadHID || DualShockGamepad`, `Xbox` si `XInputController`, sinon `Generic` ; clavier/souris → `KeyboardMouse`. Les glyphes sont des sprites Kenney (sheets) référencés par nom de contrôle (`buttonSouth` → `playstation_button_cross`, etc., table dans `GlyphMap.asset`).
@@ -501,7 +501,7 @@ Tous les coefficients sont dans `RiderTuning` (SO) ; `BoardSpec` (SO) module `C_
 ---
 
 ## 14. Audio
-- `AudioMixer` `BiscotteMixer` : groupes Master / Ambience / Waves / Rider / VFX / UI / Music ; snapshots `Surface`, `Underwater` (low-pass 600 Hz, réverb), `Tube` (réverb courte, low-pass 2 kHz, boost des graves), `Menu`.
+- `AudioMixer` `WavyBoardMixer` : groupes Master / Ambience / Waves / Rider / VFX / UI / Music ; snapshots `Surface`, `Underwater` (low-pass 600 Hz, réverb), `Tube` (réverb courte, low-pass 2 kHz, boost des graves), `Menu`.
 - `OceanAudio` : boucle d'ambiance (`ocean_ambience_loop_57s_generated.wav`, à remplacer par un enregistrement Sonniss/Freesound CC0 si fourni) + **synthèse procédurale** : bruit rose filtré (comme `BreakersAudio`) modulé par la somme des `whitewater` proches de la caméra (rayon 60 m) ; déferlement de la SurfWave : one-shots `beach_wave_0x` déclenchés au passage φ 1→2 du segment le plus proche (pitch ±10 %, volume ∝ H), spatialisés.
 - `RiderAudio` : sifflement de planche (bruit blanc filtré, cutoff ∝ |v|, volume ∝ |v|²), rail en carve (bruit + grain), pump (whoosh court), atterrissage (impact Kenney `impactSoft_*` + splash), wipeout (splash lourd + bulles), rame (clapotis rythmés), respiration en apnée.
 - `UiAudio` : Kenney interface sounds ; trick popups (ding/whoosh courts), score de vague (tambour/jingle court synthétisé ou Kenney).
@@ -515,7 +515,7 @@ Tous les coefficients sont dans `RiderTuning` (SO) ; `BoardSpec` (SO) module `C_
 - **Pause** : Reprendre / Options / Changer conditions (Free) / Quitter session.
 - **Options** : Graphismes (preset, résolution, plein écran, VSync, render scale, upscaler, FOV), Audio (5 volumes), Contrôles (rebinding, sensibilité souris, inversion Y, vibration ON/OFF, assist d'atterrissage Full/Light/Off, indicateur de take-off), Langue (FR/EN), Accessibilité (ralenti global 0,8–1,0, taille HUD, daltonisme : palettes).
 - **Localisation** : tables CSV → `ScriptableObject` `LocTable` ; clé → texte ; changement à chaud.
-- **Sauvegarde** : `SaveSystem` JSON (`Application.persistentDataPath/biscotte_save.json`) : options, overrides de bindings, meilleurs scores par spot/mode, défis, déblocages. Écriture atomique (fichier temporaire + rename).
+- **Sauvegarde** : `SaveSystem` JSON (`Application.persistentDataPath/wavyboard_save.json`) : options, overrides de bindings, meilleurs scores par spot/mode, défis, déblocages. Écriture atomique (fichier temporaire + rename).
 
 ---
 
@@ -558,7 +558,7 @@ Réglages URP par preset = 4 `UniversalRenderPipelineAsset` (`Assets/_Project/Se
 ---
 
 ## 18. Structure projet, asmdefs, conventions
-Voir `Docs/AGENT_PLAYBOOK.md` §3–4 (fait foi). Rappels : `Biscotte.Runtime` référence `Unity.Splines`, `Unity.Cinemachine`, `Unity.InputSystem`, `Unity.Burst`, `Unity.Mathematics`, `Unity.Collections`, `StormBreakers.Runtime`, `Unity.RenderPipelines.Universal.Runtime` (Decal, Volume), `Unity.TextMeshPro` (si uGUI utilisé pour des popups monde), `Unity.VisualEffectGraph.Runtime` ; `Biscotte.Editor` référence en plus `Unity.Splines.Editor`, `Unity.Cinemachine.Editor`. Allow unsafe code : OUI pour `Biscotte.Runtime` (écriture MeshData/GraphicsBuffer).
+Voir `Docs/AGENT_PLAYBOOK.md` §3–4 (fait foi). Rappels : `WavyBoard.Runtime` référence `Unity.Splines`, `Unity.Cinemachine`, `Unity.InputSystem`, `Unity.Burst`, `Unity.Mathematics`, `Unity.Collections`, `StormBreakers.Runtime`, `Unity.RenderPipelines.Universal.Runtime` (Decal, Volume), `Unity.TextMeshPro` (si uGUI utilisé pour des popups monde), `Unity.VisualEffectGraph.Runtime` ; `WavyBoard.Editor` référence en plus `Unity.Splines.Editor`, `Unity.Cinemachine.Editor`. Allow unsafe code : OUI pour `WavyBoard.Runtime` (écriture MeshData/GraphicsBuffer).
 
 ---
 
@@ -567,13 +567,13 @@ Voir `Docs/AGENT_PLAYBOOK.md` §3–4 (fait foi). Rappels : `Biscotte.Runtime` r
 Format : `Pn-Tk` — tâche ; **DoD** (definition of done) ; **Vérif** (commandes). Une tâche = un commit. Les phases sont séquentielles ; à l'intérieur, les tâches marquées ∥ peuvent être parallélisées (agents distincts, dossiers distincts).
 
 ### P0 — Fondations du projet (≈ 1 jour)
-- **P0-T1** Nettoyage template : supprimer `Assets/TutorialInfo`, `Assets/Readme.asset`, `Assets/InputSystem_Actions.inputactions`, `Mobile_RPAsset/Mobile_Renderer`, niveau de qualité « Mobile » ; renommer `SampleScene` → `Playground`. Player Settings : companyName « ForgeOff », productName « Biscotte », resolution fullscreen window, run in background ON, API DX12 + DX11 fallback (liste explicite), `apiCompatibilityLevel` .NET Standard 2.1 (défaut), Incremental GC ON. DoD : projet compile, scène `Playground` ouverte. Vérif : `get_player_settings`, `get_quality_settings`, `list_open_scenes`.
-- **P0-T2** Arborescence `Assets/_Project/*` + asmdefs (`Biscotte.Runtime` unsafe, `Biscotte.Editor`, tests) + `Tools/` + `.editorconfig`. DoD : `recompile_status = completed`, 0 warning nouveau. ∥
+- **P0-T1** Nettoyage template : supprimer `Assets/TutorialInfo`, `Assets/Readme.asset`, `Assets/InputSystem_Actions.inputactions`, `Mobile_RPAsset/Mobile_Renderer`, niveau de qualité « Mobile » ; renommer `SampleScene` → `Playground`. Player Settings : companyName « ForgeOff », productName « WavyBoard », resolution fullscreen window, run in background ON, API DX12 + DX11 fallback (liste explicite), `apiCompatibilityLevel` .NET Standard 2.1 (défaut), Incremental GC ON. DoD : projet compile, scène `Playground` ouverte. Vérif : `get_player_settings`, `get_quality_settings`, `list_open_scenes`.
+- **P0-T2** Arborescence `Assets/_Project/*` + asmdefs (`WavyBoard.Runtime` unsafe, `WavyBoard.Editor`, tests) + `Tools/` + `.editorconfig`. DoD : `recompile_status = completed`, 0 warning nouveau. ∥
 - **P0-T3** Qualité/URP : 4 URP assets Low/Medium/High/Ultra (clonés de `PC_RPAsset`, réglages §16.2), `QualitySettings` 4 niveaux (High par défaut ; Low forcé automatiquement au premier lancement si `SystemInfo.graphicsMemorySize < 3000` ou GPU intégré détecté), renderer Forward+ vérifié, GRD Instanced, Depth/Opaque texture ON, HDR ON, `Time.fixedDeltaTime = 1/60`. DoD : fichiers dans `Settings/Quality`, `get_quality_settings` conforme. ∥
-- **P0-T4** Input : `BiscotteActions.inputactions` (maps/actions/schemes §11), project-wide, classe générée. DoD : `InputSystem.actions` non nul en Play ; test EditMode charge l'asset et vérifie les actions attendues. ∥
+- **P0-T4** Input : `WavyBoardActions.inputactions` (maps/actions/schemes §11), project-wide, classe générée. DoD : `InputSystem.actions` non nul en Play ; test EditMode charge l'asset et vérifie les actions attendues. ∥
 - **P0-T5** Core : `GameBootstrap` (scène `Boot` → charge `MainMenu` ou `Playground` en dev), `WaveClock`, `ServiceRegistry`, `DebugSettings`, `DebugOverlay` (F1, fps/ms), `SaveSystem` (JSON, tests EditMode). DoD : tests verts. ∥
 - **P0-T6** Git : commit baseline (humain ou agent autorisé) ; `git lfs ls-files` non vide. Vérif : `git status` propre.
-- **P0-T7** Tests infra : `Biscotte.Tests.EditMode` avec un test trivial ; `unity command run_tests --mode EditMode` passe. DoD : rapport JUnit dans `Build/`.
+- **P0-T7** Tests infra : `WavyBoard.Tests.EditMode` avec un test trivial ; `unity command run_tests --mode EditMode` passe. DoD : rapport JUnit dans `Build/`.
 
 ### P1 — Océan ambiant et environnement (≈ 2–3 jours)
 - **P1-T1** Scène `Playground` : `Ocean.prefab` SB instancié, `OceanAmbient` (wrapper) avec preset « Baie matin » (λ = 35/14/6/2 m, intensités 0,9/0,8/0,7/0,9, directions vers la plage), vent 4 m/s offshore, HDRI `secluded_beach`, soleil aligné, `GlobalVolume`. DoD : capture 1600×900 nette, 0 erreur console, fps ≥ 60 en Low sur Iris Xe (`get_performance_stats`).
@@ -581,7 +581,7 @@ Format : `Pn-Tk` — tâche ; **DoD** (definition of done) ; **Vérif** (command
 - **P1-T3** `OceanMath` (port Burst de `Ocean.OceanDeformation/GetHeight/GetNormal/GetVelocity`) + test de parité (1000 points aléatoires, 20 temps, tol 1e-4) + benchmark (1000 échantillons < 0,25 ms Burst). DoD : tests verts. ∥
 - **P1-T4** `WaterSurfaceComposite` (ambiant seul pour l'instant) + `SampleBatch` job + gizmo d'échantillonnage (grille 20×20 flottante). DoD : gizmos collés à la surface visuelle (écart < 3 cm mesuré par test PlayMode qui compare `Sample` et le vertex shader via `Ocean.OceanDeformation`). ∥
 - **P1-T5a** Optimisation des modèles Poly Haven (obligatoire avant tout placement) : `Tools/OptimizePolyHavenModels.cs` (run_script) → copie des meshes glTF dans `Assets/_Project/Art/Models/PolyHaven/`, génération de Mesh LODs (`MeshLodUtility.GenerateMeshLods`), mesh de base décimé (cibles : rochers/falaises ≤ 60 k tris, arbres ≤ 40 k, petits props ≤ 20 k ; repli UnityMeshSimplifier MIT), matériaux URP/Lit (diff/nor_gl/arm → mask map), colliders convexes simplifiés (≤ 255 tris) ou capsules, prefabs dans `Assets/_Project/Prefabs/Env/`. DoD : tableau tris avant/après dans `Docs/perf/P1.md` ; scène de test avec les 16 prefabs ≤ 2 ms GPU en Low. ∥
-- **P1-T5** Terrain « Baie Biscotte » : 512 m, plage en pente 1:30, bathymétrie (barre de sable à 90 m, profondeur 2,5 m ; chenal), layers Poly Haven (import settings §ASSETS_MANIFEST), rochers/arbres (prefabs optimisés de P1-T5a) placés par `Tools/BuildBaieEnvironment.cs` (`run_script`), colliders. DoD : capture, terrain lié à `OceanController.terrain` (effets rivage visibles). ∥
+- **P1-T5** Terrain « Baie WavyBoard » : 512 m, plage en pente 1:30, bathymétrie (barre de sable à 90 m, profondeur 2,5 m ; chenal), layers Poly Haven (import settings §ASSETS_MANIFEST), rochers/arbres (prefabs optimisés de P1-T5a) placés par `Tools/BuildBaieEnvironment.cs` (`run_script`), colliders. DoD : capture, terrain lié à `OceanController.terrain` (effets rivage visibles). ∥
 - **P1-T6** Presets d'environnement (`EnvironmentPreset` × 5 : matin/aube/midi/soir/couvert) + `EnvironmentDirector` (HDRI, soleil, volume, vent). DoD : switch à chaud via cheat menu, captures des 5. ∥
 - **P1-T7** Audio de base : mixer, snapshots, `OceanAudio` (boucle + bruit procédural). DoD : écoute en Play, pas de clic de boucle (test : analyse des 100 ms de jonction). ∥
 - **P1-T8** Perf pass : Project Auditor, Frame Debugger ; budget §16.1 respecté sur `Playground` sans SurfWave. DoD : tableau de mesures dans `Docs/perf/P1.md`.
@@ -687,7 +687,7 @@ Format : `Pn-Tk` — tâche ; **DoD** (definition of done) ; **Vérif** (command
 
 ## 22. Décisions prises, hypothèses, questions ouvertes
 Décisions : océan hybride SB + SurfWave ; CPU authoritative ; UI Toolkit ; Cinemachine 3 ; project-wide actions ; Poly Haven/Kenney/Quaternius CC0 ; Mono en dev ; 3 spots ; scoring APB-like ; pas de multi.
-Hypothèses : DA réaliste stylisée ; solo ; 60 fps Low iGPU ; nom « Biscotte ».
+Hypothèses : DA réaliste stylisée ; solo ; 60 fps Low iGPU ; nom « WavyBoard ».
 Questions ouvertes (réponse humaine souhaitée, défauts appliqués sinon) : (1) personnage final (mannequin Quaternius vs Universal Base Characters vs Mixamo) ; (2) Steam ou non (achievements, Steam Input) ; (3) musique ; (4) mode Shorebreak en v1.
 
 ---

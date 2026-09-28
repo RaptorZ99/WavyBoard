@@ -113,13 +113,13 @@ InitTestScene*.unity*
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
 
-# Biscotte: drop folder for manually downloaded assets (sorted by agents into Assets/ThirdParty)
+# WavyBoard: drop folder for manually downloaded assets (sorted by agents into Assets/ThirdParty)
 /Incoming/
 
-# Biscotte: screenshots taken by the Pipeline capture_game_view command (folder ignored by Unity thanks to the ~ suffix)
+# WavyBoard: screenshots taken by the Pipeline capture_game_view command (folder ignored by Unity thanks to the ~ suffix)
 /[Aa]ssets/Screenshots~/
 
-# Biscotte: Poly Haven scans (~850 MB, CC0) are NOT versioned; re-download with Tools/fetch_polyhaven.ps1.
+# WavyBoard: Poly Haven scans (~850 MB, CC0) are NOT versioned; re-download with Tools/fetch_polyhaven.ps1.
 # The .meta files ARE versioned so asset GUIDs stay stable. The sky HDRI used by the scenes is kept.
 /Assets/ThirdParty/PolyHaven/**/*.jpg
 /Assets/ThirdParty/PolyHaven/**/*.png

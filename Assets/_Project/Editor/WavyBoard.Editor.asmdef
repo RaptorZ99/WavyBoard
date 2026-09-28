@@ -1,8 +1,8 @@
 {
-    "name": "Biscotte.Editor",
-    "rootNamespace": "Biscotte.EditorTools",
+    "name": "WavyBoard.Editor",
+    "rootNamespace": "WavyBoard.EditorTools",
     "references": [
-        "Biscotte.Runtime",
+        "WavyBoard.Runtime",
         "Unity.Burst",
         "Unity.Mathematics",
         "Unity.Collections",

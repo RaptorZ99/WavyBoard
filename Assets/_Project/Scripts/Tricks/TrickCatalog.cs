@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Biscotte.Tricks
+namespace WavyBoard.Tricks
 {
     /// <summary>Where on the wave the rider is when a gesture lands. The same gesture reads as a different
     /// manoeuvre in each zone — that is what lets the whole wave be a playground instead of just the lip.</summary>

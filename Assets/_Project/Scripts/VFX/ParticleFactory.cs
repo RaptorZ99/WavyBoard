@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Biscotte.VFX
+namespace WavyBoard.VFX
 {
     /// <summary>Creates world-space particle systems driven by manual emission (EmitParams).</summary>
     public static class ParticleFactory

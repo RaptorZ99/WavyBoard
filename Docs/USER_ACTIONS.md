@@ -25,7 +25,7 @@ Procédure commune : ouvrir le lien, cliquer « Add to My Assets », puis dans l
 | 2 | **Mixamo** (Adobe, gratuit avec compte, usage commercial autorisé dans un jeu, pas de redistribution brute) | https://www.mixamo.com | Clips « Swimming », « Treading Water », « Falling », « Getting Up » et personnages réalistes ; auto-rig d'un mesh custom | Clips UAL (crawl, swim, idle, etc.) |
 | 3 | **Sonniss GDC Game Audio Bundles** (royalty-free, très volumineux) | https://gdc.sonniss.com/ | Enregistrements océan/vagues/underwater pro | Boucle d'ambiance générée + 4 samples CC0 + audio procédural (Storm Breakers) |
 
-Déposer les téléchargements dans `C:\Users\Max\Documents\Biscotte\Incoming\` (dossier hors Assets) : un agent les triera et les importera en respectant `Docs/ASSETS_MANIFEST.md`.
+Déposer les téléchargements dans `C:\Users\Max\Documents\WavyBoard\Incoming\` (dossier hors Assets) : un agent les triera et les importera en respectant `Docs/ASSETS_MANIFEST.md`.
 
 ## C. Outils de build (à faire avant la Phase 8 « release »)
 
@@ -40,7 +40,7 @@ Déposer les téléchargements dans `C:\Users\Max\Documents\Biscotte\Incoming\` 
 
 Le dépôt a des fichiers indexés mais **aucun commit**. Avant que les agents ne commencent :
 ```powershell
-cd C:\Users\Max\Documents\Biscotte
+cd C:\Users\Max\Documents\WavyBoard
 git add -A
 git commit -m "chore: baseline Unity 6.6 URP project + third-party CC0 assets + docs"
 ```
@@ -54,6 +54,6 @@ Vérifier que `git lfs ls-files | Measure-Object` liste bien les binaires lourds
 ## F. Décisions en attente de l'humain (réponses par défaut appliquées si silence)
 
 1. Direction artistique : **réaliste stylisé** (Poly Haven + Storm Breakers) — défaut retenu. Alternative : cartoon (Synty/KayKit).
-2. Nom du jeu : « Biscotte » (nom de projet) — provisoire.
+2. Nom du jeu : « WavyBoard » (nom de projet) — provisoire.
 3. Langue de l'UI : FR + EN — défaut.
 4. Cible de perf : 60 fps 1080p « Low » sur Iris Xe ; 120 fps 1440p « High » sur GPU dédié — défaut.

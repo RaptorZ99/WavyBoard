@@ -1,6 +1,6 @@
 {
-    "name": "Biscotte.Runtime",
-    "rootNamespace": "Biscotte",
+    "name": "WavyBoard.Runtime",
+    "rootNamespace": "WavyBoard",
     "references": [
         "Unity.Burst",
         "Unity.Mathematics",

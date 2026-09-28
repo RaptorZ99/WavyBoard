@@ -4,7 +4,7 @@ using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace Biscotte.Wave
+namespace WavyBoard.Wave
 {
     /// <summary>
     /// A reef break in the Teahupoo mould: one peak, a left-to-right (along +T) peel of heavy barrel sections, a slower

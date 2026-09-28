@@ -1,9 +1,9 @@
 using UnityEngine;
 
-namespace Biscotte.Rider
+namespace WavyBoard.Rider
 {
     /// <summary>Board definition. The visual mesh is swappable: assign boardModel (e.g. the Blender export) to replace the procedural board.</summary>
-    [CreateAssetMenu(menuName = "Biscotte/Board Spec", fileName = "BoardSpec")]
+    [CreateAssetMenu(menuName = "WavyBoard/Board Spec", fileName = "BoardSpec")]
     public class BoardSpec : ScriptableObject
     {
         public string displayName = "Standard";

@@ -1,7 +1,7 @@
-using Biscotte.InputSys;
+using WavyBoard.InputSys;
 using UnityEngine;
 
-namespace Biscotte.Rider
+namespace WavyBoard.Rider
 {
     /// <summary>
     /// Drives a Humanoid character (any avatar: the Quaternius mannequin now, a custom one later) with the procedural

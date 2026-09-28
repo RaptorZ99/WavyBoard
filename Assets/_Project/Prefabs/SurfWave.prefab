@@ -103,7 +103,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2741d434d84379345991ba2abfa56921, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Biscotte.Runtime::Biscotte.Wave.SurfWave
+  m_EditorClassIdentifier: WavyBoard.Runtime::WavyBoard.Wave.SurfWave
   Ns: 320
 --- !u!114 &1658650345210958972
 MonoBehaviour:
@@ -116,7 +116,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ae18f952a96555140a9f7d11790bfe8d, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Biscotte.Runtime::Biscotte.VFX.WaveVfx
+  m_EditorClassIdentifier: WavyBoard.Runtime::WavyBoard.VFX.WaveVfx
   sprayMaterial: {fileID: 2100000, guid: 34781301427f1a746a95b1b77b7a9f27, type: 2}
   foamMaterial: {fileID: 2100000, guid: c1ec097854de67f48831b17931c1a90b, type: 2}
   intensity: 1

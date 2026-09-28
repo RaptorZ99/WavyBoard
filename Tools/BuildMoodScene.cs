@@ -5,10 +5,10 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-namespace Biscotte.Tools
+namespace WavyBoard.Tools
 {
     // Builds a temporary "mood" preview scene: Poly Haven HDRI sky + Storm Breakers ocean + Poly Haven rocks + post volume.
-    // Run with: unity command run_script --file Tools/BuildMoodScene.cs --entry Biscotte.Tools.BuildMoodScene.Main --timeout_ms 600000
+    // Run with: unity command run_script --file Tools/BuildMoodScene.cs --entry WavyBoard.Tools.BuildMoodScene.Main --timeout_ms 600000
     public static class BuildMoodScene
     {
         const string kHdri = "Assets/ThirdParty/PolyHaven/hdris/secluded_beach/secluded_beach_4k.hdr";

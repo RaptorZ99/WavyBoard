@@ -1,7 +1,7 @@
-# AGENT PLAYBOOK — Piloter le projet Biscotte avec le Unity CLI
+# AGENT PLAYBOOK — Piloter le projet WavyBoard avec le Unity CLI
 
-> Mode d'emploi opérationnel pour tout agent IA qui implémente Biscotte.
-> La spec fonctionnelle et technique est dans `Docs/BISCOTTE_SPEC.md` : la lire d'abord, puis revenir ici pour la mécanique.
+> Mode d'emploi opérationnel pour tout agent IA qui implémente WavyBoard.
+> La spec fonctionnelle et technique est dans `Docs/WAVYBOARD_SPEC.md` : la lire d'abord, puis revenir ici pour la mécanique.
 
 ## 1. Règles absolues
 
@@ -29,7 +29,7 @@ unity command set_serialized_field ...          # champ précis, références d'
 unity command create_script --path Assets/_Project/Scripts/Rider/RiderController.cs
 unity command write_text_file --path <rel> --content "<texte>" --confirm true
 unity command recompile ; unity command recompile_status
-unity command attach_script --target Rider --type Biscotte.Rider.RiderController
+unity command attach_script --target Rider --type WavyBoard.Rider.RiderController
 unity command create_prefab --target Rider --path Assets/_Project/Prefabs/Rider.prefab
 unity command instantiate_prefab --prefab Assets/_Project/Prefabs/Rider.prefab
 unity command save_scene
@@ -40,7 +40,7 @@ unity command get_console_logs                  # erreurs et warnings récents
 unity command run_tests --mode EditMode ; unity command test_status
 unity command eval --code "return UnityEngine.Application.unityVersion;" --timeout 60
 unity command eval_file --file C:/path/snippet.cs --timeout 120
-unity command run_script --file Tools/BuildSteps.cs --entry Biscotte.Tools.Build.Player
+unity command run_script --file Tools/BuildSteps.cs --entry WavyBoard.Tools.Build.Player
 unity command package_add --identifier com.unity.xxx@1.2.3 --confirm true   # puis package_status / recompile_status
 unity command package_search --query com.unity.xxx                          # paramètre = --query (pas --name)
 unity command import_asset --source C:/abs/file.png --path Assets/_Project/Art/file.png
@@ -68,7 +68,7 @@ Pièges connus : `package_add --wait true` peut bloquer quand le serveur Pipelin
 
 | Chemin | Rôle |
 |---|---|
-| `Docs/BISCOTTE_SPEC.md` | **Source de vérité** : design, architecture, plan par phases, critères d'acceptation |
+| `Docs/WAVYBOARD_SPEC.md` | **Source de vérité** : design, architecture, plan par phases, critères d'acceptation |
 | `Docs/ASSETS_MANIFEST.md` | Inventaire des assets tiers, licences, chemins, usages prévus |
 | `Docs/USER_ACTIONS.md` | Actions manuelles réservées à l'humain (Asset Store, IL2CPP, Mixamo, itch.io) |
 | `Docs/RESEARCH_SOURCES.md` | Sources (docs Unity 6.6, communauté, science du surf) et ce qu'elles établissent |
@@ -82,8 +82,8 @@ Pièges connus : `package_add --wait true` peut bloquer quand le serveur Pipelin
 
 ## 4. Conventions de code
 
-- C# 9, `namespace Biscotte.<Domaine>` : Core, Ocean, Wave, Rider, Board, CameraRig, InputSys, Tricks, Scoring, Session, UI, Audio, VFX, Debugging, EditorTools.
-- Assembly definitions : `Biscotte.Runtime` (`Assets/_Project/Scripts`), `Biscotte.Editor` (`Assets/_Project/Editor`), `Biscotte.Tests.EditMode` / `Biscotte.Tests.PlayMode` (`Assets/_Project/Tests`). Références runtime : `Unity.Splines`, `Unity.Cinemachine`, `Unity.InputSystem`, `Unity.Burst`, `Unity.Mathematics`, `Unity.Collections`, `StormBreakers.Runtime`, `Unity.VisualEffectGraph.Runtime` (si nécessaire), `Unity.TextMeshPro` (uGUI) si utilisé.
+- C# 9, `namespace WavyBoard.<Domaine>` : Core, Ocean, Wave, Rider, Board, CameraRig, InputSys, Tricks, Scoring, Session, UI, Audio, VFX, Debugging, EditorTools.
+- Assembly definitions : `WavyBoard.Runtime` (`Assets/_Project/Scripts`), `WavyBoard.Editor` (`Assets/_Project/Editor`), `WavyBoard.Tests.EditMode` / `WavyBoard.Tests.PlayMode` (`Assets/_Project/Tests`). Références runtime : `Unity.Splines`, `Unity.Cinemachine`, `Unity.InputSystem`, `Unity.Burst`, `Unity.Mathematics`, `Unity.Collections`, `StormBreakers.Runtime`, `Unity.VisualEffectGraph.Runtime` (si nécessaire), `Unity.TextMeshPro` (uGUI) si utilisé.
 - Données de réglage = `ScriptableObject` dans `Assets/_Project/Data` (jamais de constantes magiques dans les MonoBehaviours).
 - Zéro allocation en régime stable dans `Update`/`FixedUpdate` (pas de LINQ, pas de `new` de tableaux, pas de concaténation de strings).
 - Maths lourdes (vague, maillage) : `Unity.Mathematics` + jobs `[BurstCompile]` + `Mesh.MeshData`. L'échantillonnage CPU de la surface et la génération du maillage partagent **la même fonction** (une seule vérité).
@@ -103,14 +103,14 @@ Pièges connus : `package_add --wait true` peut bloquer quand le serveur Pipelin
 ```bash
 unity command run_tests --mode EditMode        # réutilise l'Editor ouvert ; puis test_status
 unity command run_tests --mode PlayMode
-unity test C:/Users/Max/Documents/Biscotte --mode EditMode --report-format junit --output ./Build/test-edit.xml --timeout 900   # variante batch (Editor fermé)
-unity build C:/Users/Max/Documents/Biscotte --profile Assets/_Project/Settings/BuildProfiles/Windows_Dev.asset --output-path ./Build/Windows_Dev/Biscotte.exe
+unity test C:/Users/Max/Documents/WavyBoard --mode EditMode --report-format junit --output ./Build/test-edit.xml --timeout 900   # variante batch (Editor fermé)
+unity build C:/Users/Max/Documents/WavyBoard --profile Assets/_Project/Settings/BuildProfiles/Windows_Dev.asset --output-path ./Build/Windows_Dev/WavyBoard.exe
 ```
 Exit code 8 = tests en échec (ne pas relancer aveuglément) ; autre code ≠ 0 = problème d'infrastructure.
 
 ## 7. Storm Breakers (tiers, CC0) — règles de port
 
-- Dossier `Assets/ThirdParty/StormBreakers` (asmdef `StormBreakers.Runtime`). On utilise le modèle de vague tel quel pour l'océan « ambiant » ; on **re-implémente à l'identique** `Ocean.OceanDeformation` en version Burst (`Biscotte.Ocean.OceanMath`) pour nos jobs, avec un test EditMode qui compare les deux sur 1000 points (tolérance 1e-4).
+- Dossier `Assets/ThirdParty/StormBreakers` (asmdef `StormBreakers.Runtime`). On utilise le modèle de vague tel quel pour l'océan « ambiant » ; on **re-implémente à l'identique** `Ocean.OceanDeformation` en version Burst (`WavyBoard.Ocean.OceanMath`) pour nos jobs, avec un test EditMode qui compare les deux sur 1000 points (tolérance 1e-4).
 - Tout patch nécessaire à Unity 6.6 (API obsolètes, upgrade Shader Graph/VFX) est consigné dans `Assets/ThirdParty/StormBreakers/PATCHES.txt`.
 
 ## 8. Git
@@ -124,18 +124,18 @@ Exit code 8 = tests en échec (ne pas relancer aveuglément) ; autre code ≠ 0 
 ### Shaders d'eau générés (ne jamais éditer les .shadergraph à la main)
 - `python Tools/make_surfwave_graph.py` → `Assets/_Project/Shaders/SurfWaveOcean.shadergraph` (maillage de vague de surf).
 - `SURF_MODE=ocean python Tools/make_surfwave_graph.py` → `Assets/_Project/Shaders/OceanAmbientClip.shadergraph` (plan océan Storm Breakers avec trous alpha-clip sous les vagues, rectangles `_SurfRectA0..3` / `_SurfRectB0..3` alimentés par `OceanAmbient.SyncHoles`).
-- Les deux sont des copies du graphe `ocean.shadergraph` de Storm Breakers modifiées par script (chirurgie JSON) : même rendu d'eau, même déformation GPU de la houle. Après génération : `unity command run_script --file Tools/CheckShader.cs --entry Biscotte.Tools.CheckShader.Main --timeout_ms 300000 --timeout 400` (import + compilation, messages).
+- Les deux sont des copies du graphe `ocean.shadergraph` de Storm Breakers modifiées par script (chirurgie JSON) : même rendu d'eau, même déformation GPU de la houle. Après génération : `unity command run_script --file Tools/CheckShader.cs --entry WavyBoard.Tools.CheckShader.Main --timeout_ms 300000 --timeout 400` (import + compilation, messages).
 - Règles apprises : le maillage de la vague est construit sur le plan NON déformé (le GPU ajoute la houle) ; les matrices `_LIDR/_NKVW` ne sont jamais sérialisées (copiées chaque frame depuis les statiques `StormBreakers.Ocean`) ; l'enroulement des triangles doit être horaire vu du dessus (le graphe SB rend les faces arrière avec son look sous-marin) ; couleur de sommet = (translucidité, écume, AO tube, eau blanche).
 - Variables de debug (mode surf) : `SURF_NO_FOAM=1`, `SURF_NO_SSS=1`, `SURF_NO_NORMAL=1`, `SURF_DEBUG=vc` (émission = couleur de sommet).
 
 ### Aperçus en mode édition (sans Play, quelques secondes)
-- Vague : `unity command run_script --file Tools/WavePreview.cs --entry Biscotte.Tools.WavePreview.Setup` (variantes `SetupFar`, `SetupTop`, `SetupTube`, `SetupWhitewater`), puis `unity command capture_game_view --save_path Screenshots~/x.png`, puis `...WavePreview.Cleanup`.
+- Vague : `unity command run_script --file Tools/WavePreview.cs --entry WavyBoard.Tools.WavePreview.Setup` (variantes `SetupFar`, `SetupTop`, `SetupTube`, `SetupWhitewater`), puis `unity command capture_game_view --save_path Screenshots~/x.png`, puis `...WavePreview.Cleanup`.
 - Poses du rider : `Tools/PoseTest.cs` (`Setup`, `SetupSide`, `SetupClosePaddle/Ride/Air/DK`, `Cleanup`) : une rangée de mannequins posés par `RiderPose` sur des bodyboards.
 
 ### Sessions de jeu headless (l'Editor peut être non focalisé)
 - `bash Tools/headless_session.sh <nom> [captures=6] [intervalle_s=8] [airs=false] [steps=6]` : Play, autopilote (`RiderAutoPilot`), `HeadlessPlayTicker`, captures `Assets/Screenshots~/<nom>_<i>.png` + état du rider imprimé à chaque capture, Stop.
 - `bash Tools/recompile_wait.sh` : recompile puis attend la fin de compilation ET le redémarrage du serveur Pipeline (sinon la commande suivante échoue en "Network error").
-- Reconstruction de la scène : `unity command run_script --file Tools/BuildPlayground.cs --entry Biscotte.Tools.BuildPlayground.Main --timeout_ms 600000 --timeout 700` (recrée prefabs, matériaux, scène ; les valeurs par défaut des scripts s'appliquent aux prefabs recréés).
+- Reconstruction de la scène : `unity command run_script --file Tools/BuildPlayground.cs --entry WavyBoard.Tools.BuildPlayground.Main --timeout_ms 600000 --timeout 700` (recrée prefabs, matériaux, scène ; les valeurs par défaut des scripts s'appliquent aux prefabs recréés).
 
 ### Gameplay (état)
 - Porté par la vague dès qu'on est sur une face en pente d'une vague en train de lever (`RiderController.CarryFactor`), célérité 6 m/s, ligne de déferlement de pente 2 (peel 3 m/s), take-off si cap vers la plage et phase ≥ 0,3 ; aide au take-off `RiderTuning.takeoffAssist`.

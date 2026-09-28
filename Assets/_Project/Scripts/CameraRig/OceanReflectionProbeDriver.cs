@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Biscotte.CameraRig
+namespace WavyBoard.CameraRig
 {
     /// <summary>Refreshes a realtime reflection probe (ViaScripting) periodically, following the main camera horizontally.</summary>
     [RequireComponent(typeof(ReflectionProbe))]

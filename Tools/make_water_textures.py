@@ -1,4 +1,4 @@
-"""Generates the tileable water textures of Biscotte (numpy + scipy + Pillow):
+"""Generates the tileable water textures of WavyBoard (numpy + scipy + Pillow):
 
   Assets/_Project/Art/Textures/Water_Ripples_N.png  tangent-space normal map of wind ripples and small chop, from an
                                                     ocean spectrum (Phillips, directional) by inverse FFT: tileable by

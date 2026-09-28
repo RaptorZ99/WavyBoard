@@ -1,10 +1,10 @@
 using System.Collections;
-using Biscotte.Tricks;
+using WavyBoard.Tricks;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.DualShock;
 
-namespace Biscotte.InputSys
+namespace WavyBoard.InputSys
 {
     /// <summary>
     /// Reads the Surf action map, latches button presses for FixedUpdate consumers, detects the active device, drives rumble.
@@ -111,8 +111,8 @@ namespace Biscotte.InputSys
         void Awake()
         {
             Instance = this;
-            if (actions == null) actions = Resources.Load<InputActionAsset>("Input/BiscotteActions");
-            if (actions == null) { Debug.LogError("InputRouter: no InputActionAsset assigned (and Resources/Input/BiscotteActions not found)"); return; }
+            if (actions == null) actions = Resources.Load<InputActionAsset>("Input/WavyBoardActions");
+            if (actions == null) { Debug.LogError("InputRouter: no InputActionAsset assigned (and Resources/Input/WavyBoardActions not found)"); return; }
             surf = actions.FindActionMap("Surf", true);
             move = surf.FindAction("Move", true);
             boardStick = surf.FindAction("AirRotate", true);   // right stick / mouse delta: the board

@@ -1,7 +1,7 @@
 using System;
 using Unity.Mathematics;
 
-namespace Biscotte.Ocean
+namespace WavyBoard.Ocean
 {
     /// <summary>One component of the ambient sea, as authored (metres, degrees).</summary>
     [Serializable]

@@ -1,7 +1,7 @@
-using Biscotte.Rider;
+using WavyBoard.Rider;
 using UnityEngine;
 
-namespace Biscotte.VFX
+namespace WavyBoard.VFX
 {
     /// <summary>Rail spray, wake and splashes for the rider (Shuriken, manual emission).</summary>
     public class RiderVfx : MonoBehaviour
