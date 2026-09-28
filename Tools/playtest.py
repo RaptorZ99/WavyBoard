@@ -34,6 +34,10 @@ ap.add_argument("--captures", type=int, default=6)
 ap.add_argument("--steps", type=int, default=6)
 ap.add_argument("--name", default="run")
 ap.add_argument("--auto", type=int, default=0, help="event-driven screenshots (air apex, tube, landing, swing, ride)")
+ap.add_argument("--mixed", action="store_true", help="keep the random set sizes instead of forcing --scale")
+ap.add_argument("--interval", type=float, default=34)
+ap.add_argument("--period", type=float, default=11)
+ap.add_argument("--nospacing", action="store_true", help="disable the wave spacing guard (to reproduce crowding)")
 a = ap.parse_args()
 
 cmd("editor_play", timeout=90)
@@ -43,6 +47,7 @@ for _ in range(30):
     time.sleep(1)
 time.sleep(2)
 
+sizes = "" if a.mixed else ("sched.sizes = new WavyBoard.Wave.WaveSetScheduler.SetSize[] { new WavyBoard.Wave.WaveSetScheduler.SetSize { name = \"test\", scale = %sf, weight = 1f } };" % a.scale)
 setup = f"""
 var r = UnityEngine.Object.FindFirstObjectByType<WavyBoard.Rider.RiderController>();
 if (r == null) return "no rider";
@@ -54,8 +59,9 @@ if (rec == null) rec = r.gameObject.AddComponent<WavyBoard.Debugging.PlaytestRec
 rec.rider = r; rec.captureDir = "{'Assets/Screenshots~/playtest/' + a.name if a.auto else ''}"; rec.maxCaptures = {a.auto};
 System.IO.Directory.CreateDirectory("{'Assets/Screenshots~/playtest/' + a.name}");
 var sched = UnityEngine.Object.FindFirstObjectByType<WavyBoard.Wave.WaveSetScheduler>();
-sched.sizes = new WavyBoard.Wave.WaveSetScheduler.SetSize[] {{ new WavyBoard.Wave.WaveSetScheduler.SetSize {{ name = "test", scale = {a.scale}f, weight = 1f }} }};
-sched.setInterval = 34f; sched.wavePeriod = 11f; sched.wavesPerSet = 3;
+{sizes}
+{'sched.minCrestSpacing = 0f; sched.spacingPerHeight = 0f;' if a.nospacing else ''}
+sched.setInterval = {a.interval}f; sched.wavePeriod = {a.period}f; sched.wavesPerSet = 3;
 WavyBoard.EditorTools.HeadlessPlayTicker.StepsPerUpdate = {a.steps};
 return WavyBoard.EditorTools.HeadlessPlayTicker.Enable(true) + " | mode {a.mode} scale {a.scale}";
 """

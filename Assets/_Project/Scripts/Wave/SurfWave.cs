@@ -75,6 +75,26 @@ namespace WavyBoard.Wave
 
         public float CrestPositionAlongD => Params.CrestOffset(WaveTime);
 
+        /// <summary>World position of the crest line along D right now (dot with the travel direction).</summary>
+        public float CrestAlongD => math.dot(Params.origin, Params.travelDir) + Params.CrestOffset(WaveTime);
+
+        /// <summary>
+        /// How much this wave owns a world point inside its footprint: 0 on its crest line, 1 around the foot of its face
+        /// (or the end of its back slope), more out on its flats. Where two footprints overlap, the water belongs to the
+        /// wave the point is nearest to, in units of that wave's own size — never simply to the newest one (a rider on
+        /// the face of a wave must not fall through to the flat in front of the one behind).
+        /// </summary>
+        public bool Ownership(float3 worldPos, out float score)
+        {
+            score = float.MaxValue;
+            if (!IsAlive) return false;
+            LocalCoords(worldPos, (float)(SamplingTime - SpawnTime), out float s, out float xi);
+            if (s <= Params.sMin || s >= Params.sMax || xi <= Params.xiMin || xi >= Params.xiMax) return false;
+            float H = math.max(0.5f, Params.height);
+            score = xi >= 0f ? xi / (3.5f * H + 4f) : -xi / (1.6f * H + 4f);
+            return true;
+        }
+
         // ------------------------------------------------------------------ lifecycle
         void Awake()
         {
@@ -170,12 +190,12 @@ namespace WavyBoard.Wave
         }
 
         /// <summary>Spawns a wave aimed at a rider at <paramref name="aim"/>: its peak pitches just in front of him.</summary>
-        public void Spawn(SurfSpotConfig spot, float heightScale, int id, Vector3 aim)
+        public void Spawn(SurfSpotConfig spot, float heightScale, int id, Vector3 aim, float celerityScale = -1f, float extraLead = 0f)
         {
             EnsureBuffers();
             if (jobScheduled) { handle.Complete(); jobScheduled = false; }
             Spot = spot;
-            Params = spot.BuildParams(id, heightScale, aim);
+            Params = spot.BuildParams(id, heightScale, aim, celerityScale, extraLead);
             spot.FillSections(sections, Params);
             SpawnTime = Time.timeAsDouble;
             IsAlive = true;
@@ -211,6 +231,14 @@ namespace WavyBoard.Wave
             float dt = dD / math.max(0.5f, Params.celerity);
             Params.firstBreakTime += dt;
             Params.endTime += dt;
+        }
+
+        /// <summary>Fades the wave out over the next <paramref name="fade"/> seconds, at least the 6 s of the amplitude
+        /// envelope (<see cref="SurfWaveMath.Row"/>) so it never pops; never extends its life.</summary>
+        public void Retire(float fade)
+        {
+            float end = WaveTime + math.max(6f, fade);
+            if (end < Params.endTime) Params.endTime = end;
         }
 
         public void Despawn()

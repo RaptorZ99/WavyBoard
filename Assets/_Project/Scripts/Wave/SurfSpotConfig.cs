@@ -27,6 +27,8 @@ namespace WavyBoard.Wave
         [Tooltip("Yaw (deg) of the travel direction D around world up; 0 = +Z")] public float travelYawDeg = 0f;
         [Tooltip("Crest height of a medium set wave above the sea (m)")] public float height = 3.4f;
         [Tooltip("Speed of the crest toward the beach for a medium wave (m/s)")] public float celerity = 7.5f;
+        [Tooltip("How much bigger waves travel faster: speed x size ^ this. 0 = every wave at the same speed (the reef's\ndepth sets it), so a set never catches the one before it and the spacing between waves never changes")]
+        [Range(0f, 0.5f)] public float celeritySizeExponent = 0f;
         [Tooltip("Length of crest that breaks, from the peak (m)")] public float breakLength = 175f;
         [Tooltip("Behind the peak the wave crumbles and fades over this length (m)")] public float tailLength = 35f;
         [Tooltip("Past the last section the shoulder backs off into the channel over this length (m)")] public float endTaper = 45f;
@@ -67,6 +69,10 @@ namespace WavyBoard.Wave
         public float3 CrestDir => math.normalize(math.cross(new float3(0f, 1f, 0f), TravelDir));
         public float3 Origin => transform.position;
 
+        /// <summary>Position along D (dot with the travel direction) of the crest of a wave aimed at <paramref name="aim"/>,
+        /// at its spawn, before any extra lead.</summary>
+        public float SpawnCrestAlongD(Vector3 aim, float c) => math.dot((float3)aim, TravelDir) + lineupBack - c * breakLead;
+
         /// <summary>Where the rider waits for the first set: just seaward of the peak.</summary>
         public Vector3 LineupPosition() => (Vector3)(Origin + CrestDir * lineupS - TravelDir * lineupBack);
 
@@ -88,22 +94,30 @@ namespace WavyBoard.Wave
             return sections[sections.Count - 1];
         }
 
-        /// <summary>A wave of the given size aimed at a rider at <paramref name="aim"/>: its peak pitches just in front
-        /// of him <see cref="breakLead"/> seconds after the spawn.</summary>
-        public SurfWaveParams BuildParams(int id, float heightScale, Vector3 aim)
+        /// <summary>Speed of the crest toward the beach for a wave of this size (see <see cref="celeritySizeExponent"/>).</summary>
+        public float CelerityFor(float sizeScale) => celerity * math.pow(math.clamp(sizeScale, 0.5f, 2f), celeritySizeExponent);
+
+        /// <summary>
+        /// A wave of the given size aimed at a rider at <paramref name="aim"/>: its peak pitches just in front of him
+        /// <see cref="breakLead"/> seconds after the spawn. <paramref name="celerityScale"/> (&gt; 0) sets its speed from
+        /// another size (the waves of a set travel together); <paramref name="extraLead"/> metres start its crest that
+        /// much further out to sea (it still breaks at the same place, later) — how the scheduler keeps waves apart.
+        /// </summary>
+        public SurfWaveParams BuildParams(int id, float heightScale, Vector3 aim, float celerityScale = -1f, float extraLead = 0f)
         {
             float3 D = TravelDir, T = CrestDir;
             float H = height * heightScale;
             float ts = math.clamp(math.sqrt(heightScale), 0.8f, 1.3f);
-            float c = celerity * math.sqrt(math.clamp(heightScale, 0.5f, 2f));
+            float c = CelerityFor(celerityScale > 0f ? celerityScale : heightScale);
+            float lead = breakLead + math.max(0f, extraLead) / c;
             float3 origin = (float3)aim - T * lineupS + D * lineupBack;
             origin.y = 0f;
             var p = new SurfWaveParams
             {
                 origin = origin, travelDir = D, crestDir = T,
                 celerity = c,
-                firstBreakTime = breakLead,
-                crestStartOffset = -c * breakLead,
+                firstBreakTime = lead,
+                crestStartOffset = -c * lead,
                 timeScale = ts,
                 tubeScale = math.max(minTubeRoom, tubeRoom * math.pow(1f / math.max(0.3f, heightScale), smallTubeBoost)),
                 barrelHold = barrelHold * math.pow(math.max(0.3f, heightScale), holdSizeExponent),
@@ -118,7 +132,7 @@ namespace WavyBoard.Wave
                 shoalDuration = shoalDuration,
                 id = id,
             };
-            p.endTime = breakLead + BreakDelay(breakLength) + (WaveProfile.TFlat + p.barrelHold) * ts + 1f;
+            p.endTime = lead + BreakDelay(breakLength) + (WaveProfile.TFlat + p.barrelHold) * ts + 1f;
             return p;
         }
 

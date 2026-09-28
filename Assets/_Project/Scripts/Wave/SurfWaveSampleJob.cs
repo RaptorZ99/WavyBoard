@@ -80,7 +80,8 @@ namespace WavyBoard.Wave
             r.CrestDistance = cd;
             r.FaceWidth = faceWidth;
             r.WaveHeight = waveH;
-            r.WhitewaterAmount = phase >= 2f || ri.lipless > 0.5f ? attr.y : 0f;
+            float whitewater = phase >= 2f || ri.lipless > 0.5f ? attr.y : 0f;
+            r.WhitewaterAmount = whitewater;
             r.SeabedDepth = 200f;
             r.WaveId = P.id;
             r.PeelDistance = s - SurfWaveMath.PeelS(P, Sections, tw);
@@ -93,9 +94,12 @@ namespace WavyBoard.Wave
                 r.LipHeight = math.max(0f, L.yTop - L.yTip);
             }
 
-            // push of the moving water: the face carries a rider along D; the whitewater shoves him
+            // push of the moving water: the face carries a rider along D; the whitewater shoves him. Only on the body of
+            // the wave (or in its foam): the flat water around it does not move (it used to push a paddler to the beach
+            // from 30 m in front of a wave)
             float hNorm = waveH > 0.05f ? math.saturate(y / waveH) : 0f;
-            float push = phase >= 2.3f ? P.celerity * 0.85f : P.celerity * (0.55f + 0.45f * hNorm) * math.smoothstep(0.15f, 0.9f, phase);
+            float body = math.max(math.saturate(y / math.max(0.3f, 0.2f * waveH)), whitewater);
+            float push = (phase >= 2.3f ? P.celerity * 0.85f : P.celerity * (0.55f + 0.45f * hNorm) * math.smoothstep(0.15f, 0.9f, phase)) * body;
             const float dt = 0.05f;
             var Lf = EvalRow(s, tw + dt, B, out _);
             float yFuture = WaveProfile.HeightAt(new NativeSlice<float2>(B), Lf, xi - P.celerity * dt, out _, out _, out _);

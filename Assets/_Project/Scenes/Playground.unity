@@ -248,13 +248,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: WavyBoard.Runtime::WavyBoard.Wave.WaveSetScheduler
   spot: {fileID: 1921486755}
   wavePrefab: {fileID: 4680083090893444784, guid: fdbf8f8359943474fa5e4027f49bc903, type: 3}
-  poolSize: 4
+  poolSize: 6
   setInterval: 42
   wavesPerSet: 3
   wavePeriod: 11
   firstSetDelay: 1
   autoSpawn: 1
   heightScale: 1
+  minCrestSpacing: 78
+  spacingPerHeight: 4
+  retireDistance: 150
+  retireFade: 6
   sizes:
   - name: petite
     scale: 0.68
@@ -1139,6 +1143,7 @@ MonoBehaviour:
   travelYawDeg: 0
   height: 3.4
   celerity: 7.5
+  celeritySizeExponent: 0
   breakLength: 175
   tailLength: 35
   endTaper: 45

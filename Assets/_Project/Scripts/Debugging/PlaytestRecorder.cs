@@ -31,12 +31,18 @@ namespace WavyBoard.Debugging
         public int TubeShotFrames { get; private set; }
         public int SideSwitches { get; private set; }
         public float MaxAirPeak { get; private set; }
+        /// <summary>Smallest crest-to-crest distance seen between two live waves (m).</summary>
+        public float MinCrestGap { get; private set; } = float.MaxValue;
+        /// <summary>Times the water under a riding rider switched to another wave (falling through to the one behind).</summary>
+        public int RideWaveSwitches { get; private set; }
+        public int WavesSpawned { get; private set; }
 
         readonly StringBuilder log = new StringBuilder(4096);
         CameraDirector director;
         float lastSide;
         int captures;
         float prevVy, lastCaptureTime = -10f, tubeCaptureAt = -1f, swingCaptureAt = -1f, landCaptureAt = -1f;
+        int rideWaveId = -1, maxWaveId;
 
         void Start()
         {
@@ -110,7 +116,37 @@ namespace WavyBoard.Debugging
             Vector3 toCam = p - rider.RenderPosition;
             float side = Mathf.Sign(Vector3.Dot(toCam, (Vector3)rider.Sample.CrestDir));
             if (rider.State == RiderState.Ride && side != lastSide) { SideSwitches++; lastSide = side; swingCaptureAt = Time.time + 0.45f; }
+            WaveSpacing(water);
             AutoCapture();
+        }
+
+        void WaveSpacing(WaterSurfaceComposite water)
+        {
+            var list = water.ActiveSurfWaves;
+            for (int i = 0; i < list.Count; i++)
+            {
+                var a = list[i];
+                if (a == null || !a.IsAlive) continue;
+                if (a.Params.id > maxWaveId) { maxWaveId = a.Params.id; WavesSpawned++; }
+                for (int j = i + 1; j < list.Count; j++)
+                {
+                    var b = list[j];
+                    if (b == null || !b.IsAlive) continue;
+                    float gap = Mathf.Abs(a.CrestAlongD - b.CrestAlongD);
+                    if (gap < MinCrestGap)
+                    {
+                        MinCrestGap = gap;
+                        if (gap < 50f) Line("CLOSE WAVES " + a.Params.id + "/" + b.Params.id + " gap " + gap.ToString("0.0") + " m");
+                    }
+                }
+            }
+            int id = rider.Sample.WaveId;
+            if (rider.State == RiderState.Ride)
+            {
+                if (rideWaveId >= 0 && id >= 0 && id != rideWaveId) { RideWaveSwitches++; Line("RIDE SWITCHED WAVE " + rideWaveId + " -> " + id); }
+                if (id >= 0) rideWaveId = id;
+            }
+            else rideWaveId = -1;
         }
 
         void AutoCapture()
@@ -136,7 +172,8 @@ namespace WavyBoard.Debugging
 
         public string Report()
         {
-            return $"frames {Frames} | camera in water {CameraInWater} (min clearance {MinCameraClearance:0.00} m) | launches {Launches} | landings {Landings} (clean {CleanLandings}, on the face {LandedOnFace}) | max air peak {MaxAirPeak:0.0} m | wipeouts {WipeoutCount} | tube frames {TubeFrames} (tube shot {TubeShotFrames}) | camera side switches {SideSwitches}\n"
+            return $"waves spawned {WavesSpawned} | min crest gap {MinCrestGap:0.0} m | ride wave switches {RideWaveSwitches}\n"
+                   + $"frames {Frames} | camera in water {CameraInWater} (min clearance {MinCameraClearance:0.00} m) | launches {Launches} | landings {Landings} (clean {CleanLandings}, on the face {LandedOnFace}) | max air peak {MaxAirPeak:0.0} m | wipeouts {WipeoutCount} | tube frames {TubeFrames} (tube shot {TubeShotFrames}) | camera side switches {SideSwitches}\n"
                    + $"waves {rider.WavesRidden} tricks {rider.TricksLanded} airs {rider.AirsLanded} tube total {rider.TotalTubeTime:0.0}s\n" + log;
         }
     }
