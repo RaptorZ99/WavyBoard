@@ -13,6 +13,8 @@ namespace WavyBoard.Wave
         public float crestStartOffset;  // crest position along D at spawn
         public float firstBreakTime;    // wave time when the peak starts to pitch
         public float timeScale;         // bigger waves live slower (sqrt of the size)
+        public float tubeScale;         // size of the curl / inside of the tube relative to the key shapes
+        public float barrelHold;        // extra seconds (key time) the tube stays open: a longer barrel along the crest
         public float height;            // reference height H of this wave (m)
         public float breakLength;       // length of crest that breaks (m), rows beyond run into the channel
         public float endTaper;          // channel: the unbroken shoulder backs off over this length (m)
@@ -51,10 +53,11 @@ namespace WavyBoard.Wave
             float shoal = math.smoothstep(p.ShoalEnd - p.shoalDuration, p.ShoalEnd, tw) * channel;
             var r = new WaveProfile.RowInput
             {
-                tau = (tw - p.firstBreakTime - k.x) / p.timeScale,
+                tau = WaveProfile.HoldBarrel((tw - p.firstBreakTime - k.x) / p.timeScale, p.barrelHold * (1f - k.w)),
                 shoal = shoal,
                 heavy = k.z,
                 lipless = k.w,
+                tubeScale = p.tubeScale,
                 xScale = math.max(k.y, 0.55f * p.height),
                 yScale = k.y * amp,
                 xiMin = p.xiMin,

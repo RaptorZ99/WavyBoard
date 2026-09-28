@@ -201,6 +201,7 @@ namespace WavyBoard.Wave
             public float shoal;      // 0 round swell .. 1 steep face, before the break
             public float heavy;      // 0 mellow curl .. 1 Teahupoo slab
             public float lipless;    // 0 throws a lip .. 1 crumbles (behind the peak, closing section)
+            public float tubeScale;  // size of the curl (and so of the inside of the tube) relative to the keys
             public float xScale;     // metres per key unit along D
             public float yScale;     // metres per key unit up (height * envelope)
             public float xiMin, xiMax;
@@ -216,12 +217,48 @@ namespace WavyBoard.Wave
                 float2 p = PathPoint(keys, false, j, r.tau, r.shoal);
                 if (r.lipless > 0f) p = math.lerp(p, PathPoint(keys, true, j, r.tau, r.shoal), r.lipless);
                 if (j >= Wall && j <= Crest && p.x > 0f) p.x *= 0.55f + 0.45f * r.heavy;
+                p = ScaleCurl(p, j, r);
                 float x = j == F2 ? r.xiMax : (j == B2 ? r.xiMin : p.x * r.xScale);
                 c.Add(new float2(x, p.y * r.yScale));
             }
             c.Add(float2.zero);
             c[0] = 2f * c[1] - c[2];
             c[M + 1] = 2f * c[M] - c[M - 1];
+        }
+
+        /// <summary>
+        /// Opens the tube: the wall, the ceiling, the lip and the crest grow about the foot of the back wall, so the
+        /// inside of the barrel gets wider and taller while the floor the rider stands on stays where it is. It follows
+        /// the life of the curl (nothing on the unbroken face, full while the tube is open, gone once it collapses).
+        /// </summary>
+        static float2 ScaleCurl(float2 p, int j, in RowInput r)
+        {
+            if (r.tubeScale <= 1.0001f) return p;
+            float w;
+            switch (j)
+            {
+                case FaceMid: w = 0.3f; break;
+                case Back: w = 0.25f; break;
+                default: w = j >= Wall && j <= Crest ? 1f : 0f; break;
+            }
+            if (w <= 0f) return p;
+            float life = math.smoothstep(-0.4f, 1.4f, r.tau) * (1f - math.smoothstep(TImpact, TMound, r.tau)) * (1f - r.lipless);
+            float k = 1f + (r.tubeScale - 1f) * life * w;
+            float2 pivot = new float2(0f, 0.22f);   // the foot of the back wall of the tube (key units)
+            return pivot + (p - pivot) * k;
+        }
+
+        /// <summary>
+        /// Holds the open tube for <paramref name="hold"/> extra seconds: the time between the landing of the lip and
+        /// the end of the open barrel is stretched, everything after it is shifted. Continuous.
+        /// </summary>
+        public static float HoldBarrel(float tau, float hold)
+        {
+            if (hold <= 0f || tau <= TBarrel) return tau;
+            float open = TBarrel2 - TBarrel;
+            float end = TBarrel + open + hold;
+            if (tau < end) return TBarrel + (tau - TBarrel) * open / (open + hold);
+            return tau - hold;
         }
 
         /// <summary>Centripetal Catmull-Rom point of segment i (between controls i and i+1) at t in [0, 1].</summary>

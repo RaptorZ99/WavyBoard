@@ -34,6 +34,13 @@ namespace WavyBoard.Wave
         [Tooltip("Footprint of the wave mesh along D, relative to the crest (m): the trailing foam lives behind")] public float xiMin = -44f;
         public float xiMax = 30f;
 
+        [Header("Tube (every size gets a roomy barrel)")]
+        [Tooltip("Size of the curl, and so of the inside of the tube, for a medium wave (1 = the key shapes)")] public float tubeRoom = 1.3f;
+        [Tooltip("Small waves get relatively roomier tubes: room x (1 / size) ^ this (0 = strictly proportional)")] public float smallTubeBoost = 0.45f;
+        [Tooltip("No wave, however big, gets less room than this")] public float minTubeRoom = 1.2f;
+        [Tooltip("Extra seconds the tube stays open for a medium wave: a longer barrel along the crest")] public float barrelHold = 1.3f;
+        [Tooltip("Bigger waves hold their tube longer: hold x size ^ this")] public float holdSizeExponent = 1f;
+
         [Header("Timing (s)")]
         [Tooltip("From the spawn far out to the peak pitching")] public float breakLead = 16f;
         [Tooltip("The swell rises out of the sea")] public float spawnFade = 5f;
@@ -98,6 +105,8 @@ namespace WavyBoard.Wave
                 firstBreakTime = breakLead,
                 crestStartOffset = -c * breakLead,
                 timeScale = ts,
+                tubeScale = math.max(minTubeRoom, tubeRoom * math.pow(1f / math.max(0.3f, heightScale), smallTubeBoost)),
+                barrelHold = barrelHold * math.pow(math.max(0.3f, heightScale), holdSizeExponent),
                 height = H,
                 breakLength = breakLength,
                 endTaper = endTaper,
@@ -109,7 +118,7 @@ namespace WavyBoard.Wave
                 shoalDuration = shoalDuration,
                 id = id,
             };
-            p.endTime = breakLead + BreakDelay(breakLength) + WaveProfile.TFlat * ts + 1f;
+            p.endTime = breakLead + BreakDelay(breakLength) + (WaveProfile.TFlat + p.barrelHold) * ts + 1f;
             return p;
         }
 

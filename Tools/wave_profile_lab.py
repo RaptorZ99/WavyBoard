@@ -115,7 +115,43 @@ def hermite_keys(keys, times, t):
     return out
 
 
-def shape_at(tau, shoal=1.0, heavy=1.0):
+TBARREL, TBARREL2, TIMPACT, TMOUND = 1.5, 3.3, 4.1, 5.2
+CURL_W = {4: 0.3, 12: 0.25}          # FACE_MID, BACK partly follow the curl; WALL..CREST fully
+
+
+def hold_barrel(tau, hold):
+    """WaveProfile.HoldBarrel: the open tube lasts `hold` s longer, everything after is shifted."""
+    if hold <= 0 or tau <= TBARREL:
+        return tau
+    open_ = TBARREL2 - TBARREL
+    end = TBARREL + open_ + hold
+    return TBARREL + (tau - TBARREL) * open_ / (open_ + hold) if tau < end else tau - hold
+
+
+def smoothstep(a, b, x):
+    t = min(1.0, max(0.0, (x - a) / (b - a)))
+    return t * t * (3 - 2 * t)
+
+
+def scale_curl(pts, tau, tube_scale):
+    """WaveProfile.ScaleCurl: the curl grows about the foot of the back wall, so the tube opens."""
+    if tube_scale <= 1.0001:
+        return pts
+    life = smoothstep(-0.4, 1.4, tau) * (1 - smoothstep(TIMPACT, TMOUND, tau))
+    out = []
+    for j, (x, y) in enumerate(pts):
+        w = CURL_W.get(j, 1.0 if 5 <= j <= 11 else 0.0)
+        k = 1 + (tube_scale - 1) * life * w
+        out.append((x * k, 0.22 + (y - 0.22) * k))
+    return out
+
+
+def size_params(height_scale, tube_room=1.3, small_boost=0.45, min_room=1.2, hold=1.3):
+    """SurfSpotConfig.BuildParams: tube scale and extra open-tube time for a wave of this size."""
+    return max(min_room, tube_room * (1 / height_scale) ** small_boost), hold * height_scale
+
+
+def shape_at(tau, shoal=1.0, heavy=1.0, tube_scale=1.0):
     """Control points at time tau (s) relative to the local break; shoal 0..1 grows the swell into the steep face."""
     pre = [tuple(np.add(np.multiply(a, 1 - shoal), np.multiply(b, shoal))) for a, b in zip(KEYS["swell"], KEYS["steep"])]
     keys = [pre] + [KEYS[n] for n, _ in TIMELINE[1:]]
@@ -124,7 +160,7 @@ def shape_at(tau, shoal=1.0, heavy=1.0):
     if heavy < 1.0:
         # mellow sections: the lip throws less far and thinner, the tube is smaller (spilling-ish curl)
         pts = [(x * (0.55 + 0.45 * heavy) if 5 <= j <= 11 and x > 0 else x, y) for j, (x, y) in enumerate(pts)]
-    return pts
+    return scale_curl(pts, tau, tube_scale)
 
 
 def curve(pts):
@@ -193,6 +229,23 @@ def main():
     ax.set_aspect("equal"); ax.set_xlim(-8, 10); ax.set_ylim(-1, 5.5); ax.grid(alpha=0.3)
     ax.set_title("Tube a l'echelle (H = 4 m) : bodyboarder allonge (noir) et drop-knee (gris)")
     fig.tight_layout(); fig.savefig(os.path.join(OUT, "barrel_scale.png"), dpi=110); plt.close(fig)
+
+    # 3b. every set size, before (tube scale 1, no hold) and after, at game scale, with the riders
+    sizes = [("petite", 0.68), ("moyenne", 0.95), ("grosse", 1.2), ("bombe", 1.45)]
+    fig, axs = plt.subplots(2, 4, figsize=(20, 8))
+    for col, (name, hs) in enumerate(sizes):
+        Hs = 3.4 * hs
+        ts, hold = size_params(hs)
+        for row, (k, lab) in enumerate([(1.0, "avant"), (ts, "apres")]):
+            ax = axs[row, col]
+            c = curve(shape_at(2.4, tube_scale=k)) * Hs
+            ax.fill(np.concatenate([c[:, 0], [c[-1, 0], c[0, 0]]]), np.concatenate([c[:, 1], [-2, -2]]), color="#1b7fa3", alpha=0.35)
+            ax.plot(c[:, 0], c[:, 1], color="#0b4f6c", lw=1.8)
+            ax.add_patch(plt.Rectangle((0.45 * Hs, 0.35 * Hs * 0.3), 1.0, 0.45, color="k"))
+            ax.add_patch(plt.Rectangle((0.8 * Hs, 0.2 * Hs * 0.3), 0.45, 1.25, color="#555"))
+            ax.set_aspect("equal"); ax.set_xlim(-6, 11); ax.set_ylim(-1, 8); ax.grid(alpha=0.3)
+            ax.set_title(f"{name} H={Hs:.1f} m - {lab}" + (f" (x{k:.2f}, tube +{hold:.1f} s)" if row else ""), fontsize=9)
+    fig.tight_layout(); fig.savefig(os.path.join(OUT, "tube_sizes.png"), dpi=90); plt.close(fig)
 
     # 4. peel: sections along the crest at one instant (vp = 5 m/s), seen in 3D
     from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
