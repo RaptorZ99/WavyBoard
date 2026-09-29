@@ -1,0 +1,156 @@
+@import 'tailwindcss';
+
+/*
+  Palette taken from the game's Water material (Water_Wave.mat):
+  _DeepColor -> abyss, _ShallowColor -> wall, _SSSColor -> lagoon (the light through the lip), _FoamColor -> foam.
+  The only warm colour is the sun.
+*/
+@theme {
+  --color-abyss: #051f38;
+  --color-abyss-2: #0a2c4a;
+  --color-trench: #03172a;
+  --color-wall: #0d6b94;
+  --color-lagoon: #33cce6;
+  --color-lagoon-soft: #9be7f2;
+  --color-foam: #f0f7ff;
+  --color-sun: #ffc56b;
+  --color-coral: #ff7a5c;
+  --color-ink: #062640;
+  --color-paper: #eef6f8;
+  --color-mist: #d9e9ee;
+
+  --font-display: 'Anybody', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: 'Newsreader', ui-serif, Georgia, serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --ease-surf: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@layer base {
+  html {
+    background: var(--color-abyss);
+    color: var(--color-foam);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    background: var(--color-abyss);
+    font-family: var(--font-serif);
+    font-optical-sizing: auto;
+  }
+  ::selection {
+    background: var(--color-lagoon);
+    color: var(--color-abyss);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-lagoon);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+  img,
+  video {
+    display: block;
+  }
+}
+
+@layer components {
+  .display {
+    font-family: var(--font-display);
+    font-variation-settings: 'wdth' 100;
+    letter-spacing: -0.02em;
+    line-height: 0.92;
+  }
+  .wide {
+    font-variation-settings: 'wdth' 135;
+  }
+  .narrow {
+    font-variation-settings: 'wdth' 62;
+  }
+  .ui {
+    font-family: var(--font-display);
+    font-variation-settings: 'wdth' 100;
+    letter-spacing: 0;
+  }
+  .grain::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.07;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+}
+
+/*
+  the swell that rolls through the hero title: transform only (GPU-composited, no text layout per frame).
+  Each letter rises and stretches up from its baseline as the swell passes under it.
+*/
+@keyframes swell {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale3d(1, 1, 1);
+  }
+  45% {
+    transform: translate3d(0, -0.06em, 0) scale3d(1.015, 1.09, 1);
+  }
+}
+.swell-letter {
+  display: inline-block;
+  transform-origin: 50% 88%;
+  animation: swell 5.4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  will-change: transform;
+  backface-visibility: hidden;
+  text-shadow: 0 10px 40px rgba(3, 23, 42, 0.35);
+}
+
+/* report: foam bubbles rising in "La morale", quotes bobbing like buoys, data flowing in the technical diagram */
+@keyframes bubble {
+  0% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate3d(0, -110vh, 0);
+    opacity: 0;
+  }
+}
+@keyframes bob {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -8px, 0);
+  }
+}
+@keyframes flow {
+  to {
+    stroke-dashoffset: -18;
+  }
+}
+
+@keyframes drift {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .swell-letter {
+    animation: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
