@@ -1,5 +1,6 @@
 import { B, Body, C, Callout, Chip, CountUp, Lead, P, Part, Pull } from '../kit'
 import { Icon, type IconName } from '../icons'
+import { asset } from '../../../lib/asset'
 
 /* ============================================================== 01 En bref */
 
@@ -32,7 +33,7 @@ export function Brief() {
           <img decoding="async"
             width={1600}
             height={885}
-            src="/media/evolution/11-jeu-final.webp"
+            src={asset('/media/evolution/11-jeu-final.webp')}
             alt="Le jeu final : dans le tube, avec le HUD"
             className="relative h-auto w-full rounded-[1.6rem] shadow-[0_40px_90px_-30px_rgba(0,0,0,0.7)] ring-1 ring-foam/15"
             loading="lazy"

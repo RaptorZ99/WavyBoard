@@ -22,9 +22,17 @@ npm run preview
 
 Toutes les captures de la landing sont déclarées dans `src/content/media.ts`. Un emplacement sans `src` affiche un
 placeholder qui décrit la capture attendue ; déposer le fichier dans `public/media/` et renseigner `src`.
+Toujours passer les chemins de `public/` par `asset()` (`src/lib/asset.ts`) : le site n’est pas servi à la racine sur
+GitHub Pages.
 
 Les captures du jeu ont été prises dans l’éditeur Unity ouvert, par le CLI :
 
 - images fixes : `WavyBoard.EditorTools.WaveLab.Shot(...)` puis `unity command capture_game_view` ;
 - vidéos : `WavyBoard.Debugging.FrameRecorder` (images JPEG à pas de temps fixe pendant qu’un `RiderBot` ride),
   assemblées avec ffmpeg.
+
+## Déploiement
+
+GitHub Pages : https://raptorz99.github.io/WavyBoard/. Le workflow `.github/workflows/pages.yml` construit le site à chaque
+push sur `main` qui touche `Website/` (ou à la main depuis l’onglet Actions), avec `BASE_PATH=/WavyBoard/`, et copie
+`index.html` en `404.html` pour que `/rapport` s’ouvre en accès direct. En local et sur Vercel, la base reste `/`.

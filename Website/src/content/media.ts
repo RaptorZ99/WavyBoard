@@ -4,6 +4,8 @@
  * RiderBot rides (see Website/README.md). A slot without `src` renders a placeholder that says what to capture.
  */
 
+import { asset } from '../lib/asset'
+
 export interface Media {
   kind: 'image' | 'video'
   src?: string
@@ -12,7 +14,7 @@ export interface Media {
   alt?: string
 }
 
-const G = '/media/game'
+const G = asset('/media/game')
 
 export const MEDIA: {
   trailer: Media

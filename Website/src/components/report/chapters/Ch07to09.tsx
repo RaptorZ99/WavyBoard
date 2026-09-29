@@ -6,6 +6,7 @@ import { MediaSlot } from '../../ui/MediaSlot'
 import { ProfileSvg } from '../../wave/ProfileSvg'
 import { TAU_MAX, TAU_MIN, stageAt } from '../../../lib/profileGeometry'
 import { ROLES, STAGES } from '../../../lib/waveProfile'
+import { asset } from '../../../lib/asset'
 
 /* ============================================================== 07 Comment l'IA pilote Unity */
 
@@ -87,7 +88,7 @@ function Terminal() {
           <AnimatePresence>
             {eyes && (
               <motion.img decoding="async"
-                src="/media/game/lab-tube.webp"
+                src={asset('/media/game/lab-tube.webp')}
                 alt="La capture que l’agent relit : le tube photographié par WaveLab"
                 className="absolute inset-0 h-full w-full object-cover"
                 initial={{ opacity: 0, scale: 1.08, filter: 'blur(10px)' }}
@@ -161,7 +162,7 @@ export function Cli() {
           <p className="text-[1.08rem] leading-relaxed text-foam/85">
             Les images et les vidéos de ce site ont été tournées de la même façon, sans que personne ne touche à l’éditeur : les plans fixes avec <C>WaveLab</C>, les vidéos en laissant le bot rider pendant qu’un petit composant (<C>FrameRecorder</C>) enregistre chaque image à pas de temps fixe, assemblées ensuite avec ffmpeg.
           </p>
-          <MediaSlot kind="video" src="/media/game/tube.mp4" poster="/media/game/tube-poster.webp" alt="Une ride dans le tube, enregistrée par FrameRecorder" rounded="rounded-2xl" className="ring-1 ring-foam/15" />
+          <MediaSlot kind="video" src={asset('/media/game/tube.mp4')} poster={asset('/media/game/tube-poster.webp')} alt="Une ride dans le tube, enregistrée par FrameRecorder" rounded="rounded-2xl" className="ring-1 ring-foam/15" />
         </div>
       </Callout>
     </div>
@@ -466,7 +467,7 @@ export function Wave() {
         </p>
       </Part>
       <ProfileLab />
-      <LabFigure w={1650} h={660} src="/media/lab/stages.webp" alt="Les coupes de la vague au fil du temps, tracées par wave_profile_lab.py" />
+      <LabFigure w={1650} h={660} src={asset('/media/lab/stages.webp')} alt="Les coupes de la vague au fil du temps, tracées par wave_profile_lab.py" />
       <Part title="Des graphiques avant la 3D">
         <P>
           Avant de toucher au jeu, l’agent a écrit un double de la vague en Python (<C>Tools/wave_profile_lab.py</C>) qui trace :
@@ -487,8 +488,8 @@ export function Wave() {
         </ul>
         <P>Le script vérifie aussi, sur 90 instants, que la courbe ne se croise jamais elle-même. Le code C# du jeu est contrôlé contre les chiffres du script : les deux doivent rester identiques.</P>
         <div className="grid gap-6 lg:grid-cols-2">
-          <LabFigure w={1500} h={1200} src="/media/lab/keys.webp" alt="Les dix formes clés et leurs points de contrôle" />
-          <LabFigure w={1800} h={720} src="/media/lab/tube_sizes.webp" alt="Le tube de chaque taille de vague, avant et après agrandissement" />
+          <LabFigure w={1500} h={1200} src={asset('/media/lab/keys.webp')} alt="Les dix formes clés et leurs points de contrôle" />
+          <LabFigure w={1800} h={720} src={asset('/media/lab/tube_sizes.webp')} alt="Le tube de chaque taille de vague, avant et après agrandissement" />
         </div>
       </Part>
       <Part title="Des photos, pas des chiffres">

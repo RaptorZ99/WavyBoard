@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 're
 import { AnimatePresence, motion, useInView, useReducedMotion, useScroll, useTransform } from 'motion/react'
 import { B, Body, C, CountUp, I, P, Part } from '../kit'
 import { MODEL_COLORS, modelKey } from '../modelColors'
+import { asset } from '../../../lib/asset'
 
 /* ============================================================== 10 Le cheminement */
 
@@ -131,9 +132,9 @@ function BeforeAfter() {
         }}
         onPointerMove={(e) => e.buttons === 1 && drag(e.clientX)}
       >
-        <img decoding="async" src="/media/evolution/09-tube-parfait.webp" alt="28 septembre : le tube de la vague Teahupoo, vu de l’intérieur" className="absolute inset-0 h-full w-full object-cover" draggable={false} />
+        <img decoding="async" src={asset('/media/evolution/09-tube-parfait.webp')} alt="28 septembre : le tube de la vague Teahupoo, vu de l’intérieur" className="absolute inset-0 h-full w-full object-cover" draggable={false} />
         <div className="absolute inset-0" style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}>
-          <img decoding="async" src="/media/evolution/03-premier-tube.webp" alt="8 septembre : premier tube lisible, vu de l’intérieur" className="h-full w-full object-cover" draggable={false} />
+          <img decoding="async" src={asset('/media/evolution/03-premier-tube.webp')} alt="8 septembre : premier tube lisible, vu de l’intérieur" className="h-full w-full object-cover" draggable={false} />
         </div>
         <span className="ui absolute left-4 top-4 rounded-full bg-trench/80 px-3 py-1.5 text-[0.8rem] text-foam">8 septembre</span>
         <span className="ui absolute right-4 top-4 rounded-full bg-lagoon px-3 py-1.5 text-[0.8rem] font-[700] text-abyss">28 septembre</span>
@@ -196,7 +197,7 @@ function Filmstrip() {
           <li key={f} className="w-[80%] shrink-0 snap-start sm:w-[44%] lg:w-[30%]">
             <button type="button" onClick={() => setOpen(i)} className="group block w-full text-left" aria-label={`Agrandir : ${alt}`}>
               <span className="relative block overflow-hidden rounded-[1.2rem] ring-1 ring-foam/12">
-                <img decoding="async" src={`/media/evolution/${f}.webp`} alt={alt} loading="lazy" className="aspect-video w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]" />
+                <img decoding="async" src={asset(`/media/evolution/${f}.webp`)} alt={alt} loading="lazy" className="aspect-video w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]" />
                 <span className="ui absolute left-3 top-3 rounded-full bg-trench/80 px-2.5 py-1 text-[0.72rem] tabular-nums text-foam">{String(i + 1).padStart(2, '0')}</span>
               </span>
               <span className="ui mt-3 block text-[0.85rem] font-[750] text-lagoon">{date}</span>
@@ -208,7 +209,7 @@ function Filmstrip() {
       <AnimatePresence>
         {cur && (
           <motion.div role="dialog" aria-modal="true" aria-label={cur[1]} className="fixed inset-0 z-[90] flex flex-col items-center justify-center bg-trench/97 p-4 sm:p-10" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setOpen(null)}>
-            <motion.img decoding="async" key={open} src={`/media/evolution/${cur[0]}.webp`} alt={cur[1]} className="max-h-[78vh] w-auto max-w-full rounded-xl shadow-2xl" initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} onClick={(e) => e.stopPropagation()} />
+            <motion.img decoding="async" key={open} src={asset(`/media/evolution/${cur[0]}.webp`)} alt={cur[1]} className="max-h-[78vh] w-auto max-w-full rounded-xl shadow-2xl" initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} onClick={(e) => e.stopPropagation()} />
             <p className="mt-5 max-w-[70ch] text-center text-[1.05rem] text-foam/85">
               <span className="ui mr-2 font-[750] text-lagoon">{cur[2]}</span>
               {cur[3]}
