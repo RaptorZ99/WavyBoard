@@ -1,0 +1,2612 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WavyBoard · Soutenance</title>
+<meta name="description" content="Soutenance du projet WavyBoard : un jeu de bodyboard sous Unity 6.6 écrit par des agents IA. M2 EFREI, Culture &amp; Concepts Informatiques.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23051F38'/%3E%3Cpath d='M6 46c10 0 14-6 18-14 5-10 12-16 22-16 7 0 12 4 12 10 0 5-4 8-8 8-3 0-5-2-5-5 0 4-4 7-9 7 5 5 11 10 22 10v10H6z' fill='%2333CCE6'/%3E%3Cpath d='M6 50c14 0 22-2 30-6 6 4 14 6 22 6v8H6z' fill='%23F0F7FF'/%3E%3C/svg%3E">
+<style>
+/* =====================================================================
+   WAVYBOARD · SOUTENANCE
+   One self-contained deck on a fixed 1920×1080 stage, scaled to the window.
+   The palette is the game's own Water material (deep, shallow, the light
+   through the lip, foam); the wave drawn everywhere is the game's real
+   cross-section (WaveProfile.cs), computed live in the browser.
+
+   Keys: ← → Space PgUp PgDn Home End · P presenter view · N notes
+         F fullscreen · B black screen · E edit text · H help
+   ===================================================================== */
+
+/* === 1. FONTS ===
+   Anybody, Newsreader, JetBrains Mono (Google Fonts, OFL), bundled in
+   assets/fonts so the deck also works without a network on the day. */
+/* Anybody normal latin-ext */
+@font-face {
+  font-family: 'Anybody';
+  font-style: normal;
+  font-weight: 100 900;
+  font-stretch: 50% 150%;
+  font-display: block;
+  src: url(assets/fonts/Anybody-normal-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* Anybody normal latin */
+@font-face {
+  font-family: 'Anybody';
+  font-style: normal;
+  font-weight: 100 900;
+  font-stretch: 50% 150%;
+  font-display: block;
+  src: url(assets/fonts/Anybody-normal-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* JetBrains Mono normal latin-ext */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url(assets/fonts/JetBrainsMono-normal-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* JetBrains Mono normal latin */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url(assets/fonts/JetBrainsMono-normal-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* JetBrains Mono normal latin-ext */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 600;
+  font-display: block;
+  src: url(assets/fonts/JetBrainsMono-normal-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* JetBrains Mono normal latin */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 600;
+  font-display: block;
+  src: url(assets/fonts/JetBrainsMono-normal-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* Newsreader italic latin-ext */
+@font-face {
+  font-family: 'Newsreader';
+  font-style: italic;
+  font-weight: 300 700;
+  font-display: block;
+  src: url(assets/fonts/Newsreader-italic-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* Newsreader italic latin */
+@font-face {
+  font-family: 'Newsreader';
+  font-style: italic;
+  font-weight: 300 700;
+  font-display: block;
+  src: url(assets/fonts/Newsreader-italic-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* Newsreader normal latin-ext */
+@font-face {
+  font-family: 'Newsreader';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: block;
+  src: url(assets/fonts/Newsreader-normal-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* Newsreader normal latin */
+@font-face {
+  font-family: 'Newsreader';
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: block;
+  src: url(assets/fonts/Newsreader-normal-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* === 2. THEME TOKENS ===
+   Change the look of the whole deck here. */
+:root {
+    --abyss: #051f38;
+    --abyss-2: #0a2c4a;
+    --trench: #03172a;
+    --night: #020e1b;
+    --wall: #0d6b94;
+    --lagoon: #33cce6;
+    --lagoon-soft: #9be7f2;
+    --foam: #f0f7ff;
+    --paper: #eef6f8;
+    --mist: #d9e9ee;
+    --ink: #062640;
+    --sun: #ffc56b;
+    --coral: #ff7a5c;
+
+    /* one colour per Claude model (same as the web report) */
+    --m-fable: #3987e5;
+    --m-opus5: #d95926;
+    --m-opus48: #199e70;
+    --m-opus55: #c98500;
+    --m-sonnet: #d55181;
+
+    /* one colour per speaker */
+    --alexandre: #ffc56b;
+    --maxime: #ff8f73;
+    --louis: #5fd8ec;
+
+    --font-display: 'Anybody', ui-sans-serif, system-ui, sans-serif;
+    --font-serif: 'Newsreader', ui-serif, Georgia, serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-io: cubic-bezier(0.65, 0, 0.35, 1);
+
+    --stage-bg: #010b16;
+    --slide-bg: #051f38;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* ===========================================
+   FIXED 16:9 STAGE: MANDATORY BASE STYLES
+   (frontend-slides viewport-base.css, verbatim)
+   =========================================== */
+
+/* 1. Lock the browser viewport */
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: var(--stage-bg, #000);
+}
+
+/* 2. Full-window deck viewport */
+.deck-viewport {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    background: var(--stage-bg, #000);
+}
+
+/* 3. Fixed 16:9 design canvas.
+   JavaScript sets transform: translate(...) scale(...). */
+.deck-stage {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    transform-origin: 0 0;
+    background: var(--slide-bg, #fff);
+}
+
+/* 4. Slides stack inside the fixed stage.
+   Content must be laid out at 1920×1080, not reflowed per device. */
+.slide {
+    position: absolute;
+    inset: 0;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    display: block;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    background: var(--slide-bg, #fff);
+}
+
+.slide.active,
+.slide.visible {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    z-index: 1;
+}
+
+/* 5. Keep media inside authored slide bounds */
+img,
+video,
+canvas,
+svg {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+/* 6. Presentation chrome stays outside the slide design system */
+.deck-controls {
+    position: fixed;
+    left: 50%;
+    bottom: 22px;
+    transform: translateX(-50%);
+    z-index: 1000;
+}
+
+/* 7. Print one fixed-size slide per page */
+@media print {
+    html,
+    body {
+        width: 1920px;
+        height: auto;
+        overflow: visible;
+        background: #fff;
+    }
+
+    .deck-viewport {
+        position: static;
+        overflow: visible;
+        background: #fff;
+    }
+
+    .deck-stage {
+        position: static;
+        width: auto;
+        height: auto;
+        transform: none !important;
+        background: none;
+    }
+
+    .slide {
+        position: relative;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        width: 1920px;
+        height: 1080px;
+        break-after: page;
+        page-break-after: always;
+    }
+
+    .slide:last-child {
+        break-after: auto;
+        page-break-after: auto;
+    }
+
+    .deck-controls {
+        display: none !important;
+    }
+}
+
+/* 8. Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.2s !important;
+    }
+}
+
+/* === 3. SLIDE ATMOSPHERE ===
+   Each act has its own water: the deck deepens toward the tube (act III),
+   then breaks into foam (light slides) at the end, like the life of a wave. */
+body {
+    font-family: var(--font-serif);
+    color: var(--foam);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    font-optical-sizing: auto;
+}
+
+.slide {
+    --g1: #082946;
+    --g2: #041a30;
+    --glow: rgba(51, 204, 230, 0.14);
+    --glow2: rgba(13, 107, 148, 0.26);
+    color: var(--foam);
+    background:
+        radial-gradient(1100px 700px at 82% -8%, var(--glow), transparent 62%),
+        radial-gradient(900px 620px at 6% 108%, var(--glow2), transparent 66%),
+        linear-gradient(180deg, var(--g1) 0%, var(--g2) 100%);
+    /* fade out: stay visible until the opacity transition is over */
+    transition: opacity 0.8s var(--ease), visibility 0s linear 0.8s;
+}
+.slide.active { transition: opacity 0.8s var(--ease), visibility 0s linear 0s; }
+.slide[data-act="2"] { --g1: #0a3150; --g2: #03172a; --glow: rgba(51, 204, 230, 0.16); }
+.slide[data-act="3"] { --g1: #0b385a; --g2: #04203a; --glow: rgba(51, 204, 230, 0.26); --glow2: rgba(51, 204, 230, 0.12); }
+.slide[data-act="4"] { --g1: #0d436a; --g2: #062640; }
+.slide.light {
+    color: var(--ink);
+    --g1: #f4f9fd;
+    --g2: #dcebf2;
+    --glow: rgba(51, 204, 230, 0.22);
+    --glow2: rgba(13, 107, 148, 0.12);
+}
+
+/* film grain over every slide (same recipe as the website) */
+.slide::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 60;
+    pointer-events: none;
+    opacity: 0.07;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.slide.light::after { opacity: 0.05; mix-blend-mode: multiply; }
+
+/* caustics: soft light drifting through the water, only on the live slide */
+.caustics {
+    position: absolute;
+    inset: -12%;
+    z-index: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(420px 240px at 28% 30%, rgba(155, 231, 242, 0.075), transparent 70%),
+        radial-gradient(560px 280px at 72% 62%, rgba(51, 204, 230, 0.065), transparent 70%),
+        radial-gradient(300px 180px at 55% 12%, rgba(240, 247, 255, 0.05), transparent 70%);
+    animation: drift 22s var(--ease-io) infinite alternate;
+    animation-play-state: paused;
+}
+.slide.active .caustics { animation-play-state: running; }
+.slide.light .caustics { opacity: 0.6; }
+@keyframes drift {
+    from { transform: translate3d(-2%, -1%, 0) rotate(0deg); }
+    to { transform: translate3d(3%, 2%, 0) rotate(4deg); }
+}
+
+/* === 4. REVEAL SYSTEM ===
+   .rv elements rise in when their slide is shown; --d sets the stagger. */
+.rv {
+    opacity: 0;
+    transform: translate3d(0, 26px, 0);
+    transition:
+        opacity 0.9s var(--ease),
+        transform 0.9s var(--ease),
+        filter 0.9s var(--ease);
+    transition-delay: calc(var(--d, 0) * 95ms + 140ms);
+}
+.rv.blur { filter: blur(8px); }
+.rv.left { transform: translate3d(-40px, 0, 0); }
+.rv.right { transform: translate3d(40px, 0, 0); }
+.rv.zoom { transform: scale(0.94); }
+.slide.shown .rv { opacity: 1; transform: none; filter: none; }
+
+/* === 5. TYPE AND SHARED COMPONENTS === */
+.head { position: absolute; left: 120px; top: 116px; right: 120px; z-index: 2; }
+.kicker {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-family: var(--font-mono);
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--lagoon);
+}
+.kicker::before { content: ""; width: 34px; height: 2px; background: currentColor; opacity: 0.7; }
+.light .kicker { color: var(--wall); }
+.h2 {
+    margin-top: 16px;
+    font-family: var(--font-display);
+    font-weight: 760;
+    font-variation-settings: 'wdth' 100;
+    font-size: 72px;
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+    color: var(--foam);
+}
+.h2 em { font-style: normal; color: var(--lagoon); }
+.light .h2 { color: var(--ink); }
+.light .h2 em { color: var(--wall); }
+.lead { font-family: var(--font-serif); font-size: 34px; line-height: 1.3; font-weight: 350; color: rgba(240, 247, 255, 0.86); }
+.mono { font-family: var(--font-mono); }
+.disp { font-family: var(--font-display); }
+.abs { position: absolute; }
+
+.card {
+    position: absolute;
+    border-radius: 28px;
+    background: linear-gradient(180deg, rgba(240, 247, 255, 0.075), rgba(240, 247, 255, 0.028));
+    border: 1px solid rgba(240, 247, 255, 0.12);
+    box-shadow: 0 30px 80px -40px rgba(0, 0, 0, 0.75);
+}
+.light .card {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.6));
+    border-color: rgba(6, 38, 64, 0.1);
+    box-shadow: 0 30px 70px -45px rgba(6, 38, 64, 0.45);
+}
+.chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    height: 44px;
+    padding: 0 18px;
+    border-radius: 999px;
+    background: rgba(240, 247, 255, 0.08);
+    border: 1px solid rgba(240, 247, 255, 0.14);
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 620;
+    white-space: nowrap;
+}
+.dot {
+    display: inline-block;
+    flex: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--c, var(--lagoon));
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--c, var(--lagoon)) 24%, transparent);
+}
+.ico { width: 30px; height: 30px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.notes { display: none; }
+
+/* === 6. DECK CHROME ===
+   One layer above every slide: brand, act, speaker, page number. */
+.chrome { position: absolute; inset: 0; z-index: 30; pointer-events: none; color: var(--foam); transition: color 0.6s var(--ease); }
+.chrome > * { transition: opacity 0.35s var(--ease); }
+.chrome.swap > * { opacity: 0 !important; }
+.chrome .brand {
+    position: absolute;
+    left: 120px;
+    top: 50px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-variation-settings: 'wdth' 125;
+    font-size: 25px;
+    letter-spacing: -0.01em;
+}
+.chrome .brand svg { width: 34px; height: 34px; color: var(--lagoon); }
+.chrome .act {
+    position: absolute;
+    right: 120px;
+    top: 60px;
+    font-family: var(--font-mono);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    opacity: 0.75;
+}
+.chrome .who {
+    position: absolute;
+    left: 120px;
+    bottom: 42px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--font-display);
+    font-size: 19px;
+    font-weight: 650;
+}
+.chrome .page {
+    position: absolute;
+    right: 120px;
+    bottom: 44px;
+    font-family: var(--font-mono);
+    font-size: 16px;
+    letter-spacing: 0.14em;
+    opacity: 0.72;
+}
+.chrome.light { color: var(--ink); }
+.chrome.light .brand svg { color: var(--wall); }
+.chrome.bare .brand,
+.chrome.bare .act,
+.chrome.bare .who,
+.chrome.bare .page { opacity: 0; }
+
+/* === 7. SWELL BAR ===
+   The game's wave, drawn along the bottom of the stage: it travels to the
+   right as the talk moves on and lives the life of a wave (swell, lip, tube,
+   foam), one stage per slide. */
+#swell {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 1920px;
+    height: 200px;
+    max-width: none;
+    max-height: none;
+    z-index: 20;
+    pointer-events: none;
+}
+
+/* === 8. SHARED LIGHT LAYOUT ===
+   Few boxes: information sits on thin rules and generous spacing. */
+.lbl { font-family: var(--font-mono); font-size: 15px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--lagoon); }
+.muted { color: rgba(240, 247, 255, 0.72); }
+
+/* === 9. SLIDE 01 · TITLE ===
+   Full-bleed game footage (the rider in the tube) under the swelling title. */
+.bgvid {
+    position: absolute;
+    inset: 0;
+    width: 1920px;
+    height: 1080px;
+    max-width: none;
+    max-height: none;
+    object-fit: cover;
+    z-index: 0;
+    animation: kenburns 28s linear infinite alternate;
+}
+@keyframes kenburns {
+    from { transform: scale(1.04); }
+    to { transform: scale(1.13) translate3d(-1%, 1%, 0); }
+}
+.sl-title .shade {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background:
+        linear-gradient(180deg, rgba(2, 14, 27, 0.6) 0%, rgba(2, 14, 27, 0) 24%, rgba(2, 14, 27, 0) 36%, rgba(3, 23, 42, 0.86) 70%, #03172a 100%),
+        radial-gradient(1000px 640px at 0% 100%, rgba(3, 23, 42, 0.78), transparent 70%);
+}
+.sl-title .top-l { position: absolute; left: 120px; top: 62px; z-index: 2; }
+.sl-title .top-r { position: absolute; right: 120px; top: 64px; z-index: 2; font-family: var(--font-mono); font-size: 15px; font-weight: 600; letter-spacing: 0.24em; text-transform: uppercase; color: rgba(240, 247, 255, 0.8); }
+.sl-title .block { position: absolute; left: 112px; bottom: 150px; z-index: 2; }
+.hero {
+    font-family: var(--font-display);
+    font-weight: 820;
+    font-variation-settings: 'wdth' 122, 'wght' 820;
+    font-size: 200px;
+    line-height: 0.86;
+    letter-spacing: -0.035em;
+    color: var(--foam);
+    white-space: nowrap;
+}
+.hero .L { display: inline-block; opacity: 0; transform: translate3d(0, 0.8em, 0); transition: opacity 1.1s var(--ease), transform 1.1s var(--ease); transition-delay: calc(var(--i) * 60ms + 250ms); }
+.slide.shown .hero .L { opacity: 1; transform: none; }
+/* the swell that rolls through the letters (same keyframes as the site's hero) */
+.hero .L span { display: inline-block; transform-origin: 50% 88%; animation: swell 5.4s cubic-bezier(0.45, 0, 0.55, 1) infinite; animation-delay: calc(var(--i) * 0.22s + 1.2s); text-shadow: 0 10px 40px rgba(3, 23, 42, 0.35); }
+@keyframes swell {
+    0%, 100% { transform: translate3d(0, 0, 0) scale3d(1, 1, 1); }
+    45% { transform: translate3d(0, -0.06em, 0) scale3d(1.015, 1.09, 1); }
+}
+.sl-title .question { margin-top: 30px; max-width: 1120px; padding-left: 26px; border-left: 3px solid var(--lagoon); font-family: var(--font-serif); font-style: italic; font-weight: 380; font-size: 44px; line-height: 1.18; color: rgba(240, 247, 255, 0.95); }
+.byline { margin-top: 32px; display: flex; align-items: center; gap: 34px; font-family: var(--font-display); font-size: 27px; font-weight: 650; }
+.byline span { display: inline-flex; align-items: center; gap: 12px; }
+.byline em { font-style: normal; font-family: var(--font-mono); font-size: 16px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.7; margin-left: 12px; }
+.sl-title .stats { position: absolute; right: 120px; bottom: 150px; z-index: 2; display: flex; gap: 44px; text-align: right; }
+.sl-title .stats b { display: block; font-family: var(--font-display); font-weight: 800; font-variation-settings: 'wdth' 125; font-size: 74px; line-height: 1; }
+.sl-title .stats span { display: block; width: 150px; margin-top: 10px; margin-left: auto; font-family: var(--font-mono); font-size: 14px; font-weight: 600; letter-spacing: 0.12em; line-height: 1.4; text-transform: uppercase; color: var(--lagoon-soft); }
+
+/* === 10. SLIDE 02 · PREPARE: RESEARCH, THEN THE SPECIFICATION === */
+.sl-prep .cols { position: absolute; left: 120px; top: 268px; width: 1680px; display: grid; grid-template-columns: 1fr 1fr; }
+.sl-prep .c { padding-right: 64px; }
+.sl-prep .c + .c { padding: 0 0 0 64px; border-left: 1px solid rgba(240, 247, 255, 0.14); }
+.sl-prep h3 { font-family: var(--font-display); font-size: 38px; font-weight: 760; }
+.sl-prep h3 i { font-style: normal; font-family: var(--font-mono); font-size: 16px; font-weight: 600; color: var(--lagoon); margin-right: 14px; vertical-align: 6px; }
+.sl-prep .meta { margin-top: 8px; display: flex; align-items: center; gap: 10px; font-size: 21px; color: rgba(240, 247, 255, 0.7); }
+.sl-prep .domains { margin-top: 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px 36px; list-style: none; }
+.sl-prep .domains li { display: grid; grid-template-columns: 28px 1fr; gap: 12px; }
+.sl-prep .domains .ico { width: 26px; height: 26px; color: var(--lagoon); margin-top: 2px; }
+.sl-prep .domains b { display: block; font-family: var(--font-display); font-size: 21px; font-weight: 720; }
+.sl-prep .domains span { display: block; margin-top: 2px; font-size: 18.5px; line-height: 1.3; color: rgba(240, 247, 255, 0.7); }
+.sl-prep .lines { margin-top: 30px; display: grid; gap: 14px; }
+.sl-prep .lines p { padding-left: 18px; border-left: 2px solid rgba(155, 231, 242, 0.35); font-size: 21px; line-height: 1.35; color: rgba(240, 247, 255, 0.82); }
+.sl-prep .lines b { color: var(--foam); font-weight: 600; }
+.sl-prep .find { margin-top: 28px; padding: 16px 22px; border-radius: 14px; background: rgba(51, 204, 230, 0.1); border-left: 3px solid var(--lagoon); font-size: 21px; line-height: 1.35; color: rgba(240, 247, 255, 0.82); }
+.sl-prep .find b { display: block; margin-top: 4px; font-family: var(--font-display); font-size: 26px; font-weight: 760; color: var(--foam); }
+.sl-prep .figs { margin-top: 26px; display: flex; gap: 56px; }
+.sl-prep .figs b { display: block; font-family: var(--font-display); font-weight: 820; font-variation-settings: 'wdth' 120; font-size: 64px; line-height: 1; }
+.sl-prep .figs span { display: block; margin-top: 6px; font-family: var(--font-mono); font-size: 13.5px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--lagoon-soft); }
+.sl-prep .phases { margin-top: 20px; display: flex; gap: 6px; }
+.sl-prep .phases span { flex: 1; height: 28px; display: grid; place-items: center; border-radius: 6px; background: rgba(51, 204, 230, 0.12); font-family: var(--font-mono); font-size: 13.5px; font-weight: 600; color: var(--lagoon-soft); }
+.sl-prep blockquote { margin-top: 26px; padding-left: 20px; border-left: 3px solid var(--lagoon); font-family: var(--font-serif); font-style: italic; font-size: 23px; line-height: 1.35; }
+.sl-prep blockquote small { display: block; margin-top: 6px; font-family: var(--font-mono); font-style: normal; font-size: 13px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--lagoon); }
+.sl-prep .rules { margin-top: 22px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 28px; list-style: none; }
+.sl-prep .rules li { display: flex; gap: 10px; font-size: 19.5px; line-height: 1.3; color: rgba(240, 247, 255, 0.85); }
+.sl-prep .rules li::before { content: ""; width: 7px; height: 7px; flex: none; margin-top: 9px; border-radius: 2px; background: var(--lagoon); transform: rotate(45deg); }
+.sl-prep .flow { margin-top: 24px; font-size: 20px; line-height: 1.4; color: rgba(240, 247, 255, 0.82); }
+.sl-prep .flow b { color: var(--foam); font-weight: 600; }
+.sl-prep .flow i { font-style: normal; color: var(--lagoon); margin: 0 8px; }
+.sl-prep .pull { margin-top: 16px; font-size: 20px; line-height: 1.4; color: rgba(240, 247, 255, 0.7); }
+.sl-prep .pull s { color: var(--coral); text-decoration-thickness: 2px; }
+
+/* === 11. SLIDE 03 · THE CLAUDE CODE HARNESS === */
+.sl-harness .hub { position: absolute; left: 60px; top: 250px; width: 1060px; height: 740px; }
+.sl-harness .hub svg.orbit { position: absolute; inset: 0; width: 1060px; height: 740px; max-width: none; max-height: none; overflow: visible; }
+.sl-harness .ring { transform-origin: 530px 375px; animation: spin 60s linear infinite; animation-play-state: paused; }
+.sl-harness.active .ring { animation-play-state: running; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.sl-harness .core { position: absolute; left: 530px; top: 375px; width: 220px; height: 220px; margin: -110px 0 0 -110px; border-radius: 50%; display: grid; place-content: center; text-align: center; background: radial-gradient(circle at 40% 35%, rgba(51, 204, 230, 0.4), rgba(13, 107, 148, 0.25) 55%, rgba(3, 23, 42, 0.9)); border: 1px solid rgba(155, 231, 242, 0.45); box-shadow: 0 0 80px -10px rgba(51, 204, 230, 0.45); }
+.sl-harness .core b { font-family: var(--font-display); font-weight: 800; font-variation-settings: 'wdth' 118; font-size: 32px; line-height: 1.05; }
+.sl-harness .core span { margin-top: 6px; font-family: var(--font-mono); font-size: 14px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--lagoon-soft); }
+.sl-harness .node { position: absolute; width: 320px; margin-left: -160px; margin-top: -56px; padding: 14px 18px; border-radius: 16px; background: rgba(4, 26, 48, 0.9); border: 1px solid rgba(240, 247, 255, 0.12); }
+.sl-harness .node b { display: block; font-family: var(--font-mono); font-size: 17px; font-weight: 600; color: var(--lagoon); }
+.sl-harness .node span { display: block; margin-top: 4px; font-size: 20px; line-height: 1.28; color: rgba(240, 247, 255, 0.85); }
+.sl-harness .side { position: absolute; left: 1180px; top: 262px; width: 620px; }
+.sl-harness .roles { margin-top: 12px; list-style: none; }
+.sl-harness .roles li { display: grid; grid-template-columns: 40px 1fr; gap: 14px; padding: 14px 0; border-top: 1px solid rgba(240, 247, 255, 0.12); }
+.sl-harness .roles .ico { width: 30px; height: 30px; color: var(--sun); margin-top: 3px; }
+.sl-harness .roles b { display: block; font-family: var(--font-display); font-size: 25px; font-weight: 720; }
+.sl-harness .roles span { display: block; margin-top: 3px; font-size: 19.5px; line-height: 1.32; color: rgba(240, 247, 255, 0.75); }
+.sl-harness .roles em { font-style: italic; color: var(--sun); }
+.sl-harness .models { margin-top: 30px; }
+.sl-harness .models ul { margin-top: 10px; list-style: none; }
+.sl-harness .models li { display: grid; grid-template-columns: 18px 130px 1fr; align-items: center; padding: 6px 0; font-size: 19px; color: rgba(240, 247, 255, 0.75); }
+.sl-harness .models li b { font-family: var(--font-display); font-size: 19px; font-weight: 700; color: var(--foam); }
+.sl-harness .models .dot { width: 9px; height: 9px; box-shadow: none; }
+
+/* === 12. SLIDE 04 · HOW THE AI DRIVES UNITY, AND CHECKS ITS WORK === */
+.term { left: 120px; top: 268px; width: 1000px; height: 340px; overflow: hidden; background: rgba(2, 13, 25, 0.9); border-color: rgba(240, 247, 255, 0.14); }
+.term .bar { display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 22px; border-bottom: 1px solid rgba(240, 247, 255, 0.08); font-family: var(--font-mono); font-size: 14px; color: rgba(240, 247, 255, 0.55); }
+.term .bar i { width: 12px; height: 12px; border-radius: 50%; }
+.term .bar i:nth-child(1) { background: #ff6b5f; }
+.term .bar i:nth-child(2) { background: #ffbd4a; }
+.term .bar i:nth-child(3) { background: #33c65a; }
+.term .bar span { margin-left: auto; }
+.term pre { padding: 16px 26px; font-family: var(--font-mono); font-size: 19px; line-height: 1.52; color: var(--foam); white-space: pre; }
+.term .tl { display: block; min-height: 1.52em; }
+.term .p { color: var(--lagoon); }
+.term .c { color: rgba(155, 231, 242, 0.55); }
+.term .s { color: var(--sun); }
+.term .caret { display: inline-block; width: 10px; height: 1.1em; vertical-align: -0.18em; background: var(--lagoon); animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.shot { position: absolute; left: 1170px; top: 268px; width: 630px; margin: 0; }
+.shot .frame { position: relative; width: 630px; height: 300px; border-radius: 18px; overflow: hidden; border: 1px solid rgba(240, 247, 255, 0.18); background: #02101f; box-shadow: 0 40px 90px -40px rgba(0, 0, 0, 0.8); opacity: 0; transform: scale(0.97); transition: opacity 0.7s var(--ease), transform 0.9s var(--ease); }
+.shot .frame img { width: 100%; height: 100%; max-width: none; max-height: none; object-fit: cover; display: block; }
+.shot .frame::after { content: ""; position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+.shot.snap .frame { opacity: 1; transform: none; }
+.shot.snap .frame::after { animation: flash 0.7s ease-out; }
+@keyframes flash { 0% { opacity: 0.85; } 100% { opacity: 0; } }
+.shot figcaption { margin-top: 12px; font-size: 19px; line-height: 1.35; color: rgba(240, 247, 255, 0.68); opacity: 0; transition: opacity 0.6s 0.3s; }
+.shot.snap figcaption { opacity: 1; }
+.loop { position: absolute; left: 120px; top: 680px; width: 1680px; }
+.loop h3 { display: flex; align-items: baseline; justify-content: space-between; gap: 30px; font-family: var(--font-display); font-size: 30px; font-weight: 740; }
+.loop h3 em { font-style: normal; color: var(--lagoon); }
+.loop h3 small { font-family: var(--font-mono); font-size: 14px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(240, 247, 255, 0.6); white-space: nowrap; }
+.loop h3 small b { color: var(--coral); font-weight: 600; }
+.loop h3 small i { font-style: normal; color: var(--lagoon); }
+.loop .line { position: relative; margin-top: 22px; height: 3px; border-radius: 3px; background: linear-gradient(90deg, var(--coral), var(--sun) 35%, var(--lagoon)); transform-origin: left; transform: scaleX(0); transition: transform 1.8s var(--ease) 0.6s; }
+.slide.shown .loop .line { transform: scaleX(1); }
+.steps { display: grid; grid-template-columns: repeat(5, 1fr); gap: 30px; list-style: none; }
+.steps li { position: relative; padding-top: 26px; }
+.steps li::before { content: ""; position: absolute; left: 0; top: -9px; width: 12px; height: 12px; border-radius: 50%; background: var(--abyss); border: 3px solid var(--lagoon); }
+.steps b { display: block; font-family: var(--font-mono); font-size: 17px; font-weight: 600; color: var(--lagoon); }
+.steps span { display: block; margin-top: 6px; font-size: 19.5px; line-height: 1.32; color: rgba(240, 247, 255, 0.82); }
+.steps .ok { display: block; margin-top: 8px; font-family: var(--font-mono); font-size: 14px; font-weight: 600; color: #6fe3b9; }
+
+/* === 13. SLIDE 05 · SIX VERSIONS OF THE WAVE === */
+.sl-path .h2, .sl-wave .h2 { font-size: 64px; }
+.sl-path .legend { position: absolute; right: 120px; top: 114px; display: flex; gap: 22px; }
+.sl-path .legend span { display: inline-flex; align-items: center; gap: 9px; font-family: var(--font-display); font-size: 17px; font-weight: 620; color: rgba(240, 247, 255, 0.8); }
+.sl-path .legend .dot { width: 9px; height: 9px; box-shadow: none; }
+.sl-path svg.axis { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; max-width: none; max-height: none; pointer-events: none; }
+.sl-path .draw { stroke-dasharray: 1800; stroke-dashoffset: 1800; transition: stroke-dashoffset 2.2s var(--ease) 0.3s; }
+.sl-path.shown .draw { stroke-dashoffset: 0; }
+.wcol { position: absolute; top: 342px; width: 238px; margin: 0; }
+.wcol time { display: block; font-family: var(--font-mono); font-size: 14px; font-weight: 600; color: var(--lagoon-soft); }
+.wcol .m { display: flex; align-items: center; gap: 7px; margin-top: 3px; font-family: var(--font-mono); font-size: 12.5px; font-weight: 600; color: rgba(240, 247, 255, 0.6); }
+.wcol .m .dot { width: 7px; height: 7px; box-shadow: none; }
+.wcol .img { position: relative; margin-top: 12px; height: 340px; border-radius: 12px; overflow: hidden; background: #02101f; }
+.wcol img { width: 100%; height: 100%; max-width: none; max-height: none; object-fit: cover; display: block; transition: filter 1.2s var(--ease) 1.6s; }
+.slide.shown .wcol.gone img { filter: grayscale(0.75) brightness(0.72); }
+.wcol .tag { position: absolute; left: 10px; top: 10px; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; font-size: 13px; font-weight: 700; background: rgba(2, 14, 27, 0.8); color: var(--coral); }
+.wcol b { display: block; margin-top: 14px; font-family: var(--font-display); font-size: 21px; font-weight: 740; line-height: 1.15; }
+.wcol p { margin-top: 6px; font-size: 18.5px; line-height: 1.32; color: rgba(240, 247, 255, 0.78); }
+.wcol .extra { display: block; margin-top: 8px; font-family: var(--font-display); font-size: 16.5px; font-weight: 650; line-height: 1.3; color: var(--sun); }
+.wcol.win { width: 338px; }
+.wcol.win .img { height: 340px; outline: 2px solid var(--lagoon); outline-offset: -2px; box-shadow: 0 0 70px -14px rgba(51, 204, 230, 0.7); }
+.wcol.win .tag { width: auto; height: auto; padding: 5px 12px; border-radius: 999px; font-family: var(--font-mono); font-size: 12.5px; font-weight: 600; color: var(--abyss); background: var(--lagoon); }
+.wcol.win b { color: var(--lagoon); font-size: 25px; }
+.wcol.win ul { margin-top: 10px; list-style: none; display: grid; grid-template-columns: auto auto; justify-content: start; gap: 6px 16px; }
+.wcol.win li { display: flex; gap: 10px; font-size: 18.5px; line-height: 1.3; color: rgba(240, 247, 255, 0.86); }
+.wcol.win li::before { content: "+"; font-family: var(--font-display); font-weight: 800; color: var(--lagoon); }
+.wcol.win .extra { font-size: 18px; }
+.sl-path .pause { position: absolute; left: 1380px; top: 274px; width: 100px; text-align: center; font-family: var(--font-mono); font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; line-height: 1.4; color: rgba(240, 247, 255, 0.5); }
+
+/* === 13b. SLIDE 05 · ONE VERSION PER ARROW PRESS ===
+   Each press lifts the next version out of its column into a large frame
+   (two frames swap, so the previous one sinks back while the next rises);
+   the press after ⑥ returns to the overview. */
+.vz { position: absolute; inset: 0; z-index: 6; pointer-events: none; }
+.vz-back { position: absolute; inset: 0; opacity: 0; background: radial-gradient(120% 95% at 36% 48%, #0a2a47, #03111f); transition: opacity 0.6s var(--ease); }
+.vz.open .vz-back { opacity: 1; }
+.vz-f { position: absolute; border-radius: 12px; overflow: hidden; background: #02101f; opacity: 0; box-shadow: 0 50px 130px -40px rgba(0, 0, 0, 0.9); transition: left 0.8s var(--ease), top 0.8s var(--ease), width 0.8s var(--ease), height 0.8s var(--ease), border-radius 0.8s var(--ease), opacity 0.5s var(--ease); }
+.vz-f.on { opacity: 1; border-radius: 18px; }
+.vz-f img { width: 100%; height: 100%; max-width: none; max-height: none; object-fit: cover; display: block; }
+.vz-f.win { outline: 2px solid var(--lagoon); outline-offset: -2px; box-shadow: 0 0 120px -24px rgba(51, 204, 230, 0.75); }
+.vz-f.snap, .vz.snap * { transition: none !important; }
+.vz-cap { position: absolute; left: 1400px; top: 190px; width: 400px; height: 684px; display: flex; flex-direction: column; justify-content: center; opacity: 0; transform: translate3d(0, 18px, 0); transition: opacity 0.45s var(--ease), transform 0.6s var(--ease); }
+.vz-cap.on { opacity: 1; transform: none; }
+.vz-tag { align-self: flex-start; padding: 6px 14px; border-radius: 999px; border: 1px solid rgba(255, 122, 92, 0.6); font-family: var(--font-mono); font-size: 15px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--coral); }
+.vz-tag.ok { border-color: var(--lagoon); background: var(--lagoon); color: var(--abyss); }
+.vz-n { margin-top: 26px; font-family: var(--font-display); font-weight: 800; font-variation-settings: 'wdth' 110; font-size: 120px; line-height: 0.9; letter-spacing: -0.04em; color: var(--foam); }
+.vz-n small { font-size: 40px; font-weight: 600; letter-spacing: 0; color: rgba(240, 247, 255, 0.4); }
+.vz-t { display: block; margin-top: 14px; font-family: var(--font-display); font-size: 48px; font-weight: 780; line-height: 1.04; letter-spacing: -0.02em; }
+.vz-f.win ~ .vz-cap .vz-t, .vz-cap.win .vz-t { color: var(--lagoon); }
+.vz-meta { margin-top: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; font-family: var(--font-mono); font-size: 16px; font-weight: 600; color: var(--lagoon-soft); }
+.vz-meta .m { display: inline-flex; align-items: center; gap: 8px; color: rgba(240, 247, 255, 0.7); }
+.vz-meta .dot { width: 8px; height: 8px; box-shadow: none; }
+.vz-d { margin-top: 22px; font-size: 30px; line-height: 1.25; color: rgba(240, 247, 255, 0.88); }
+.vz-cap ul { margin-top: 20px; list-style: none; display: grid; gap: 6px; }
+.vz-cap li { display: flex; gap: 12px; font-size: 27px; line-height: 1.25; color: rgba(240, 247, 255, 0.9); }
+.vz-cap li::before { content: "+"; font-family: var(--font-display); font-weight: 800; color: var(--lagoon); }
+.vz-x { margin-top: 14px; font-family: var(--font-display); font-size: 26px; font-weight: 700; color: var(--sun); }
+.vz-dots { margin-top: 40px; display: flex; gap: 8px; }
+.vz-dots i { width: 38px; height: 4px; border-radius: 2px; background: rgba(240, 247, 255, 0.18); }
+.vz-dots i.past { background: rgba(240, 247, 255, 0.5); }
+.vz-dots i.on { background: var(--lagoon); }
+
+/* === 14. SLIDE 06 · THE WAVE (live cross-section + peel) === */
+#profileCanvas { position: absolute; left: 96px; top: 262px; width: 1060px; height: 430px; max-width: none; max-height: none; }
+.stages { position: absolute; left: 120px; top: 712px; width: 1030px; display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; list-style: none; }
+.stages li { padding-top: 10px; border-top: 3px solid rgba(240, 247, 255, 0.16); font-family: var(--font-display); font-size: 16px; font-weight: 620; line-height: 1.18; color: rgba(240, 247, 255, 0.5); transition: color 0.3s, border-color 0.3s; }
+.stages li i { display: block; font-style: normal; font-family: var(--font-mono); font-size: 12.5px; color: rgba(240, 247, 255, 0.4); }
+.stages li.past { border-top-color: rgba(240, 247, 255, 0.4); color: rgba(240, 247, 255, 0.7); }
+.stages li.on { border-top-color: var(--lagoon); color: var(--foam); }
+.stages li.on i { color: var(--lagoon); }
+.tau { position: absolute; left: 120px; top: 800px; font-family: var(--font-mono); font-size: 15.5px; color: rgba(240, 247, 255, 0.6); }
+.tau b { color: var(--lagoon); font-weight: 600; }
+#peelCanvas { position: absolute; left: 1180px; top: 246px; width: 640px; height: 470px; max-width: none; max-height: none; }
+.peelcap { position: absolute; left: 1200px; top: 716px; width: 600px; font-family: var(--font-serif); font-size: 24px; line-height: 1.32; color: rgba(240, 247, 255, 0.86); }
+.peelcap b { color: var(--lagoon); font-weight: 520; }
+.facts { position: absolute; left: 120px; top: 862px; width: 1680px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 34px; list-style: none; }
+.facts li { padding-top: 12px; border-top: 1px solid rgba(240, 247, 255, 0.16); font-size: 18.5px; line-height: 1.3; color: rgba(240, 247, 255, 0.75); }
+.facts li b { display: block; font-family: var(--font-display); font-size: 21px; font-weight: 720; color: var(--foam); }
+
+/* === 15. SLIDE 07 · ARCHITECTURE ===
+   Three columns read left to right; modules sit on a thin rule, no nested boxes. */
+.sl-arch .sub { position: absolute; left: 120px; top: 250px; font-size: 24px; color: rgba(240, 247, 255, 0.72); }
+.arch { position: absolute; left: 120px; top: 330px; width: 1680px; display: grid; grid-template-columns: 420px 56px 640px 56px 1fr; align-items: start; }
+.col { display: flex; flex-direction: column; gap: 24px; }
+.col h3 { padding-bottom: 12px; border-bottom: 2px solid rgba(51, 204, 230, 0.5); font-family: var(--font-display); font-size: 28px; font-weight: 740; }
+.col h3 small { display: block; margin-top: 2px; font-family: var(--font-mono); font-size: 13.5px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--lagoon); }
+.mod { padding-left: 16px; border-left: 2px solid rgba(240, 247, 255, 0.16); }
+.mod b { display: block; font-family: var(--font-mono); font-size: 19.5px; font-weight: 600; color: var(--lagoon); line-height: 1.25; }
+.mod span { display: block; margin-top: 5px; font-size: 22px; line-height: 1.32; color: rgba(240, 247, 255, 0.82); }
+.mod.src b { font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--foam); }
+.mod.hot { border-left-color: var(--lagoon); }
+.flowc { display: grid; place-items: center; height: 480px; }
+.flowc svg { width: 56px; height: 40px; overflow: visible; }
+.flowc .fl { stroke-dasharray: 5 6; animation: flow 1.1s linear infinite; animation-play-state: paused; }
+.slide.active .flowc .fl { animation-play-state: running; }
+@keyframes flow { to { stroke-dashoffset: -22; } }
+
+/* === 16. SLIDE 08 · TECHNOLOGIES === */
+.stack { position: absolute; left: 120px; top: 262px; width: 1010px; list-style: none; }
+.stack li { display: grid; grid-template-columns: 170px 1fr; gap: 20px; align-items: baseline; padding: 11px 0; border-bottom: 1px solid rgba(240, 247, 255, 0.08); }
+.stack li:last-child { border-bottom: 0; }
+.stack .k { font-family: var(--font-mono); font-size: 14px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--lagoon); }
+.stack .v { font-size: 21px; line-height: 1.35; color: rgba(240, 247, 255, 0.78); }
+.stack .v b { font-family: var(--font-display); font-weight: 720; color: var(--foam); }
+.sl-stack .online { position: absolute; left: 120px; top: 900px; display: flex; align-items: center; gap: 12px; font-size: 22px; color: rgba(240, 247, 255, 0.8); }
+.sl-stack .online b { font-family: var(--font-mono); font-size: 19px; font-weight: 600; color: var(--lagoon); }
+.tree { left: 1190px; top: 150px; width: 610px; height: 800px; padding: 0; overflow: hidden; background: rgba(2, 13, 25, 0.88); }
+.tree .bar { display: flex; align-items: center; gap: 10px; height: 50px; padding: 0 22px; border-bottom: 1px solid rgba(240, 247, 255, 0.08); font-family: var(--font-mono); font-size: 15px; color: rgba(240, 247, 255, 0.55); }
+.tree .bar i { width: 12px; height: 12px; border-radius: 50%; background: rgba(240, 247, 255, 0.22); }
+.tree pre { padding: 26px 24px 0; font-family: var(--font-mono); font-size: 17.5px; line-height: 1.95; color: rgba(240, 247, 255, 0.9); white-space: pre; }
+.tree pre .d { color: var(--lagoon); font-weight: 600; }
+.tree pre .g { color: rgba(240, 247, 255, 0.28); }
+.tree pre .n { color: rgba(155, 231, 242, 0.62); }
+.tree .nums { position: absolute; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid rgba(240, 247, 255, 0.1); background: rgba(3, 23, 42, 0.8); }
+.tree .nums div { padding: 18px 22px 20px; }
+.tree .nums b { display: block; font-family: var(--font-display); font-weight: 800; font-variation-settings: 'wdth' 122; font-size: 44px; line-height: 1; }
+.tree .nums span { font-family: var(--font-mono); font-size: 13px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--lagoon-soft); }
+
+/* === 17. SLIDE 09 · LIMITS === */
+.lims { position: absolute; left: 120px; top: 272px; width: 1680px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 44px; }
+.lim { display: flex; flex-direction: column; min-height: 580px; padding-top: 18px; border-top: 3px solid rgba(51, 204, 230, 0.55); }
+.lim i.num { font-style: normal; font-family: var(--font-mono); font-size: 14px; font-weight: 600; color: var(--lagoon); }
+.lim h3 { margin-top: 10px; font-family: var(--font-display); font-weight: 760; font-size: 29px; line-height: 1.12; }
+.lim p { margin-top: 12px; font-size: 21px; line-height: 1.36; color: rgba(240, 247, 255, 0.78); }
+.lim .fig { margin-top: auto; padding-top: 20px; }
+.lim .vs div + div { margin-top: 16px; }
+.lim .vs b, .lim .count { display: block; font-family: var(--font-display); font-weight: 820; font-variation-settings: 'wdth' 118; font-size: 46px; line-height: 1; letter-spacing: -0.02em; white-space: nowrap; }
+.lim .vs span, .lim .count + span { display: block; margin-top: 6px; font-size: 18.5px; color: rgba(240, 247, 255, 0.7); }
+.lim .count { color: var(--coral); }
+.lim blockquote { padding-left: 18px; border-left: 3px solid var(--sun); font-family: var(--font-serif); font-style: italic; font-size: 25px; line-height: 1.3; }
+.lim .own { margin-top: 14px; font-size: 19.5px; color: rgba(240, 247, 255, 0.8); }
+.lim .own b { color: var(--lagoon); font-family: var(--font-display); font-weight: 750; }
+.lim .pics { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.lim .pics figure { margin: 0; }
+.lim .pics img { width: 100%; height: 104px; max-width: none; max-height: none; object-fit: cover; border-radius: 10px; display: block; }
+.lim .pics figcaption { margin-top: 6px; font-size: 16.5px; line-height: 1.25; color: rgba(240, 247, 255, 0.7); }
+.lim .pics figcaption b { display: block; font-family: var(--font-display); font-size: 22px; font-weight: 780; color: var(--foam); }
+.lim table { width: 100%; margin-top: 14px; border-collapse: collapse; font-size: 16.5px; }
+.lim th { padding: 0 0 6px; font-family: var(--font-mono); font-size: 12px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; text-align: right; color: rgba(240, 247, 255, 0.55); }
+.lim td { padding: 6px 0; border-top: 1px solid rgba(240, 247, 255, 0.1); color: rgba(240, 247, 255, 0.75); }
+.lim td:nth-child(2), .lim td:nth-child(3) { font-family: var(--font-display); font-weight: 650; text-align: right; color: var(--foam); }
+.lim td:nth-child(3) { color: var(--coral); }
+.sl-limits .note { position: absolute; left: 120px; top: 900px; font-size: 23px; color: rgba(240, 247, 255, 0.8); }
+.sl-limits .note b { color: var(--lagoon); font-weight: 560; }
+
+/* === 18. SLIDE 10 · WHAT WE WOULD DO AGAIN === */
+.lessons { position: absolute; left: 120px; top: 350px; width: 1680px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 60px; }
+.lessons .who { display: flex; align-items: center; gap: 12px; padding-bottom: 14px; border-bottom: 2px solid rgba(240, 247, 255, 0.14); font-family: var(--font-display); font-size: 26px; font-weight: 740; }
+.lesson { margin-top: 48px; display: grid; grid-template-columns: 64px 1fr; }
+.lesson i { font-style: normal; font-family: var(--font-display); font-weight: 820; font-variation-settings: 'wdth' 125; font-size: 54px; line-height: 1; color: var(--lagoon); }
+.lesson b { display: block; font-family: var(--font-display); font-size: 32px; font-weight: 740; line-height: 1.15; color: var(--foam); }
+.lesson span { display: block; margin-top: 10px; font-size: 23px; line-height: 1.35; color: rgba(240, 247, 255, 0.72); }
+
+/* === 19. SLIDE 11 · LIVE DEMO ===
+   A stage cue while Alexandre switches to Unity. V plays the trailer as a fallback. */
+.sl-demo .bgimg { position: absolute; inset: 0; width: 1920px; height: 1080px; max-width: none; max-height: none; object-fit: cover; z-index: 0; transform: scale(1.03); }
+.sl-demo .shade { position: absolute; inset: 0; z-index: 1; background: linear-gradient(90deg, rgba(2, 14, 27, 0.92) 0%, rgba(2, 14, 27, 0.7) 42%, rgba(2, 14, 27, 0.3) 62%, rgba(2, 14, 27, 0.6) 100%), linear-gradient(180deg, transparent 60%, rgba(2, 14, 27, 0.8) 100%); }
+.sl-demo .live { position: absolute; left: 120px; top: 170px; z-index: 2; display: inline-flex; align-items: center; gap: 14px; padding: 10px 20px; border-radius: 999px; background: rgba(255, 90, 80, 0.14); border: 1px solid rgba(255, 110, 95, 0.55); font-family: var(--font-mono); font-size: 17px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: #ff9a8c; }
+.sl-demo .live i { width: 14px; height: 14px; border-radius: 50%; background: #ff5a4e; animation: pulse 1.6s infinite; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 90, 78, 0.7); } 70% { box-shadow: 0 0 0 16px rgba(255, 90, 78, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 90, 78, 0); } }
+.sl-demo h2 { position: absolute; left: 114px; top: 262px; z-index: 2; font-family: var(--font-display); font-weight: 820; font-variation-settings: 'wdth' 108; font-size: 96px; line-height: 0.95; letter-spacing: -0.03em; }
+.sl-demo h2 em { font-style: normal; color: var(--lagoon); }
+.sl-demo .by { position: absolute; left: 120px; top: 500px; z-index: 2; display: flex; align-items: center; gap: 14px; font-family: var(--font-display); font-size: 30px; font-weight: 700; }
+.sl-demo .by small { font-family: var(--font-serif); font-weight: 400; font-size: 24px; color: rgba(240, 247, 255, 0.75); }
+.sl-demo .route { position: absolute; left: 1130px; top: 190px; width: 670px; z-index: 2; padding: 28px 32px 22px; border-radius: 26px; background: rgba(3, 23, 42, 0.82); border: 1px solid rgba(240, 247, 255, 0.14); }
+.sl-demo .route ol { margin-top: 10px; list-style: none; counter-reset: step; }
+.sl-demo .route li { counter-increment: step; display: grid; grid-template-columns: 44px 1fr auto; gap: 14px; align-items: center; padding: 14px 0; border-top: 1px solid rgba(240, 247, 255, 0.1); }
+.sl-demo .route li::before { content: counter(step); width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; border: 2px solid rgba(51, 204, 230, 0.6); font-family: var(--font-display); font-weight: 800; font-size: 17px; color: var(--lagoon); }
+.sl-demo .route b { display: block; font-family: var(--font-display); font-size: 24px; font-weight: 740; }
+.sl-demo .route span { display: block; margin-top: 2px; font-size: 18.5px; color: rgba(240, 247, 255, 0.7); }
+.pad kbd { display: inline-grid; place-items: center; min-width: 38px; height: 32px; padding: 0 10px; border-radius: 9px; background: rgba(240, 247, 255, 0.08); border: 1px solid rgba(240, 247, 255, 0.2); font-family: var(--font-display); font-size: 14.5px; font-weight: 750; color: var(--lagoon-soft); white-space: nowrap; }
+#demoVid { position: absolute; inset: 0; width: 1920px; height: 1080px; max-width: none; max-height: none; object-fit: cover; z-index: 10; background: #000; opacity: 0; pointer-events: none; transition: opacity 0.5s var(--ease); }
+#demoVid.on { opacity: 1; }
+
+/* === 20. SLIDE 12 · THE MORAL (the wave has broken: foam) === */
+.bubbles { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.bubbles i { position: absolute; bottom: -40px; border-radius: 50%; border: 1.5px solid rgba(13, 107, 148, 0.28); background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.9), rgba(155, 231, 242, 0.25) 60%, transparent 70%); animation: bubble linear infinite; animation-play-state: paused; }
+.slide.active .bubbles i { animation-play-state: running; }
+@keyframes bubble {
+    0% { transform: translate3d(0, 0, 0); opacity: 0; }
+    12% { opacity: 0.9; }
+    100% { transform: translate3d(var(--dx, 20px), -1180px, 0); opacity: 0; }
+}
+.moral { position: absolute; left: 120px; top: 206px; width: 1500px; font-family: var(--font-serif); font-weight: 380; font-size: 96px; line-height: 1.04; letter-spacing: -0.015em; color: var(--ink); }
+.moral em { display: block; font-style: italic; color: var(--wall); }
+.thanks { position: absolute; left: 120px; top: 640px; display: flex; align-items: baseline; gap: 34px; }
+.thanks b { font-family: var(--font-display); font-weight: 820; font-variation-settings: 'wdth' 125; font-size: 120px; line-height: 1; letter-spacing: -0.03em; color: var(--ink); }
+.thanks span { font-family: var(--font-serif); font-style: italic; font-size: 42px; color: var(--wall); }
+.sl-end .next { position: absolute; left: 120px; top: 830px; width: 1240px; }
+.sl-end .next .lbl { color: var(--wall); }
+.sl-end .next p { margin-top: 10px; font-size: 25px; line-height: 1.4; color: rgba(6, 38, 64, 0.8); }
+.sl-end .next p b { font-family: var(--font-display); font-weight: 740; color: var(--ink); }
+.qrcard { position: absolute; right: 120px; top: 560px; width: 330px; padding: 26px 26px 22px; border-radius: 26px; background: rgba(255, 255, 255, 0.86); border: 1px solid rgba(6, 38, 64, 0.12); box-shadow: 0 30px 70px -40px rgba(6, 38, 64, 0.55); text-decoration: none; color: var(--ink); display: block; }
+.qrcard .qr { display: block; width: 278px; height: 278px; }
+.qrcard .t { display: block; margin-top: 16px; font-family: var(--font-serif); font-size: 21px; line-height: 1.25; color: rgba(6, 38, 64, 0.8); }
+.qrcard .u { display: block; margin-top: 6px; font-family: var(--font-mono); font-size: 17px; font-weight: 600; color: var(--wall); }
+
+/* === 21. ACT INTRO OVERLAY ===
+   Plays for ~1.5 s when the talk enters a new act (forward only). */
+#actIntro {
+    position: absolute;
+    inset: 0;
+    z-index: 40;
+    pointer-events: none;
+    visibility: hidden;
+    opacity: 0;
+    background:
+        radial-gradient(1200px 800px at 72% 22%, rgba(51, 204, 230, 0.2), transparent 60%),
+        linear-gradient(180deg, #062a48 0%, #020e1b 100%);
+}
+#actIntro.on { visibility: visible; opacity: 1; transition: opacity 0.5s var(--ease); }
+#actIntro.off { visibility: visible; opacity: 0; transition: opacity 0.9s var(--ease); }
+#actIntro canvas { position: absolute; left: 0; bottom: 0; width: 1920px; height: 560px; max-width: none; max-height: none; }
+#actIntro .txt { position: absolute; left: 150px; top: 190px; }
+#actIntro .num { font-family: var(--font-serif); font-style: italic; font-weight: 300; font-size: 190px; line-height: 0.9; color: transparent; -webkit-text-stroke: 2px rgba(155, 231, 242, 0.85); }
+#actIntro .name { margin-top: 6px; font-family: var(--font-display); font-weight: 820; font-variation-settings: 'wdth' 120; font-size: 150px; line-height: 0.95; letter-spacing: -0.035em; color: var(--foam); }
+#actIntro .sub { margin-top: 18px; font-family: var(--font-serif); font-style: italic; font-size: 42px; color: rgba(240, 247, 255, 0.82); }
+#actIntro .by { margin-top: 30px; display: inline-flex; align-items: center; gap: 14px; font-family: var(--font-display); font-size: 28px; font-weight: 700; }
+#actIntro .txt > * { transform: translate3d(0, 24px, 0); opacity: 0; transition: transform 1s var(--ease), opacity 1s var(--ease); }
+#actIntro.on .txt > * { transform: none; opacity: 1; }
+#actIntro.on .txt > :nth-child(2) { transition-delay: 0.15s; }
+#actIntro.on .txt > :nth-child(3) { transition-delay: 0.3s; }
+#actIntro.on .txt > :nth-child(4) { transition-delay: 0.45s; }
+
+/* === 21. OUTSIDE THE STAGE: notes, help, black screen, edit mode === */
+#notesPanel {
+    position: fixed;
+    left: 50%;
+    bottom: 16px;
+    z-index: 900;
+    width: min(1120px, 94vw);
+    max-height: 44vh;
+    overflow: auto;
+    display: none;
+    transform: translateX(-50%);
+    padding: 20px 28px 22px;
+    border-radius: 18px;
+    background: rgba(2, 14, 27, 0.94);
+    border: 1px solid rgba(240, 247, 255, 0.16);
+    color: var(--foam);
+    font-family: var(--font-serif);
+    font-size: 20px;
+    line-height: 1.55;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+#notesPanel.on { display: block; }
+#notesPanel header { display: flex; justify-content: space-between; gap: 20px; margin-bottom: 10px; font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--lagoon); }
+#notesPanel p { margin: 0 0 8px; }
+.nt .pz { color: rgba(155, 231, 242, 0.45); font-family: var(--font-mono); font-size: 0.8em; margin: 0 0.15em; }
+.nt .pz2 { color: var(--sun); }
+.nt b { color: var(--lagoon-soft); font-weight: 600; }
+.nt .who2 { display: inline-block; margin-right: 8px; font-family: var(--font-display); font-weight: 750; color: var(--sun); }
+.nt .hand { display: block; margin-top: 6px; font-family: var(--font-mono); font-size: 0.72em; letter-spacing: 0.06em; color: var(--coral); }
+.nt .stage { font-family: var(--font-mono); font-size: 0.72em; color: var(--coral); }
+
+#help {
+    position: fixed;
+    right: 20px;
+    top: 20px;
+    z-index: 950;
+    display: none;
+    padding: 20px 24px;
+    border-radius: 16px;
+    background: rgba(2, 14, 27, 0.95);
+    border: 1px solid rgba(240, 247, 255, 0.16);
+    color: var(--foam);
+    font-family: var(--font-display);
+    font-size: 15px;
+    line-height: 1.9;
+}
+#help.on { display: block; }
+#help kbd { display: inline-block; min-width: 30px; margin-right: 10px; padding: 0 7px; border-radius: 6px; background: rgba(240, 247, 255, 0.12); font-family: var(--font-mono); font-size: 13px; text-align: center; }
+#blackout { position: fixed; inset: 0; z-index: 960; background: #000; display: none; }
+#blackout.on { display: block; }
+
+.edit-hotzone { position: fixed; top: 0; left: 0; width: 80px; height: 80px; z-index: 10000; cursor: pointer; }
+.edit-toggle {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 10001;
+    width: 46px;
+    height: 46px;
+    border: 1px solid rgba(240, 247, 255, 0.25);
+    border-radius: 12px;
+    background: rgba(2, 14, 27, 0.9);
+    color: var(--foam);
+    font-size: 20px;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+.edit-toggle.show, .edit-toggle.active { opacity: 1; pointer-events: auto; }
+.edit-toggle.active { background: var(--lagoon); color: var(--abyss); }
+body.editing [contenteditable="true"] { outline: 2px dashed rgba(51, 204, 230, 0.55); outline-offset: 4px; cursor: text; }
+body.editing [contenteditable="true"]:focus { outline-color: var(--sun); }
+.toast { position: fixed; left: 50%; top: 18px; z-index: 10002; transform: translateX(-50%); padding: 10px 18px; border-radius: 12px; background: rgba(2, 14, 27, 0.95); border: 1px solid rgba(51, 204, 230, 0.5); color: var(--foam); font-family: var(--font-display); font-size: 15px; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+.toast.on { opacity: 1; }
+
+@media print {
+    .chrome, #swell, #actIntro, #notesPanel, #help, #blackout, .edit-hotzone, .edit-toggle, #demoVid { display: none !important; }
+    .rv, .hero .L { opacity: 1 !important; transform: none !important; filter: none !important; }
+}
+
+/* === 22. REDUCED MOTION: everything is shown at once, nothing drifts === */
+@media (prefers-reduced-motion: reduce) {
+    .rv, .hero .L { transition: none !important; opacity: 1 !important; transform: none !important; filter: none !important; }
+    .bgvid, .caustics, .hero .L span, .bubbles i, .sl-harness .ring, .sl-demo .live i { animation: none !important; }
+}
+
+/* === 23. LIGHT TEXT MODE ===
+   Slides carry keywords and figures only; the sentences are in the speaker notes. */
+.sl-prep .domains { gap: 22px 30px; }
+.sl-prep .domains li { align-items: center; }
+.sl-prep .domains b { font-size: 24px; }
+.sl-prep .lines p { font-size: 23px; }
+.sl-prep .find { font-size: 23px; }
+.sl-prep .find b { font-size: 30px; }
+.sl-prep .figs b { font-size: 84px; }
+.sl-prep .figs span { font-size: 15px; }
+.sl-prep .phases span { height: 34px; font-size: 15px; }
+.sl-prep blockquote { margin-top: 34px; font-size: 27px; }
+.sl-prep .flow { margin-top: 30px; font-size: 23px; }
+.sl-harness .node span { font-size: 21px; }
+.sl-harness .roles b { font-size: 28px; }
+.sl-harness .roles span { font-size: 21px; }
+.sl-harness .models li { font-size: 20px; grid-template-columns: 18px 140px 1fr; }
+.sl-harness .models li b { font-size: 20px; }
+.steps span { font-size: 21px; }
+.shot figcaption { font-size: 21px; }
+.wcol b { font-size: 24px; }
+.wcol p { font-size: 21px; }
+.wcol.win li { font-size: 19px; }
+.peelcap { font-size: 27px; }
+.facts li { font-size: 20px; }
+.facts li b { font-size: 25px; }
+.sl-arch .sub { font-size: 26px; }
+.mod b { font-size: 20px; }
+.mod span { font-size: 23px; }
+.col { gap: 28px; }
+.stack { top: 272px; }
+.stack li { padding: 13px 0; }
+.stack .v { font-size: 26px; }
+.stack .k { font-size: 15px; }
+.lim { min-height: 520px; }
+.lim h3 { font-size: 33px; }
+.lim .vs b, .lim .count { font-size: 58px; }
+.lim .vs span, .lim .count + span { font-size: 20px; }
+.lim blockquote { font-size: 31px; }
+.lim .pics { grid-template-columns: 1fr; gap: 16px; }
+.lim .pics img { height: 118px; }
+.lim .pics figcaption b { font-size: 26px; display: inline; margin-right: 10px; }
+.lim .pics figcaption { font-size: 18px; }
+.sl-limits .note { font-size: 26px; }
+.lessons { top: 360px; }
+.lesson { margin-top: 60px; align-items: center; }
+.lesson i { font-size: 64px; }
+.lesson b { font-size: 36px; }
+.sl-demo .route li { padding: 18px 0; }
+.sl-demo .route b { font-size: 28px; }
+.sl-end .next p { font-size: 29px; }
+.stack li { padding: 11px 0; }
+.sl-stack .online { top: 922px; }
+.sl-prep .cols { top: 290px; }
+.sl-prep .domains { margin-top: 40px; }
+.sl-prep .lines { margin-top: 40px; }
+.sl-prep .find { margin-top: 40px; }
+.sl-prep .figs { margin-top: 40px; }
+.sl-prep .phases { margin-top: 26px; }
+.sl-prep blockquote { margin-top: 44px; }
+.sl-prep .flow { margin-top: 40px; }
+</style>
+</head>
+<body>
+<div class="deck-viewport">
+<main class="deck-stage" id="deckStage">
+
+<!-- =====================================================================
+     SLIDE 01 · TITLE · Alexandre
+     data-act: 0 opening · 1 preparation · 2 building · 3 the game · 4 review · 5 live demo · 6 conclusion
+     data-tau: the moment of the wave's life drawn on the swell bar
+     ===================================================================== -->
+<section class="slide sl-title" id="title" data-act="0" data-who="Alexandre" data-title="WavyBoard" data-tau="-3.2" data-chrome="bare" data-target="41">
+    <video class="bgvid" src="assets/media/tube.mp4" poster="assets/media/tube-poster.webp" muted loop playsinline preload="auto" aria-hidden="true"></video>
+    <div class="shade"></div>
+    <p class="top-l kicker rv" style="--d:1">EFREI · M2 · Culture &amp; Concepts Informatiques</p>
+    <p class="top-r rv" style="--d:2">Soutenance de projet</p>
+    <div class="block">
+        <h1 class="hero" aria-label="WavyBoard" data-letters="WavyBoard"></h1>
+        <p class="question rv" style="--d:9">Que se passe-t-il quand on confie à des agents IA une technologie que l’on ne maîtrise pas&#8239;?</p>
+        <div class="byline rv" style="--d:11">
+            <span><i class="dot" style="--c:var(--alexandre)"></i>Alexandre</span>
+            <span><i class="dot" style="--c:var(--maxime)"></i>Maxime</span>
+            <span><i class="dot" style="--c:var(--louis)"></i>Louis</span>
+            <em>Septembre 2026</em>
+        </div>
+    </div>
+    <div class="stats rv" style="--d:13">
+        <div><b>21</b><span>jours</span></div>
+        <div><b>6</b><span>vagues</span></div>
+        <div><b>4</b><span>modèles d’IA</span></div>
+    </div>
+    <aside class="notes"><p>Bonjour à tous. <span class="pz pz2">//</span></p><p>Ce que vous voyez derrière nous n’est pas une vidéo de surf : <span class="pz">/</span> c’est <b>notre jeu</b>, WavyBoard. <span class="pz pz2">//</span></p><p>Et pourtant, au début du projet, <span class="pz">/</span> aucun de nous trois n’avait jamais utilisé Unity. <span class="pz">/</span> Je suis Alexandre, <span class="pz">/</span> voici Maxime et Louis. <span class="pz pz2">//</span></p><p>Notre question : <span class="pz">/</span> <b>que se passe-t-il quand on confie à des agents IA une technologie que l’on ne maîtrise pas soi-même ?</b> <span class="pz pz2">//</span></p><p>Nous allons vous raconter comment nous avons préparé le projet, <span class="pz">/</span> construit le jeu, <span class="pz">/</span> et ce que nous en retenons. <span class="pz">/</span> Et à la fin, je vous montrerai le jeu en direct.</p></aside>
+</section>
+
+<!-- =====================================================================
+     SLIDE 02 · PREPARE: RESEARCH, THEN THE SPECIFICATION · Alexandre
+     ===================================================================== -->
+<section class="slide sl-prep" id="prep" data-act="1" data-who="Alexandre" data-title="La veille et la spécification" data-tau="-2.3" data-target="51">
+    <div class="head">
+        <p class="kicker rv">Préparer le projet</p>
+        <h2 class="h2 rv" style="--d:1">La veille, puis <em>la spécification</em></h2>
+    </div>
+    <div class="cols">
+        <div class="c rv left" style="--d:2">
+            <h3><i>01</i>La veille</h3>
+            <p class="meta"><i class="dot" style="--c:var(--m-fable)"></i>Claude Fable 5.1, effort maximal</p>
+            <ul class="domains">
+                <li><svg class="ico" viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg><b>Unity 6.6</b></li>
+                <li><svg class="ico" viewBox="0 0 24 24"><path d="M2 15c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2M2 19c2.5 0 2.5-2 5-2s2.5 2 5 2 2.5-2 5-2 2.5 2 5 2"/><path d="M12 3c2.6 3.4 3.6 5.2 3.6 6.6a3.6 3.6 0 01-7.2 0C8.4 8.2 9.4 6.4 12 3z"/></svg><b>Le rendu de l’eau</b></li>
+                <li><svg class="ico" viewBox="0 0 24 24"><path d="M3 20h18M3 20L17 5"/><path d="M8.5 20a5.5 5.5 0 00-1.7-4"/></svg><b>La physique du surf</b></li>
+                <li><svg class="ico" viewBox="0 0 24 24"><path d="M7 3.5c3.4-.9 6.6-.9 10 0 1.2 5.6 1.2 11.4 0 17-3.4.9-6.6.9-10 0-1.2-5.6-1.2-11.4 0-17z"/><path d="M9.5 8h5"/></svg><b>Le bodyboard</b></li>
+                <li><svg class="ico" viewBox="0 0 24 24"><path d="M7 8h10a4 4 0 014 4v1.5a3 3 0 01-5.4 1.8L14.5 14h-5l-1.1 1.3A3 3 0 013 13.5V12a4 4 0 014-4z"/></svg><b>Les manettes</b></li>
+                <li><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10.6 9.6a2.6 2.6 0 100 4.8M16.4 9.6a2.6 2.6 0 100 4.8"/></svg><b>Les ressources libres</b></li>
+            </ul>
+            <div class="lines">
+                <p>Sources vérifiées ou testées</p>
+                <p><b>28 agents</b> en parallèle sur le rouleau</p>
+            </div>
+            <p class="find">Aucun océan existant ne fait de tube<b>→ une vague 100 % maison</b></p>
+        </div>
+        <div class="c rv right" style="--d:4">
+            <h3><i>02</i>La spécification</h3>
+            <p class="meta"><span class="mono" style="font-size:16px">WAVYBOARD_SPEC.md</span></p>
+            <div class="figs">
+                <div><b>708</b><span>lignes</span></div>
+                <div><b>23</b><span>sections</span></div>
+                <div><b>9</b><span>phases</span></div>
+            </div>
+            <div class="phases"><span>P0</span><span>P1</span><span>P2</span><span>P3</span><span>P4</span><span>P5</span><span>P6</span><span>P7</span><span>P8</span></div>
+            <blockquote>« Un plan complet, autosuffisant, source de vérité du projet. »<small>Notre prompt de départ</small></blockquote>
+            <p class="flow"><b>Session vierge</b><i>→</i>un nouvel agent code, la spec pour seule mémoire</p>
+        </div>
+    </div>
+    <aside class="notes"><p>Notre première règle : <span class="pz">/</span> pas une ligne de code avant une vraie <b>veille</b>. <span class="pz pz2">//</span></p><p>Nous l’avons confiée au modèle le plus réfléchi, Claude Fable 5.1, en effort maximal, <span class="pz">/</span> parce que c’est au début qu’une erreur coûte le plus cher. <span class="pz">/</span> Chaque information était soit vérifiée à la source, <span class="pz">/</span> soit testée sur notre machine. <span class="pz">/</span> Et le premier constat a été clair : <span class="pz">/</span> aucun océan existant ne sait faire un <b>tube</b>. <span class="pz">/</span> Il fallait donc créer notre propre vague. <span class="pz pz2">//</span></p><p>Cette veille a abouti à une spécification de sept cents lignes, découpée en neuf phases. <span class="pz">/</span> Elle devait <b>se suffire à elle-même</b> : <span class="pz">/</span> nous avons ensuite ouvert une session vierge, <span class="pz">/</span> et un nouvel agent a écrit le code avec ce document pour seule mémoire.</p></aside>
+</section>
+
+<!-- =====================================================================
+     SLIDE 03 · THE CLAUDE CODE HARNESS · Alexandre
+     ===================================================================== -->
+<section class="slide sl-harness" id="harness" data-act="1" data-who="Alexandre" data-title="Le harnais Claude Code" data-tau="-1.6" data-target="41">
+    <div class="head">
+        <p class="kicker rv">Notre méthode</p>
+        <h2 class="h2 rv" style="--d:1">Le harnais <em>Claude Code</em></h2>
+    </div>
+    <div class="hub">
+        <svg class="orbit" viewBox="0 0 1060 740" aria-hidden="true">
+            <defs>
+                <radialGradient id="hubGlow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#33cce6" stop-opacity=".22"/><stop offset="1" stop-color="#33cce6" stop-opacity="0"/></radialGradient>
+            </defs>
+            <circle cx="530" cy="375" r="330" fill="url(#hubGlow)"/>
+            <g class="ring"><circle cx="530" cy="375" r="290" fill="none" stroke="#9be7f2" stroke-opacity=".35" stroke-width="1.5" stroke-dasharray="3 10"/></g>
+            <g stroke="#33cce6" stroke-opacity=".3" stroke-width="1.5">
+                <line x1="530" y1="375" x2="530" y2="85"/><line x1="530" y1="375" x2="781" y2="230"/><line x1="530" y1="375" x2="781" y2="520"/>
+                <line x1="530" y1="375" x2="530" y2="665"/><line x1="530" y1="375" x2="279" y2="520"/><line x1="530" y1="375" x2="279" y2="230"/>
+            </g>
+        </svg>
+        <div class="core rv zoom" style="--d:2"><b>Claude<br>Code</b><span>l’agent</span></div>
+        <div class="node rv" style="left:530px;top:85px;--d:3"><b>WAVYBOARD_SPEC.md</b><span>la référence</span></div>
+        <div class="node rv" style="left:781px;top:230px;--d:4"><b>CLAUDE.md</b><span>14 lignes de règles</span></div>
+        <div class="node rv" style="left:781px;top:520px;--d:5"><b>AGENT_PLAYBOOK.md</b><span>piloter l’éditeur</span></div>
+        <div class="node rv" style="left:530px;top:665px;--d:6"><b>USER_ACTIONS.md</b><span>le rôle des humains</span></div>
+        <div class="node rv" style="left:279px;top:520px;--d:7"><b>Git</b><span>le modèle signe chaque commit</span></div>
+        <div class="node rv" style="left:279px;top:230px;--d:8"><b>Mémoire</b><span>relue à chaque session</span></div>
+    </div>
+    <div class="side">
+        <div class="rv" style="--d:4">
+            <p class="lbl">Et nous&#8239;?</p>
+            <ul class="roles">
+                <li><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M3 12s3.5-6.5 9-6.5S21 12 21 12s-3.5 6.5-9 6.5S3 12 3 12z"/></svg><div><b>Directeurs artistiques</b><span>références et photos</span></div></li>
+                <li><svg class="ico" viewBox="0 0 24 24"><path d="M7 8h10a4 4 0 014 4v1.5a3 3 0 01-5.4 1.8L14.5 14h-5l-1.1 1.3A3 3 0 013 13.5V12a4 4 0 014-4z"/></svg><div><b>Testeurs</b><span>manette en main</span></div></li>
+                <li><svg class="ico" viewBox="0 0 24 24"><path d="M12 3v18M5 7h14M5 7l-2.5 6h5zM19 7l-2.5 6h5z"/></svg><div><b>Arbitres</b><span>quand repartir de zéro</span></div></li>
+            </ul>
+        </div>
+        <div class="models rv" style="--d:8">
+            <p class="lbl">Un modèle par étape</p>
+            <ul>
+                <li><i class="dot" style="--c:var(--m-fable)"></i><b>Fable 5.1</b>veille et spécification</li>
+                <li><i class="dot" style="--c:var(--m-opus5)"></i><b>Opus 5</b>version 4</li>
+                <li><i class="dot" style="--c:var(--m-opus48)"></i><b>Opus 4.8</b>relais de nuit</li>
+                <li><i class="dot" style="--c:var(--m-opus55)"></i><b>Opus 5.5</b>la vague finale</li>
+                <li><i class="dot" style="--c:var(--m-sonnet)"></i><b>Sonnet 5.5</b>le rapport</li>
+            </ul>
+        </div>
+    </div>
+    <aside class="notes"><p>Autour des agents, nous avons construit un cadre : <span class="pz">/</span> le <b>harnais</b>. <span class="pz pz2">//</span></p><p>Un fichier de règles, quatorze lignes seulement, que chaque agent lit en démarrant. <span class="pz">/</span> Un guide pour piloter l’éditeur Unity. <span class="pz">/</span> Et Git comme mémoire commune, <span class="pz">/</span> avec le nom du modèle sur chaque commit. <span class="pz pz2">//</span></p><p>Et nous, dans tout ça ? <span class="pz">/</span> Nous étions directeurs artistiques, testeurs manette en main, <span class="pz">/</span> et <b>arbitres</b>. <span class="pz">/</span> Par exemple, nous écrivions : <span class="pz">/</span> « je suis aspiré vers le fond du rouleau ». <span class="pz">/</span> L’agent traduisait ce ressenti en chiffres, <span class="pz">/</span> puis en correction testée. <span class="pz pz2">//</span></p><p>Sur le papier, tout était prêt. <span class="pz">/</span> Mais Unity nous réservait quelques surprises.</p><p><span class="hand">→ Regard vers Maxime, qui s’avance.</span></p></aside>
+</section>
+
+<!-- =====================================================================
+     SLIDE 04 · HOW THE AI DRIVES UNITY, AND CHECKS ITS WORK · Maxime
+     The terminal types the real commands; the capture appears on the right.
+     ===================================================================== -->
+<section class="slide sl-cli" id="cli" data-act="2" data-who="Maxime" data-title="L’IA pilote Unity" data-tau="-0.5" data-target="40">
+    <div class="head">
+        <p class="kicker rv">Comment l’IA pilote Unity</p>
+        <h2 class="h2 rv" style="--d:1">L’agent ne clique <em>jamais</em></h2>
+    </div>
+    <div class="card term rv" style="--d:2">
+        <div class="bar"><i></i><i></i><i></i><span>terminal · éditeur Unity ouvert</span></div>
+        <pre id="termOut" aria-label="Commandes envoyées à Unity"></pre>
+    </div>
+    <figure class="shot" id="termShot">
+        <div class="frame"><img src="assets/media/v6_tube.webp" alt="Le tube de la vague, photographié par l’agent sans lancer le jeu"></div>
+        <figcaption>Ses yeux : 721 captures en trois semaines</figcaption>
+    </figure>
+    <div class="loop">
+        <h3 class="rv" style="--d:4"><span>Une IA avance aussi vite qu’elle <em>se vérifie</em></span><small><b>minutes</b> → <i>fraction de seconde</i></small></h3>
+        <div class="line"></div>
+        <ol class="steps">
+            <li class="rv" style="--d:5"><b>Captures en jeu</b><span>lancer, capturer, relire</span></li>
+            <li class="rv" style="--d:6"><b>WaveLab</b><span>photos sans lancer le jeu</span></li>
+            <li class="rv" style="--d:7"><b>wave_profile_lab.py</b><span>la vague en graphique</span></li>
+            <li class="rv" style="--d:8"><b>RiderBot</b><span>un robot qui joue</span></li>
+            <li class="rv" style="--d:9"><b>RideSim</b><span>40 s de jeu, instantané</span><span class="ok">22 tests au vert</span></li>
+        </ol>
+    </div>
+    <aside class="notes"><p>Unity est un logiciel lourd, <span class="pz">/</span> qui garde beaucoup d’informations en dehors du code. <span class="pz">/</span> L’agent n’y clique <b>jamais</b> : <span class="pz">/</span> il lui envoie des commandes. <span class="pz">/</span> Il peut exécuter du code dans l’éditeur, <span class="pz">/</span> lancer les tests, <span class="pz">/</span> et surtout prendre des captures d’écran : <span class="pz">/</span> ce sont <b>ses yeux</b>. <span class="pz">/</span> Il en a pris plus de sept cents. <span class="pz pz2">//</span></p><p>C’est notre plus grande leçon : <span class="pz">/</span> une IA avance aussi vite qu’elle peut <b>vérifier son travail</b>. <span class="pz">/</span> Au début, il fallait lancer le jeu à chaque fois. <span class="pz">/</span> À la fin, un robot jouait une vague entière <span class="pz">/</span> en une <b>fraction de seconde</b>.</p></aside>
+</section>
+
+<!-- =====================================================================
+     SLIDE 05 · SIX VERSIONS OF THE WAVE · Maxime
+     One column per version, dated and coloured by the Claude model that wrote it.
+     ===================================================================== -->
+<section class="slide sl-path" id="path" data-act="2" data-who="Maxime" data-title="Six versions de la vague" data-tau="0.6" data-target="63">
+    <div class="head">
+        <p class="kicker rv">Du 8 au 29 septembre</p>
+        <h2 class="h2 rv" style="--d:1">Six versions de la vague, <em>cinq abandonnées</em></h2>
+    </div>
+    <div class="legend rv" style="--d:2">
+        <span><i class="dot" style="--c:var(--m-fable)"></i>Fable 5.1</span>
+        <span><i class="dot" style="--c:var(--m-opus48)"></i>Opus 4.8</span>
+        <span><i class="dot" style="--c:var(--m-opus5)"></i>Opus 5</span>
+        <span><i class="dot" style="--c:var(--m-opus55)"></i>Opus 5.5</span>
+    </div>
+    <svg class="axis" viewBox="0 0 1920 1080" aria-hidden="true">
+        <defs>
+            <linearGradient id="pathAx" x1="120" x2="1398" y1="0" y2="0" gradientUnits="userSpaceOnUse">
+                <stop offset="0" stop-color="#3987e5"/><stop offset=".58" stop-color="#3987e5"/>
+                <stop offset=".72" stop-color="#199e70"/><stop offset=".86" stop-color="#d95926"/><stop offset="1" stop-color="#d95926"/>
+            </linearGradient>
+        </defs>
+        <path class="draw" d="M120 312 H1398" stroke="url(#pathAx)" stroke-width="4" stroke-linecap="round" fill="none"/>
+        <path d="M1402 312 q8 -10 16 0 t16 0 t16 0 t16 0" stroke="#f0f7ff" stroke-opacity=".35" stroke-width="2.5" fill="none" stroke-dasharray="3 6"/>
+        <path class="draw" d="M1468 312 H1800" stroke="#c98500" stroke-width="4" stroke-linecap="round" fill="none"/>
+        <g stroke="#041a30" stroke-width="3">
+            <circle cx="126" cy="312" r="8" fill="#3987e5"/><circle cx="386" cy="312" r="8" fill="#3987e5"/><circle cx="646" cy="312" r="8" fill="#3987e5"/>
+            <circle cx="906" cy="312" r="8" fill="#199e70"/><circle cx="1166" cy="312" r="8" fill="#d95926"/><circle cx="1468" cy="312" r="11" fill="#c98500"/>
+        </g>
+    </svg>
+    <p class="pause rv" style="--d:9">17 jours<br>de pause</p>
+    <figure class="wcol gone rv" style="left:120px;--d:3"><time>8 sept.</time><span class="m"><i class="dot" style="--c:var(--m-fable)"></i>Fable 5.1</span>
+        <div class="img"><img src="assets/media/evo-01-premier-lancement.webp" alt=""><span class="tag">✕</span></div>
+        <b>① Invisible</b><p>prototype jouable en 2 h 23</p></figure>
+    <figure class="wcol gone rv" style="left:380px;--d:4"><time>8 sept.</time><span class="m"><i class="dot" style="--c:var(--m-fable)"></i>Fable 5.1</span>
+        <div class="img"><img src="assets/media/evo-02-vague-transparente.webp" alt=""><span class="tag">✕</span></div>
+        <b>② Transparente</b><p>du sable à travers l’eau</p></figure>
+    <figure class="wcol gone rv" style="left:640px;--d:5"><time>8 sept.</time><span class="m"><i class="dot" style="--c:var(--m-fable)"></i>Fable 5.1</span>
+        <div class="img"><img src="assets/media/evo-06-v4-hud.webp" alt=""><span class="tag">✕</span></div>
+        <b>③ Scène cassée</b><p>mal sauvegardée</p></figure>
+    <figure class="wcol gone rv" style="left:900px;--d:6"><time>Nuit du 8 au 9</time><span class="m"><i class="dot" style="--c:var(--m-fable)"></i>Fable → <i class="dot" style="--c:var(--m-opus48)"></i>Opus 4.8</span>
+        <div class="img"><img src="assets/media/evo-05-patch-rectangulaire.webp" alt=""><span class="tag">✕</span></div>
+        <b>④ 90 réglages</b><p>13 commits en une nuit</p></figure>
+    <figure class="wcol gone rv" style="left:1160px;--d:7"><time>10 et 11 sept.</time><span class="m"><i class="dot" style="--c:var(--m-opus5)"></i>Opus 5</span>
+        <div class="img"><img src="assets/media/evo-03-premier-tube.webp" alt=""><span class="tag">✕</span></div>
+        <b>⑤ « Un mur avec un parasol »</b></figure>
+    <figure class="wcol win rv zoom" style="left:1462px;--d:10"><time>28 sept.</time><span class="m"><i class="dot" style="--c:var(--m-opus55)"></i>Opus 5.5</span>
+        <div class="img"><img src="assets/media/evo-10-teahupoo.webp" alt=""><span class="tag">✓ la vague du jeu</span></div>
+        <b>⑥ Teahupoo</b>
+        <ul><li>meilleur modèle</li><li>base saine</li><li>tests rapides</li><li>deux photos cibles</li></ul>
+        <span class="extra">en quatre heures</span></figure>
+    <aside class="notes"><p>Le 8 septembre, en un après-midi, l’agent livre un premier <b>prototype jouable</b>. <span class="pz">/</span> Pendant ce temps, Alexandre intègre nos planches de bodyboard. <span class="pz">/</span> Mais au total, nous avons construit <b>six</b> versions de la vague, <span class="pz">/</span> et abandonné les cinq premières. <span class="pz pz2">//</span></p><p><span class="stage">[→ ①]</span> La première était invisible. <span class="pz">/</span> <span class="stage">[→ ②]</span> La deuxième, transparente : on voyait le sable à travers l’eau. <span class="pz">/</span> <span class="stage">[→ ③]</span> Et la troisième a été cassée par une scène mal sauvegardée. <span class="pz pz2">//</span></p><p><span class="stage">[→ ④]</span> La nuit suivante, nous laissons l’agent travailler seul : <span class="pz">/</span> treize commits pendant que nous dormons, <span class="pz">/</span> et quatre-vingt-dix réglages empilés. <span class="pz">/</span> <span class="stage">[→ ⑤]</span> La version d’après était propre et testée, <span class="pz">/</span> mais elle ressemblait à « un mur avec un parasol au-dessus ». <span class="pz">/</span> Deux fois, nous avons préféré repartir de zéro. <span class="pz pz2">//</span></p><p><span class="stage">[→ ⑥]</span> Le 28 septembre, tout se débloque : <span class="pz">/</span> un modèle plus performant, Opus 5.5, <span class="pz">/</span> un redémarrage sur une base saine, <span class="pz">/</span> des tests enfin rapides, <span class="pz">/</span> et deux photos de Teahupoo comme cible. <span class="pz">/</span> Quatre heures plus tard, <span class="pz">/</span> la vague est là. <span class="stage">[→ vue d’ensemble]</span></p><p><span class="hand">→ Louis prend la parole.</span></p></aside>
+</section>
+
+<!-- =====================================================================
+     SLIDE 06 · THE WAVE · Louis
+     Left: the game's cross-section, computed live (WaveProfile port).
+     Right: the peel, slices of the same crest at staggered times.
+     ===================================================================== -->
+<section class="slide sl-wave" id="wave" data-act="3" data-who="Louis" data-title="La vague" data-tau="1.8" data-target="41">
+    <div class="head">
+        <p class="kicker rv">La vague, personnage principal</p>
+        <h2 class="h2 rv" style="--d:1">Une seule courbe <em>pour toute la vague</em></h2>
+    </div>
+    <canvas id="profileCanvas" class="rv" style="--d:2" aria-label="Coupe de la vague du jeu, animée"></canvas>
+    <ol class="stages rv" style="--d:3" id="stageList"></ol>
+    <p class="tau rv" style="--d:3" id="tauReadout">Temps écoulé depuis le déferlement : <b>+0,0 s</b></p>
+    <canvas id="peelCanvas" class="rv" style="--d:4" aria-label="Le déroulement le long de la crête"></canvas>
+    <p class="peelcap rv" style="--d:5">Même évolution, <b>décalée dans le temps</b> : le rouleau avance.</p>
+    <ul class="facts">
+        <li class="rv" style="--d:6"><b>15 points</b>de contrôle</li>
+        <li class="rv" style="--d:7"><b>10 formes clés</b>d’après les photos</li>
+        <li class="rv" style="--d:8"><b>Un seul calcul</b>affichage et physique</li>
+        <li class="rv" style="--d:9"><b>Vérifiée en Python</b>sur 90 instants</li>
+    </ul>
+    <aside class="notes"><p>Dans ce jeu, le personnage principal, <span class="pz">/</span> c’est <b>la vague</b>. <span class="pz pz2">//</span></p><p>Vue en coupe, elle tient en une seule courbe, <span class="pz">/</span> qui passe par quinze points de contrôle. <span class="pz">/</span> Ces points se déplacent entre dix formes clés, dessinées d’après les photos : <span class="pz">/</span> vous la voyez ici naître, se creuser, puis déferler. <span class="pz pz2">//</span></p><p>Pour que le rouleau avance le long de la vague, <span class="pz">/</span> chaque point de la crête suit la même évolution, <span class="pz">/</span> avec un léger <b>décalage dans le temps</b>. <span class="pz pz2">//</span></p><p>Enfin, le même calcul sert à l’affichage et à la physique : <span class="pz">/</span> le joueur glisse exactement sur l’eau qu’il voit.</p></aside>
+</section>
+
+<!-- =====================================================================
+     SLIDE 07 · ARCHITECTURE · Louis
+     ===================================================================== -->
+<section class="slide sl-arch" id="arch" data-act="3" data-who="Louis" data-title="L’architecture" data-tau="2.5" data-target="33">
+    <div class="head">
+        <p class="kicker rv">Architecture du jeu</p>
+        <h2 class="h2 rv" style="--d:1">Comment le jeu est <em>construit</em></h2>
+    </div>
+    <p class="sub rv" style="--d:2">Un même calcul pour l’affichage et la physique</p>
+    <div class="arch">
+        <div class="col rv left" style="--d:3">
+            <h3>Les entrées</h3>
+            <div class="mod src"><b>Manette PS5, clavier, souris</b><span>12 actions</span></div>
+            <div class="mod hot"><b>InputRouter</b><span>traduit les commandes</span></div>
+            <div class="mod"><b>RiderBot</b><span>le robot de test</span></div>
+        </div>
+        <div class="flowc rv" style="--d:4"><svg viewBox="0 0 56 40"><path class="fl" d="M4 20H48" stroke="#33cce6" stroke-width="3" fill="none"/><path d="M40 12l9 8-9 8" stroke="#33cce6" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="col rv" style="--d:5">
+            <h3>La simulation<small>50 fois par seconde</small></h3>
+            <div class="mod hot"><b>RiderController</b><span>les états du personnage</span></div>
+            <div class="mod"><b>FlickIt → TrickRunner</b><span>du geste à la figure</span></div>
+            <div class="mod"><b>WaterSurfaceComposite</b><span>où est l’eau&#8239;?</span></div>
+            <div class="mod"><b>SurfWave, WaveProfile</b><span>la vague, recalculée à chaque image</span></div>
+            <div class="mod"><b>OceanSurface</b><span>l’océan, jusqu’à 6 km</span></div>
+        </div>
+        <div class="flowc rv" style="--d:6"><svg viewBox="0 0 56 40"><path class="fl" d="M4 20H48" stroke="#33cce6" stroke-width="3" fill="none"/><path d="M40 12l9 8-9 8" stroke="#33cce6" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="col rv right" style="--d:7">
+            <h3>L’affichage</h3>
+            <div class="mod hot"><b>CameraDirector</b><span>jamais sous l’eau</span></div>
+            <div class="mod"><b>WavyBoard/Water</b><span>un seul shader</span></div>
+            <div class="mod"><b>GameHud, RideScorer</b><span>interface et note sur 10</span></div>
+            <div class="mod"><b>Avatar</b><span>sans animation préenregistrée</span></div>
+        </div>
+    </div>
+    <aside class="notes"><p>Le jeu se lit en trois temps. <span class="pz pz2">//</span></p><p>D’abord les entrées : <span class="pz">/</span> la manette, le clavier, <span class="pz">/</span> ou notre robot de test, <span class="pz">/</span> qui passe par <b>les mêmes commandes</b> qu’un joueur. <span class="pz pz2">//</span></p><p>Ensuite la simulation, cinquante fois par seconde : <span class="pz">/</span> le personnage, ses figures, <span class="pz">/</span> et l’eau, qui répond à une seule question : <span class="pz">/</span> « où est la surface à cet endroit ? » <span class="pz pz2">//</span></p><p>Enfin l’affichage : <span class="pz">/</span> une caméra automatique, qui ne passe jamais sous l’eau, <span class="pz">/</span> et un seul shader pour toute la mer.</p></aside>
+</section>
+
+<!-- =====================================================================
+     SLIDE 08 · TECHNOLOGIES · Louis
+     ===================================================================== -->
+<section class="slide sl-stack" id="stack" data-act="3" data-who="Louis" data-title="Les technologies" data-tau="3.2" data-target="29">
+    <div class="head">
+        <p class="kicker rv">Sous le capot</p>
+        <h2 class="h2 rv" style="--d:1">Les technologies <em>utilisées</em></h2>
+    </div>
+    <ul class="stack">
+        <li class="rv" style="--d:2"><span class="k">Moteur</span><span class="v"><b>Unity 6.6</b> · URP</span></li>
+        <li class="rv" style="--d:3"><span class="k">Code</span><span class="v"><b>C#</b> · 8 845 lignes</span></li>
+        <li class="rv" style="--d:4"><span class="k">Performance</span><span class="v"><b>Burst</b> · Job System</span></li>
+        <li class="rv" style="--d:5"><span class="k">Rendu</span><span class="v"><b>HLSL</b> · un seul shader</span></li>
+        <li class="rv" style="--d:6"><span class="k">Manettes</span><span class="v"><b>Input System</b> · PS5, clavier</span></li>
+        <li class="rv" style="--d:7"><span class="k">IA</span><span class="v"><b>Claude Code</b> · CLI Unity</span></li>
+        <li class="rv" style="--d:8"><span class="k">Tests</span><span class="v"><b>22 tests</b> · RideSim</span></li>
+        <li class="rv" style="--d:9"><span class="k">Outils</span><span class="v"><b>Python</b> · ffmpeg · Git</span></li>
+        <li class="rv" style="--d:10"><span class="k">Ressources</span><span class="v"><b>100 % libres</b> (CC0)</span></li>
+        <li class="rv" style="--d:11"><span class="k">Site web</span><span class="v"><b>React</b> · three.js</span></li>
+    </ul>
+    <p class="online rv" style="--d:12"><i class="dot" style="--c:#3fd19c"></i><span>En ligne : <b>raptorz99.github.io/WavyBoard</b></span></p>
+    <div class="card tree rv right" style="--d:4">
+        <div class="bar"><i></i><i></i><i></i><span style="margin-left:12px">organisation du dépôt</span></div>
+<pre><span class="d">Biscotte/</span>
+<span class="g">├─</span> <span class="d">Assets/_Project/</span>   <span class="n">le jeu</span>
+<span class="g">│  ├─</span> Scripts/         <span class="n">le code</span>
+<span class="g">│  ├─</span> Shaders/Water/   <span class="n">le shader</span>
+<span class="g">│  ├─</span> Editor/          <span class="n">WaveLab, RideSim</span>
+<span class="g">│  └─</span> Tests/EditMode/  <span class="n">22 tests</span>
+<span class="g">├─</span> <span class="d">Assets/ThirdParty/</span> <span class="n">ressources</span>
+<span class="g">├─</span> <span class="d">Tools/</span>             <span class="n">outils Python</span>
+<span class="g">├─</span> <span class="d">Docs/</span>              <span class="n">spécification</span>
+<span class="g">├─</span> <span class="d">Website/</span>           <span class="n">site et rapport</span>
+<span class="g">└─</span> CLAUDE.md          <span class="n">les règles</span></pre>
+        <div class="nums">
+            <div><b>48</b><span>fichiers C#</span></div>
+            <div><b>1</b><span>shader</span></div>
+            <div><b>22</b><span>tests</span></div>
+        </div>
+    </div>
+    <aside class="notes"><p>Côté technologies : <span class="pz">/</span> Unity 6.6 et son moteur de rendu URP, <span class="pz">/</span> près de neuf mille lignes de C#, <span class="pz">/</span> accélérées par Burst pour recalculer la vague à chaque image, <span class="pz">/</span> un shader en HLSL, <span class="pz">/</span> et Python pour nos outils de test. <span class="pz pz2">//</span></p><p>Le site du projet est en React et three.js, <span class="pz">/</span> et GitHub Actions le met en ligne automatiquement. <span class="pz pz2">//</span></p><p>Maxime va maintenant vous parler des limites.</p><p><span class="hand">→ Maxime reprend la parole.</span></p></aside>
+</section>
+
+<!-- =====================================================================
+     SLIDE 09 · LIMITS · Maxime
+     ===================================================================== -->
+<section class="slide sl-limits" id="limits" data-act="4" data-who="Maxime" data-title="Les limites" data-tau="4.1" data-target="35">
+    <div class="head">
+        <p class="kicker rv">Les limites</p>
+        <h2 class="h2 rv" style="--d:1">Ce que l’IA ne fait pas <em>seule</em></h2>
+    </div>
+    <div class="lims">
+        <div class="lim rv" style="--d:2">
+            <i class="num">01</i>
+            <h3>La finition est longue</h3>
+            <div class="fig vs"><div><b>2 h 23</b><span>pour un prototype</span></div><div><b>3 semaines</b><span>pour une vague qui plaît</span></div></div>
+        </div>
+        <div class="lim rv" style="--d:3">
+            <i class="num">02</i>
+            <h3>Elle ne ressent pas le jeu</h3>
+            <div class="fig"><blockquote>« La caméra est dans la texture du tube. »</blockquote></div>
+        </div>
+        <div class="lim rv" style="--d:4">
+            <i class="num">03</i>
+            <h3>Elle ajoute, mais ne range pas</h3>
+            <div class="fig"><span class="count" data-count="1013998" data-prefix="−">−1 013 998</span><span>lignes supprimées au ménage</span></div>
+        </div>
+        <div class="lim rv" style="--d:5">
+            <i class="num">04</i>
+            <h3>Unity lui résiste</h3>
+            <div class="fig">
+                <div class="pics">
+                    <figure><img src="assets/media/site-hero.webp" alt=""><figcaption><b>1 soirée</b>vague du site</figcaption></figure>
+                    <figure><img src="assets/media/evo-10-teahupoo.webp" alt=""><figcaption><b>3 semaines</b>vague du jeu</figcaption></figure>
+                </div>
+            </div>
+        </div>
+    </div>
+    <p class="note rv" style="--d:7">Le modèle compte, mais pas seul : <b>base saine et tests rapides.</b></p>
+    <aside class="notes"><p>L’IA produit un prototype très vite. <span class="pz">/</span> Mais la finition prend beaucoup plus de temps : <span class="pz">/</span> elle voit une image, <span class="pz">/</span> mais elle ne ressent pas le jeu entre ses mains. <span class="pz pz2">//</span></p><p>Elle accumule, aussi : <span class="pz">/</span> lors du grand ménage final, nous avons supprimé plus d’<b>un million</b> de lignes, <span class="pz">/</span> alors que notre propre code n’a presque pas bougé. <span class="pz pz2">//</span></p><p>Enfin, Unity reste un terrain difficile pour une IA : <span class="pz">/</span> la vague de notre site web a demandé une soirée, <span class="pz">/</span> celle du jeu, <b>trois semaines</b>.</p></aside>
+</section>
+
+<!-- =====================================================================
+     SLIDE 10 · WHAT WE WOULD DO AGAIN · Alexandre, Maxime, Louis
+     ===================================================================== -->
+<section class="slide sl-lessons" id="lessons" data-act="4" data-who="Alexandre · Maxime · Louis" data-title="Ce que nous referions" data-tau="5.0" data-target="27">
+    <div class="head">
+        <p class="kicker rv">Ce que nous en retenons</p>
+        <h2 class="h2 rv" style="--d:1">Ce que nous <em>referions</em></h2>
+    </div>
+    <div class="lessons">
+        <div>
+            <p class="who rv" style="--d:2"><i class="dot" style="--c:var(--alexandre)"></i>Alexandre</p>
+            <div class="lesson rv" style="--d:3"><i>1</i><div><b>Planifier avant de coder</b></div></div>
+            <div class="lesson rv" style="--d:4"><i>2</i><div><b>Écrire les règles une fois</b></div></div>
+        </div>
+        <div>
+            <p class="who rv" style="--d:5"><i class="dot" style="--c:var(--maxime)"></i>Maxime</p>
+            <div class="lesson rv" style="--d:6"><i>3</i><div><b>Donner des yeux à l’IA</b></div></div>
+            <div class="lesson rv" style="--d:7"><i>4</i><div><b>Oser repartir de zéro</b></div></div>
+        </div>
+        <div>
+            <p class="who rv" style="--d:8"><i class="dot" style="--c:var(--louis)"></i>Louis</p>
+            <div class="lesson rv" style="--d:9"><i>5</i><div><b>Montrer des images</b></div></div>
+            <div class="lesson rv" style="--d:10"><i>6</i><div><b>Faire le ménage</b></div></div>
+        </div>
+    </div>
+    <aside class="notes"><p><span class="who2">Alexandre</span>Si c’était à refaire, nous garderions six choses. <span class="pz">/</span> Planifier avant de coder, avec le meilleur modèle. <span class="pz">/</span> Et écrire les règles une bonne fois pour toutes.</p><p><span class="who2">Maxime</span>Donner à l’IA des yeux, puis un simulateur. <span class="pz">/</span> Et ne pas hésiter à repartir de zéro.</p><p><span class="who2">Louis</span>Montrer des images plutôt que des adjectifs. <span class="pz">/</span> Et faire le ménage régulièrement. <span class="pz pz2">//</span> Et maintenant, place au jeu. <span class="pz">/</span> Alexandre ?</p></aside>
+</section>
+
+<!-- =====================================================================
+     SLIDE 11 · LIVE DEMO · Alexandre plays
+     On screen while Alexandre switches to Unity. Plan B: V plays the trailer.
+     ===================================================================== -->
+<section class="slide sl-demo" id="demo" data-act="5" data-who="Alexandre" data-title="Démonstration" data-tau="5.8" data-chrome="bare" data-target="120">
+    <img class="bgimg" src="assets/media/lab-tube.webp" alt="">
+    <div class="shade"></div>
+    <p class="live rv" style="--d:1"><i></i>En direct</p>
+    <h2 class="rv" style="--d:2">Démonstration<br><em>du jeu</em></h2>
+    <p class="by rv" style="--d:4"><i class="dot" style="--c:var(--alexandre)"></i>Alexandre<small>manette en main</small></p>
+    <div class="route rv right" style="--d:3">
+        <p class="lbl">Au programme</p>
+        <ol>
+            <li><div><b>Appeler une vague</b></div><span class="pad"><kbd>↑ croix</kbd></span></li>
+            <li><div><b>Ramer et partir</b></div><span class="pad"><kbd>Stick G</kbd> <kbd>✕</kbd></span></li>
+            <li><div><b>Pomper</b></div><span class="pad"><kbd>R2</kbd></span></li>
+            <li><div><b>Entrer dans le tube</b></div><span class="pad"><kbd>L2</kbd></span></li>
+            <li><div><b>El Rollo</b></div><span class="pad"><kbd>Stick D</kbd></span></li>
+            <li><div><b>Sortir, être noté</b></div><span class="pad"><kbd>L2</kbd></span></li>
+        </ol>
+    </div>
+    <video id="demoVid" src="assets/media/trailer.mp4" poster="assets/media/trailer-poster.webp" playsinline preload="metadata"></video>
+    <aside class="notes"><p><span class="stage">[Alexandre passe sur Unity, la scène prête, manette en main.]</span></p><p>Je suis au large, j’attends une vague. <span class="pz">/</span> Normalement, une série arrive toutes les quarante-deux secondes, <span class="pz">/</span> mais je peux en appeler une tout de suite. <span class="pz pz2">//</span></p><p>Je rame vers la plage… <span class="pz">/</span> la vague me soulève, <span class="pz">/</span> et c’est parti. <span class="pz pz2">//</span></p><p>Ma vitesse vient de la vague elle-même. <span class="pz">/</span> J’accélère en pompant, en rythme. <span class="pz pz2">//</span></p><p>Maintenant, je freine : <span class="pz">/</span> le rouleau me rattrape et se referme au-dessus de moi. <span class="pz">/</span> Je suis dans le <b>tube</b>. <span class="pz">/</span> J’accélère pour en sortir. <span class="pz pz2">//</span></p><p>Je remonte la vague à toute vitesse… <span class="pz">/</span> et la crête me projette en l’air. <span class="pz">/</span> Stick droit vers le bas, puis vers le haut : <span class="pz">/</span> un El Rollo. <span class="pz pz2">//</span></p><p>Je sors de la vague par le côté, <span class="pz">/</span> et j’obtiens une note sur dix. <span class="pz pz2">//</span></p><p><span class="stage">[Retour au diaporama : slide suivante.]</span></p><p><span class="hand">Plan B : Si Unity ne répond pas : rester sur la slide, appuyer sur V pour lancer la bande-annonce en plein écran, et dire le même commentaire dessus.</span></p></aside>
+</section>
+
+<!-- =====================================================================
+     SLIDE 12 · THE MORAL · Louis
+     The wave has broken: the deck turns to foam.
+     ===================================================================== -->
+<section class="slide sl-end light" id="end" data-act="6" data-who="Louis" data-title="Conclusion" data-tau="7.6" data-target="35">
+    <div class="bubbles" data-bubbles="34"></div>
+    <p class="moral rv blur" style="--d:1">Une IA ne remplace pas<br>la compréhension.<em>Elle la rend plus urgente.</em></p>
+    <div class="thanks rv" style="--d:5"><b>Merci.</b><span>Place à vos questions.</span></div>
+    <div class="next rv" style="--d:7">
+        <p class="lbl">Et ensuite&#8239;?</p>
+        <p>Plus de gameplay · de meilleurs assets · <b>une sortie sur Steam</b></p>
+    </div>
+    <a class="qrcard rv right" style="--d:8" href="https://raptorz99.github.io/WavyBoard/" target="_blank" rel="noopener">
+        <svg class="qr" role="img" aria-label="QR code vers raptorz99.github.io/WavyBoard" viewBox="0 0 29 29"><path class="qrline" stroke="#062640" d="M0 0.5h7m2 0h1m2 0h1m1 0h2m3 0h1m2 0h7m-29 1h1m5 0h1m1 0h1m1 0h6m1 0h3m2 0h1m5 0h1m-29 1h1m1 0h3m1 0h1m2 0h1m4 0h3m3 0h1m1 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m2 0h1m5 0h2m1 0h1m3 0h1m1 0h3m1 0h1m-29 1h1m1 0h3m1 0h1m1 0h3m2 0h3m2 0h2m2 0h1m1 0h3m1 0h1m-29 1h1m5 0h1m3 0h1m1 0h1m1 0h3m2 0h1m2 0h1m5 0h1m-29 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-17 1h4m1 0h1m1 0h2m-21 1h1m1 0h1m1 0h1m1 0h1m3 0h1m1 0h1m1 0h1m1 0h3m5 0h1m2 0h1m-27 1h1m1 0h2m2 0h2m1 0h1m2 0h1m2 0h1m3 0h3m2 0h1m2 0h1m-28 1h2m2 0h4m1 0h3m1 0h1m2 0h1m3 0h1m2 0h1m1 0h3m-29 1h6m4 0h2m1 0h1m2 0h2m1 0h1m2 0h1m4 0h1m-28 1h2m2 0h1m1 0h2m3 0h2m1 0h4m1 0h5m1 0h1m1 0h2m-28 1h1m1 0h3m2 0h1m1 0h1m1 0h1m3 0h1m3 0h1m1 0h1m2 0h1m2 0h1m-29 1h2m3 0h4m1 0h4m2 0h1m1 0h1m3 0h1m1 0h2m1 0h2m-27 1h3m4 0h1m1 0h1m5 0h2m1 0h4m1 0h1m1 0h1m-27 1h2m1 0h1m1 0h1m2 0h3m4 0h2m2 0h4m1 0h1m1 0h2m-28 1h1m1 0h1m3 0h2m2 0h1m1 0h1m1 0h2m3 0h1m1 0h1m2 0h2m1 0h1m-29 1h1m5 0h1m3 0h2m2 0h1m2 0h1m2 0h1m2 0h2m2 0h2m-28 1h2m4 0h2m1 0h1m1 0h4m1 0h2m1 0h4m1 0h1m1 0h1m-28 1h1m2 0h1m2 0h1m2 0h4m1 0h2m1 0h8m-17 1h1m1 0h2m2 0h1m1 0h1m2 0h2m3 0h1m1 0h3m-29 1h7m3 0h1m1 0h2m2 0h2m1 0h2m1 0h1m1 0h2m1 0h2m-29 1h1m5 0h1m3 0h2m4 0h5m3 0h2m1 0h2m-29 1h1m1 0h3m1 0h1m1 0h1m11 0h5m2 0h2m-29 1h1m1 0h3m1 0h1m2 0h3m1 0h1m2 0h3m2 0h1m1 0h2m1 0h3m-29 1h1m1 0h3m1 0h1m1 0h1m3 0h3m2 0h1m3 0h1m1 0h3m2 0h1m-29 1h1m5 0h1m7 0h2m1 0h2m1 0h5m2 0h1m-28 1h7m1 0h7m1 0h2m2 0h3m1 0h2m1 0h2"/></svg>
+        <span class="t">Site, vidéos et rapport</span>
+        <span class="u">raptorz99.github.io/WavyBoard</span>
+    </a>
+    <aside class="notes"><p>Quand nous avons commencé, aucun de nous ne connaissait Unity. <span class="pz">/</span> Les agents ont écrit le code. <span class="pz">/</span> Mais les décisions, les références et le goût <span class="pz">/</span> sont restés <b>les nôtres</b>. <span class="pz pz2">//</span></p><p>Une IA ne remplace pas la compréhension. <span class="pz pz2">//</span> Elle la rend plus <b>urgente</b>. <span class="pz pz2">//</span></p><p>Et la suite ? <span class="pz">/</span> Enrichir le gameplay, améliorer les assets, <span class="pz">/</span> et sortir le jeu sur <b>Steam</b>. <span class="pz pz2">//</span></p><p>Merci pour votre écoute. <span class="pz">/</span> Le rapport complet est en ligne, le lien est à l’écran. <span class="pz">/</span> Nous sommes prêts pour vos questions.</p></aside>
+</section>
+
+<!-- =====================================================================
+     STAGE-LEVEL LAYERS: swell bar, chrome, act intro
+     ===================================================================== -->
+<canvas id="swell" aria-hidden="true"></canvas>
+
+<div class="chrome bare" id="chrome" aria-hidden="true">
+    <div class="brand"><svg viewBox="0 0 64 64"><path d="M4 50c11 0 16-7 20-16 5-11 12-18 23-18 8 0 13 5 13 11 0 5-4 9-9 9-4 0-6-3-6-6 0 5-5 8-10 8 6 6 12 11 25 11v11H4z" fill="currentColor"/><path d="M4 55c15 0 24-2 32-6 7 4 15 6 24 6v5H4z" fill="currentColor" opacity=".45"/></svg><span>WavyBoard</span></div>
+    <div class="act" id="chromeAct"></div>
+    <div class="who" id="chromeWho"><i class="dot"></i><span></span></div>
+    <div class="page" id="chromePage"></div>
+</div>
+
+<div id="actIntro" aria-hidden="true">
+    <canvas id="actCanvas"></canvas>
+    <div class="txt">
+        <p class="num" id="actNum">I</p>
+        <p class="name" id="actName">Préparation</p>
+        <p class="sub" id="actSub">Préparer</p>
+        <p class="by" id="actBy"><i class="dot"></i><span></span></p>
+    </div>
+</div>
+
+</main>
+</div>
+
+<!-- =====================================================================
+     OUTSIDE THE STAGE: notes panel (N), help (H), black screen (B), editor (E)
+     ===================================================================== -->
+<div id="notesPanel" class="nt" aria-live="polite"></div>
+<div id="help" role="dialog" aria-label="Raccourcis">
+    <div><kbd>→</kbd>slide suivante (aussi Espace, Page suivante)</div>
+    <div><kbd>←</kbd>slide précédente</div>
+    <div><kbd>→</kbd>slide 5 : agrandit les versions une par une</div>
+    <div><kbd>P</kbd>vue présentateur (texte, minuteur, slide suivante)</div>
+    <div><kbd>N</kbd>texte de l’oral sous la slide</div>
+    <div><kbd>V</kbd>démo : lancer ou arrêter la vidéo de secours</div>
+    <div><kbd>T</kbd>démarrer ou remettre le minuteur à zéro</div>
+    <div><kbd>F</kbd>plein écran</div>
+    <div><kbd>B</kbd>écran noir</div>
+    <div><kbd>E</kbd>modifier le texte · <kbd>Ctrl S</kbd>enregistrer une copie</div>
+    <div><kbd>H</kbd>afficher ou masquer cette aide</div>
+</div>
+<div id="blackout"></div>
+<div class="edit-hotzone" aria-hidden="true"></div>
+<button class="edit-toggle" id="editToggle" title="Modifier le texte (E)">✏️</button>
+<div class="toast" id="toast"></div>
+<script>
+/* =====================================================================
+   1. WAVE PROFILE
+   A straight port of the game's cross-section: Assets/_Project/Scripts/
+   Wave/WaveProfile.cs, via Website/src/lib/waveProfile.ts. One continuous
+   curve (flat water, face, back wall of the tube, ceiling, lip tip, crest,
+   back) through 15 control points keyframed over the life of a point of the
+   crest. Units: wave height H; x toward the beach; tau = seconds since break.
+   ===================================================================== */
+const WaveProfile = (() => {
+    const ROLES = ['F2', 'F1', 'FOOT', 'FACE_LO', 'FACE_MID', 'WALL', 'CEIL', 'LIPIN', 'TIP', 'LIPOUT', 'LIPTOP', 'CREST', 'BACK', 'B1', 'B2'];
+    const M = ROLES.length;
+    const SEG = [10, 8, 8, 8, 8, 10, 10, 9, 9, 10, 10, 10, 8, 10];
+    const NU = SEG.reduce((a, b) => a + b, 0) + 1;
+
+    function bump(xs, h, wf, wb, xc = 0) {
+        return xs.map((x) => {
+            const u = (x - xc) / (x >= xc ? wf : wb);
+            return [x, h * (0.5 + 0.5 * Math.cos(Math.PI * Math.min(1, Math.abs(u))))];
+        });
+    }
+    const SWELL_X = [7.0, 3.6, 2.4, 1.75, 1.25, 0.85, 0.55, 0.32, 0.14, -0.02, -0.2, -0.5, -1.4, -3.6, -7.0];
+    const KEYS = {
+        swell: bump(SWELL_X, 0.42, 3.0, 3.2),
+        steep: [[7, 0], [3.4, 0], [2.1, 0.03], [1.45, 0.19], [0.95, 0.45], [0.58, 0.67], [0.36, 0.78], [0.2, 0.83], [0.07, 0.855], [-0.05, 0.86], [-0.2, 0.845], [-0.5, 0.78], [-1.45, 0.44], [-3.6, 0], [-7, 0]],
+        pitch: [[7, 0], [3.2, 0], [1.7, 0.02], [0.95, 0.18], [0.42, 0.47], [0.17, 0.72], [0.16, 0.9], [0.3, 0.99], [0.46, 1.01], [0.4, 1.08], [0.18, 1.1], [-0.25, 1.02], [-1.25, 0.55], [-3.6, 0], [-7, 0]],
+        throw: [[7, 0], [3.1, 0], [1.55, 0.015], [0.85, 0.14], [0.32, 0.4], [0.04, 0.66], [0.2, 0.92], [0.62, 0.87], [0.9, 0.62], [1.02, 0.83], [0.66, 1.05], [0.12, 1.08], [-1.1, 0.6], [-3.6, 0], [-7, 0]],
+        barrel: [[7, 0], [3.0, 0], [1.55, 0.005], [0.8, 0.08], [0.24, 0.31], [0.0, 0.6], [0.24, 0.9], [0.92, 0.68], [1.16, 0.03], [1.4, 0.4], [1.06, 0.93], [0.3, 1.1], [-1.0, 0.64], [-3.6, 0], [-7, 0]],
+        barrel2: [[7, 0], [3.0, 0], [1.6, 0.0], [0.82, 0.075], [0.26, 0.3], [0.02, 0.58], [0.26, 0.88], [0.98, 0.64], [1.24, -0.07], [1.47, 0.37], [1.1, 0.9], [0.33, 1.08], [-1.0, 0.63], [-3.6, 0], [-7, 0]],
+        impact: [[7, 0], [3.0, 0], [1.62, 0.0], [0.85, 0.07], [0.32, 0.26], [0.12, 0.44], [0.36, 0.63], [0.92, 0.47], [1.38, -0.12], [1.62, 0.3], [1.12, 0.76], [0.42, 0.9], [-0.9, 0.55], [-3.6, 0], [-7, 0]],
+        mound: bump([7, 3.6, 2.5, 2.05, 1.72, 1.45, 1.22, 1.03, 0.86, 0.68, 0.48, 0.18, -0.75, -3.5, -7], 0.6, 1.9, 2.6, 0.9),
+        bore: bump([7, 4.2, 3.2, 2.7, 2.35, 2.05, 1.8, 1.58, 1.38, 1.16, 0.9, 0.5, -0.5, -3.4, -7], 0.34, 2.1, 2.8, 1.35),
+        flat: bump([7, 4.4, 3.4, 2.9, 2.55, 2.25, 2.0, 1.78, 1.58, 1.36, 1.1, 0.7, -0.3, -3.3, -7], 0.03, 2.3, 3.0, 1.55),
+    };
+    /* life of one point of the crest: key and time relative to its break (s) */
+    const TIMELINE = [['steep', -1.6], ['pitch', 0.0], ['throw', 0.75], ['barrel', 1.5], ['barrel2', 3.3], ['impact', 4.1], ['mound', 5.2], ['bore', 7.5], ['flat', 16.0]];
+    const T_IMPACT = 4.1;
+    const T_MOUND = 5.2;
+
+    function catmull(p0, p1, p2, p3, t) {
+        const tj = (ti, a, b) => ti + Math.pow(Math.max(Math.hypot(b[0] - a[0], b[1] - a[1]), 1e-4), 0.5);
+        const t0 = 0, t1 = tj(t0, p0, p1), t2 = tj(t1, p1, p2), t3 = tj(t2, p2, p3);
+        const tt = t1 + (t2 - t1) * t;
+        const lerp = (a, b, ta, tb) => { const w = (tt - ta) / (tb - ta); return [a[0] + (b[0] - a[0]) * w, a[1] + (b[1] - a[1]) * w]; };
+        const a1 = lerp(p0, p1, t0, t1), a2 = lerp(p1, p2, t1, t2), a3 = lerp(p2, p3, t2, t3);
+        const b1 = lerp(a1, a2, t0, t2), b2 = lerp(a2, a3, t1, t3);
+        return lerp(b1, b2, t1, t2);
+    }
+    function hermiteKeys(keys, times, t) {
+        const n = keys.length;
+        if (t <= times[0]) return keys[0];
+        if (t >= times[n - 1]) return keys[n - 1];
+        let i = 0;
+        while (times[i + 1] < t) i++;
+        const u = (t - times[i]) / (times[i + 1] - times[i]), u2 = u * u, u3 = u2 * u;
+        const k0 = keys[Math.max(0, i - 1)], k1 = keys[i], k2 = keys[i + 1], k3 = keys[Math.min(n - 1, i + 2)];
+        const out = [];
+        for (let j = 0; j < M; j++) {
+            const c = [0, 1].map((a) => {
+                const p0 = k0[j][a], p1 = k1[j][a], p2 = k2[j][a], p3 = k3[j][a];
+                return 0.5 * (2 * p1 + (-p0 + p2) * u + (2 * p0 - 5 * p1 + 4 * p2 - p3) * u2 + (-p0 + 3 * p1 - 3 * p2 + p3) * u3);
+            });
+            out.push(c);
+        }
+        return out;
+    }
+    const smoothstep = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+    /* WaveProfile.ScaleCurl: the curl grows about the foot of the back wall, so the tube opens */
+    function scaleCurl(p, tau, s) {
+        if (s <= 1.0001) return p;
+        const life = smoothstep(-0.4, 1.4, tau) * (1 - smoothstep(T_IMPACT, T_MOUND, tau));
+        return p.map(([x, y], j) => {
+            const w = j === 4 ? 0.3 : j === 12 ? 0.25 : j >= 5 && j <= 11 ? 1 : 0;
+            const k = 1 + (s - 1) * life * w;
+            return [x * k, 0.22 + (y - 0.22) * k];
+        });
+    }
+    const PRE = (shoal) => KEYS.swell.map((a, j) => [a[0] * (1 - shoal) + KEYS.steep[j][0] * shoal, a[1] * (1 - shoal) + KEYS.steep[j][1] * shoal]);
+    const TL_KEYS = TIMELINE.slice(1).map(([n]) => KEYS[n]);
+    const TL_TIMES = TIMELINE.map(([, t]) => t);
+
+    function shapeAt(tau, shoal = 1, tubeScale = 1) {
+        return scaleCurl(hermiteKeys([PRE(shoal), ...TL_KEYS], TL_TIMES, tau), tau, tubeScale);
+    }
+    function sampleCurve(p, out = new Float32Array(NU * 2)) {
+        const ext = [[2 * p[0][0] - p[1][0], 2 * p[0][1] - p[1][1]], ...p, [2 * p[M - 1][0] - p[M - 2][0], 2 * p[M - 1][1] - p[M - 2][1]]];
+        let o = 0;
+        for (let i = 0; i < M - 1; i++) {
+            for (let k = 0; k < SEG[i]; k++) {
+                const q = catmull(ext[i], ext[i + 1], ext[i + 2], ext[i + 3], k / SEG[i]);
+                out[o++] = q[0];
+                out[o++] = q[1];
+            }
+        }
+        out[o++] = p[M - 1][0];
+        out[o++] = p[M - 1][1];
+        return out;
+    }
+    /* the site's convention: the swell grows into a steep face before the break, tube opened 15 % */
+    function at(tau) {
+        const p = shapeAt(tau, smoothstep(-3.1, -1.7, tau), 1.15);
+        return { p, c: sampleCurve(p) };
+    }
+    /* height and slope of the face (front branch) at x, to sit the rider on it */
+    function faceHeight(c, x) {
+        for (let k = 0; k < NU - 1; k++) {
+            const xa = c[k * 2], xb = c[(k + 1) * 2];
+            if (xb > xa + 1e-4) break;
+            if (x <= xa && x >= xb) {
+                const t = (xa - x) / Math.max(1e-5, xa - xb);
+                const ya = c[k * 2 + 1], yb = c[(k + 1) * 2 + 1];
+                return { y: ya + (yb - ya) * t, slope: (yb - ya) / Math.max(1e-5, xa - xb) };
+            }
+        }
+        return null;
+    }
+    const STAGES = [
+        { tau: -2.4, name: 'La houle' }, { tau: -1.6, name: 'Elle se creuse' }, { tau: 0.0, name: 'La lèvre bascule' },
+        { tau: 0.75, name: 'La lèvre est projetée' }, { tau: 2.4, name: 'Le tube' }, { tau: 4.1, name: 'L’impact' },
+        { tau: 5.2, name: 'La mousse' }, { tau: 7.5, name: 'La barre d’écume' },
+    ];
+    function stageAt(tau) {
+        let best = 0;
+        for (let i = 1; i < STAGES.length; i++) if (tau >= (STAGES[i - 1].tau + STAGES[i].tau) / 2) best = i;
+        return best;
+    }
+    return { ROLES, NU, at, faceHeight, STAGES, stageAt, smoothstep };
+})();
+
+/* =====================================================================
+   2. CANVAS HELPERS
+   Every canvas is authored in stage pixels and backed at 2× for sharpness.
+   ===================================================================== */
+function setupCanvas(cv, w, h, scale = 2) {
+    cv.width = Math.round(w * scale);
+    cv.height = Math.round(h * scale);
+    cv.style.width = w + 'px';
+    cv.style.height = h + 'px';
+    const ctx = cv.getContext('2d');
+    ctx.setTransform(scale, 0, 0, scale, 0, 0);
+    return ctx;
+}
+/* Traces the sampled curve (NU points, front to back) through map(x, y) -> [X, Y]. */
+function traceCurve(ctx, c, map, move = true) {
+    for (let k = 0; k < WaveProfile.NU; k++) {
+        const q = map(c[2 * k], c[2 * k + 1]);
+        if (k === 0 && move) ctx.moveTo(q[0], q[1]);
+        else ctx.lineTo(q[0], q[1]);
+    }
+}
+/* Fills the water below the surface: even-odd keeps the inside of the tube as air. */
+function fillWater(ctx, c, map, left, right, bottom, baseY) {
+    ctx.beginPath();
+    ctx.moveTo(right, baseY);
+    traceCurve(ctx, c, map, false);
+    ctx.lineTo(left, baseY);
+    ctx.lineTo(left, bottom);
+    ctx.lineTo(right, bottom);
+    ctx.closePath();
+    ctx.fill('evenodd');
+}
+const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+
+/* =====================================================================
+   3. SWELL BAR
+   The talk's progress bar is a wave: it travels left to right and ages
+   one stage per slide (swell → lip → tube → foam).
+   ===================================================================== */
+const Swell = {
+    cv: null, ctx: null, W: 1920, Hc: 200, H: 58, base: 184,
+    tau: -3.2, x0: 330, light: 0,
+    from: null, to: null, t0: 0, dur: 1400,
+    init() {
+        this.cv = document.getElementById('swell');
+        this.ctx = setupCanvas(this.cv, this.W, this.Hc);
+    },
+    target(tau, progress, light) {
+        this.from = { tau: this.tau, x0: this.x0, light: this.light };
+        this.to = { tau, x0: 330 + progress * (this.W - 660), light: light ? 1 : 0 };
+        this.t0 = performance.now();
+    },
+    frame(now) {
+        if (this.to) {
+            const k = Math.min(1, (now - this.t0) / this.dur), e = easeInOut(k);
+            this.tau = this.from.tau + (this.to.tau - this.from.tau) * e;
+            this.x0 = this.from.x0 + (this.to.x0 - this.from.x0) * e;
+            this.light = this.from.light + (this.to.light - this.from.light) * e;
+            if (k >= 1) this.to = null;
+        }
+        const { ctx, W, Hc, H, base } = this;
+        const t = now / 1000;
+        const { c } = WaveProfile.at(this.tau);
+        const ripple = (X) => Math.sin(X * 0.021 + t * 1.3) * 1.3 + Math.sin(X * 0.047 - t * 0.9) * 0.6;
+        const map = (x, y) => { const X = this.x0 + x * H; return [X, base - y * H + ripple(X)]; };
+        ctx.clearRect(0, 0, W, Hc);
+        const L = this.light;
+        const g = ctx.createLinearGradient(0, base - 1.2 * H, 0, Hc);
+        g.addColorStop(0, `rgba(${Math.round(51 - 38 * L)},${Math.round(204 - 97 * L)},${Math.round(230 - 82 * L)},${0.3 - 0.08 * L})`);
+        g.addColorStop(0.55, `rgba(13,107,148,${0.12})`);
+        g.addColorStop(1, 'rgba(13,107,148,0)');
+        ctx.fillStyle = g;
+        /* flat water to both edges, then the wave */
+        ctx.beginPath();
+        ctx.moveTo(W + 10, base + ripple(W));
+        for (let X = W; X > map(7, 0)[0]; X -= 24) ctx.lineTo(X, base + ripple(X));
+        traceCurve(ctx, c, map, false);
+        for (let X = map(-7, 0)[0]; X > -10; X -= 24) ctx.lineTo(X, base + ripple(X));
+        ctx.lineTo(-10, Hc + 5);
+        ctx.lineTo(W + 10, Hc + 5);
+        ctx.closePath();
+        ctx.fill('evenodd');
+        ctx.beginPath();
+        ctx.moveTo(W + 10, base + ripple(W));
+        for (let X = W; X > map(7, 0)[0]; X -= 24) ctx.lineTo(X, base + ripple(X));
+        traceCurve(ctx, c, map, false);
+        for (let X = map(-7, 0)[0]; X > -10; X -= 24) ctx.lineTo(X, base + ripple(X));
+        ctx.strokeStyle = L > 0.5 ? `rgba(13,107,148,${0.55})` : `rgba(240,247,255,${0.5})`;
+        ctx.lineWidth = 1.6;
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+    },
+};
+
+/* =====================================================================
+   4. STATIC MINI PROFILES (plan on slide 02)
+   ===================================================================== */
+function drawMini(cv) {
+    const w = 340, h = 70, ctx = setupCanvas(cv, w, h);
+    const tau = parseFloat(cv.dataset.tau);
+    const { c } = WaveProfile.at(tau);
+    const H = 44, base = 64, x0 = 172;
+    const map = (x, y) => [x0 + x * H, base - y * H];
+    const g = ctx.createLinearGradient(0, 8, 0, h);
+    g.addColorStop(0, 'rgba(51,204,230,.9)');
+    g.addColorStop(0.5, 'rgba(13,107,148,.55)');
+    g.addColorStop(1, 'rgba(5,31,56,0)');
+    ctx.fillStyle = g;
+    fillWater(ctx, c, map, -10, w + 10, h + 4, base);
+    ctx.beginPath();
+    traceCurve(ctx, c, map);
+    ctx.strokeStyle = 'rgba(240,247,255,.8)';
+    ctx.lineWidth = 1.6;
+    ctx.stroke();
+}
+
+/* =====================================================================
+   5. ACT INTRO WAVE (big profile under the act title)
+   ===================================================================== */
+const ActWave = {
+    ctx: null, W: 1920, Hc: 560,
+    init() { this.ctx = setupCanvas(document.getElementById('actCanvas'), this.W, this.Hc, 1.5); },
+    draw(tau) {
+        const { ctx, W, Hc } = this;
+        const { c } = WaveProfile.at(tau);
+        const H = 300, base = 520, x0 = 1180;
+        const map = (x, y) => [x0 + x * H, base - y * H];
+        ctx.clearRect(0, 0, W, Hc);
+        const g = ctx.createLinearGradient(0, base - 1.2 * H, 0, Hc);
+        g.addColorStop(0, 'rgba(51,204,230,.85)');
+        g.addColorStop(0.35, 'rgba(13,107,148,.75)');
+        g.addColorStop(1, 'rgba(3,23,42,.95)');
+        ctx.fillStyle = g;
+        fillWater(ctx, c, map, -10, W + 10, Hc + 10, base);
+        ctx.beginPath();
+        traceCurve(ctx, c, map);
+        ctx.strokeStyle = 'rgba(240,247,255,.9)';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+    },
+};
+
+/* =====================================================================
+   6. LIVE CROSS-SECTION (slide 11)
+   The real profile, in real time: tau runs one second per second.
+   ===================================================================== */
+const LiveProfile = {
+    ctx: null, W: 1060, Hc: 430, t0: 0, list: null, readout: null, last: -1,
+    X0: -2.35, X1: 2.65, S: 212, base: 338,
+    SOME: new Set(['FOOT', 'WALL', 'CEIL', 'TIP', 'LIPTOP', 'CREST']),
+    init() {
+        this.ctx = setupCanvas(document.getElementById('profileCanvas'), this.W, this.Hc);
+        this.list = document.getElementById('stageList');
+        this.readout = document.getElementById('tauReadout');
+        this.list.innerHTML = WaveProfile.STAGES.map((s, i) => `<li><i>${String(i + 1).padStart(2, '0')}</i>${s.name}</li>`).join('');
+        this.t0 = performance.now();
+    },
+    restart() { this.t0 = performance.now(); },
+    frame(now) {
+        const T = 12.6; /* seconds per loop: -3.2 → 8.4 then a short hold */
+        const u = ((now - this.t0) / 1000) % T;
+        const tau = Math.min(8.4, -3.2 + u);
+        const { ctx, W, Hc, S, base } = this;
+        const { p, c } = WaveProfile.at(tau);
+        const map = (x, y) => [(x - this.X0) * S, base - y * S];
+        ctx.clearRect(0, 0, W, Hc);
+        /* mean water level + height scale */
+        ctx.setLineDash([3, 7]);
+        ctx.strokeStyle = 'rgba(240,247,255,.18)';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(0, base); ctx.lineTo(W, base); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.strokeStyle = 'rgba(255,197,107,.7)';
+        ctx.beginPath(); ctx.moveTo(22, base); ctx.lineTo(22, base - S); ctx.moveTo(16, base - S); ctx.lineTo(28, base - S); ctx.stroke();
+        ctx.fillStyle = 'rgba(255,197,107,.9)';
+        ctx.font = '600 13px "JetBrains Mono"';
+        ctx.fillText('H', 32, base - S + 5);
+        ctx.fillStyle = 'rgba(240,247,255,.4)';
+        ctx.fillText('niveau moyen', 48, base - 8);
+        /* water */
+        const g = ctx.createLinearGradient(0, base - 1.25 * S, 0, Hc);
+        g.addColorStop(0, 'rgba(51,204,230,.95)');
+        g.addColorStop(0.38, 'rgba(13,107,148,1)');
+        g.addColorStop(1, 'rgba(5,31,56,1)');
+        ctx.fillStyle = g;
+        fillWater(ctx, c, map, -10, W + 10, Hc + 10, base);
+        ctx.beginPath();
+        traceCurve(ctx, c, map);
+        ctx.strokeStyle = 'rgba(240,247,255,.9)';
+        ctx.lineWidth = 2.4;
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+        /* rider in the barrel */
+        if (tau > 1.2 && tau < 4.0) {
+            const f = WaveProfile.faceHeight(c, 0.42);
+            if (f) {
+                const [rx, ry] = map(0.42, f.y);
+                ctx.save();
+                ctx.translate(rx, ry);
+                ctx.rotate(-Math.atan(f.slope));
+                ctx.fillStyle = '#ffc56b';
+                ctx.beginPath(); ctx.roundRect(-17, -6, 34, 6, 3); ctx.fill();
+                ctx.strokeStyle = '#031727'; ctx.lineWidth = 5.5; ctx.lineCap = 'round';
+                ctx.beginPath(); ctx.moveTo(-13, -6); ctx.quadraticCurveTo(-6, -16, 6, -15); ctx.quadraticCurveTo(14, -14, 16, -9); ctx.stroke();
+                ctx.fillStyle = '#031727'; ctx.beginPath(); ctx.arc(15, -14, 4.6, 0, Math.PI * 2); ctx.fill();
+                ctx.restore();
+            }
+        }
+        /* the 15 control points */
+        ctx.font = '600 12.5px "JetBrains Mono"';
+        p.forEach(([x, y], j) => {
+            const [X, Y] = map(x, y);
+            if (X < -5 || X > W + 5) return;
+            const named = this.SOME.has(WaveProfile.ROLES[j]);
+            ctx.beginPath();
+            ctx.arc(X, Y, named ? 4.6 : 3.2, 0, Math.PI * 2);
+            ctx.fillStyle = '#051f38';
+            ctx.fill();
+            ctx.strokeStyle = '#ffc56b';
+            ctx.lineWidth = 1.6;
+            ctx.stroke();
+            if (named) { ctx.fillStyle = '#ffc56b'; ctx.fillText(WaveProfile.ROLES[j], X + 8, Y - 8); }
+        });
+        /* stage list + readout */
+        const si = WaveProfile.stageAt(tau);
+        if (si !== this.last) {
+            [...this.list.children].forEach((li, i) => { li.className = i === si ? 'on' : i < si ? 'past' : ''; });
+            this.last = si;
+        }
+        this.readout.innerHTML = `Temps écoulé depuis le déferlement : <b>${tau >= 0 ? '+' : '−'}${Math.abs(tau).toFixed(1).replace('.', ',')} s</b> · ${WaveProfile.STAGES[si].name}`;
+    },
+};
+
+/* =====================================================================
+   7. THE PEEL (slide 11)
+   Slices of the same crest, each one a little further in its life than the
+   one behind it. They flow toward the viewer and age: the curl peels away.
+   ===================================================================== */
+const Peel = {
+    ctx: null, W: 640, Hc: 470, N: 16, dTau: 0.6,
+    init() { this.ctx = setupCanvas(document.getElementById('peelCanvas'), this.W, this.Hc); },
+    frame(now) {
+        const { ctx, W, Hc, N, dTau } = this;
+        const t = now / 1000;
+        const speed = 0.9; /* seconds of wave life per second */
+        const phase = ((t * speed) / dTau) % 1;
+        const tauNear = 6.4;
+        ctx.clearRect(0, 0, W, Hc);
+        for (let j = N; j >= 0; j--) {
+            const d = j + 1 - phase; /* depth along the crest: far = large */
+            const tau = tauNear - d * dTau;
+            const f = 1 / (1 + d * 0.035); /* perspective */
+            const S = 124 * f;
+            const ox = 30 + d * 18, oy = 452 - d * 12;
+            const { c } = WaveProfile.at(tau);
+            const map = (x, y) => [ox + (x + 1.6) * S, oy - y * S];
+            const fade = Math.min(1, d / 1.4) * Math.min(1, (N + 1 - d) / 2.5);
+            if (fade <= 0) continue;
+            const pts = [];
+            for (let k = 0; k < WaveProfile.NU; k++) {
+                const x = c[2 * k];
+                if (x > 2.2 || x < -1.6) continue;
+                pts.push(map(x, c[2 * k + 1]));
+            }
+            if (pts.length < 2) continue;
+            const g = ctx.createLinearGradient(0, oy - 1.2 * S, 0, oy);
+            g.addColorStop(0, `rgba(51,204,230,${0.9 * fade})`);
+            g.addColorStop(0.55, `rgba(13,107,148,${0.92 * fade})`);
+            g.addColorStop(1, `rgba(5,31,56,${0.95 * fade})`);
+            ctx.fillStyle = g;
+            ctx.beginPath();
+            ctx.moveTo(pts[0][0], oy + 1);
+            pts.forEach((q) => ctx.lineTo(q[0], q[1]));
+            ctx.lineTo(pts[pts.length - 1][0], oy + 1);
+            ctx.closePath();
+            ctx.fill('evenodd');
+            ctx.beginPath();
+            pts.forEach((q, i) => (i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1])));
+            ctx.strokeStyle = `rgba(240,247,255,${0.85 * fade})`;
+            ctx.lineWidth = 1 + 1.2 * f;
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+        }
+        ctx.font = '600 13px "JetBrains Mono"';
+        ctx.fillStyle = 'rgba(155,231,242,.75)';
+        ctx.fillText('le long de la crête ↗', 430, 150);
+        ctx.fillStyle = 'rgba(240,247,255,.5)';
+        ctx.fillText('déjà déferlée', 36, 466);
+        ctx.fillText('pas encore', 470, 214);
+    },
+};
+</script>
+<script>
+/* =====================================================================
+   8. SLIDE EFFECTS
+   Per-slide behaviours that start when a slide is shown and reset when it
+   is left: title letters, counters, terminal typing, bubbles, videos.
+   ===================================================================== */
+const fmt = (n) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+
+function buildTitle() {
+    document.querySelectorAll('.hero[data-letters]').forEach((h) => {
+        h.innerHTML = [...h.dataset.letters].map((ch, i) => `<span class="L" style="--i:${i}" aria-hidden="true"><span>${ch}</span></span>`).join('');
+    });
+}
+function buildBubbles() {
+    document.querySelectorAll('.bubbles[data-bubbles]').forEach((b) => {
+        const n = parseInt(b.dataset.bubbles, 10);
+        let html = '';
+        for (let i = 0; i < n; i++) {
+            const s = 8 + ((i * 37) % 26), x = (i * 71) % 100, dur = 9 + ((i * 13) % 10), delay = -((i * 7) % 17);
+            html += `<i style="left:${x}%;width:${s}px;height:${s}px;animation-duration:${dur}s;animation-delay:${delay}s;--dx:${((i % 5) - 2) * 18}px"></i>`;
+        }
+        b.innerHTML = html;
+    });
+}
+function runCounters(slide) {
+    slide.querySelectorAll('[data-count]').forEach((el) => {
+        const to = parseFloat(el.dataset.count), pre = el.dataset.prefix || '', t0 = performance.now(), dur = 1700;
+        const step = (now) => {
+            if (!slide.classList.contains('active')) return;
+            const k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 4);
+            el.textContent = pre + fmt(to * e);
+            if (k < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+    });
+}
+
+/* the terminal on slide 06: the commands of the report, typed one after the other */
+const TERM = [
+    ['unity status', '# l’éditeur est-il prêt ?'],
+    ['unity command recompile', '# après chaque modification'],
+    ['unity command get_console_logs', '# aucune erreur, sinon on s’arrête'],
+    ['unity command eval --code \\', ''],
+    ['    \'return WavyBoard.EditorTools.WaveLab.Shot("tube", 40f, 1.2f);\'', ''],
+    ['unity command capture_game_view \\', ''],
+    ['    --save_path lab/v6_tube.png', '# ses yeux', 'snap'],
+    ['unity command run_tests --mode EditMode', '# 22 tests'],
+];
+const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+let termRun = 0;
+function runTerminal(slide) {
+    const out = slide.querySelector('#termOut');
+    const shot = slide.querySelector('#termShot');
+    if (!out) return;
+    const run = ++termRun;
+    shot.classList.remove('snap');
+    out.innerHTML = '';
+    /* typed live on screen; printed at once when motion is reduced or the page is in the background */
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches || document.hidden;
+    const line = (i) => {
+        if (run !== termRun) return;
+        if (i >= TERM.length) { out.insertAdjacentHTML('beforeend', '<span class="tl"><span class="p">$</span> <span class="caret"></span></span>'); return; }
+        const [cmd, cmt, act] = TERM[i];
+        const cont = cmd.startsWith('    ');
+        const el = document.createElement('span');
+        el.className = 'tl';
+        out.appendChild(el);
+        const prompt = cont ? '' : '<span class="p">$</span> ';
+        let k = 0;
+        const type = () => {
+            if (run !== termRun) return;
+            k = reduce ? cmd.length : Math.min(cmd.length, k + 2);
+            el.innerHTML = prompt + esc(cmd.slice(0, k)).replace(/(".*?"|'.*)/, '<span class="s">$1</span>') + (k < cmd.length ? '<span class="caret"></span>' : '');
+            if (k < cmd.length) return setTimeout(type, 16);
+            if (cmt) el.insertAdjacentHTML('beforeend', `  <span class="c">${esc(cmt)}</span>`);
+            if (act === 'snap') shot.classList.add('snap');
+            setTimeout(() => line(i + 1), reduce ? 0 : 260);
+        };
+        type();
+    };
+    setTimeout(() => line(0), reduce ? 0 : 700);
+}
+
+function playMedia(slide, on) {
+    /* background loops play with their slide; the demo's fallback video only on V */
+    slide.querySelectorAll('video:not(#demoVid)').forEach((v) => {
+        if (on) { v.play().catch(() => {}); }
+        else { v.pause(); }
+    });
+    if (!on) DemoVideo.stop();
+}
+
+/* plan B for the live demo: V plays the trailer full-screen, with its sound */
+const DemoVideo = {
+    toggle() {
+        const v = document.getElementById('demoVid');
+        if (!v || deck.slides[deck.current].id !== 'demo') return;
+        if (v.classList.contains('on')) { this.stop(); return; }
+        v.classList.add('on');
+        v.currentTime = 0;
+        v.muted = false;
+        v.play().catch(() => { v.muted = true; v.play().catch(() => {}); });
+    },
+    stop() {
+        const v = document.getElementById('demoVid');
+        if (!v) return;
+        v.pause();
+        v.classList.remove('on');
+    },
+};
+
+/* slide 05: each arrow press enlarges the next version; the press after ⑥ returns to the overview */
+const VersionZoom = {
+    TARGET: { left: 120, top: 190, width: 1216, height: 684 },
+    slide: null, cols: [], frames: [], live: 0, step: -1, capTimer: 0,
+    init() {
+        this.slide = document.getElementById('path');
+        if (!this.slide) return;
+        this.cols = [...this.slide.querySelectorAll('.wcol')];
+        this.root = document.createElement('div');
+        this.root.className = 'vz';
+        this.root.dataset.runtime = '';
+        this.root.setAttribute('aria-hidden', 'true');
+        this.root.innerHTML = '<div class="vz-back"></div><div class="vz-f"><img alt=""></div><div class="vz-f"><img alt=""></div><div class="vz-cap"></div>';
+        this.slide.append(this.root);
+        this.frames = [...this.root.querySelectorAll('.vz-f')];
+        this.cap = this.root.querySelector('.vz-cap');
+    },
+    /* a column's thumbnail, in stage coordinates */
+    rectOf(i) {
+        const s = this.slide.getBoundingClientRect(), k = s.width / 1920;
+        const r = this.cols[i].querySelector('.img').getBoundingClientRect();
+        return { left: (r.left - s.left) / k, top: (r.top - s.top) / k, width: r.width / k, height: r.height / k };
+    },
+    place(f, r) {
+        f.style.left = r.left + 'px'; f.style.top = r.top + 'px';
+        f.style.width = r.width + 'px'; f.style.height = r.height + 'px';
+    },
+    zoomed() { return this.step >= 0 && this.step < this.cols.length; },
+    show(i) {
+        const out = this.frames[this.live];
+        if (this.zoomed()) { this.place(out, this.rectOf(this.step)); out.classList.remove('on'); out.style.zIndex = 1; }
+        this.live ^= 1;
+        const f = this.frames[this.live], col = this.cols[i];
+        f.classList.add('snap');
+        f.classList.remove('on');
+        f.classList.toggle('win', col.classList.contains('win'));
+        f.style.zIndex = 2;
+        f.querySelector('img').src = col.querySelector('img').getAttribute('src');
+        this.place(f, this.rectOf(i));
+        void f.offsetWidth;
+        f.classList.remove('snap');
+        f.classList.add('on');
+        this.place(f, this.TARGET);
+        this.root.classList.add('open');
+        this.caption(i);
+        this.step = i;
+    },
+    close(instant) {
+        const f = this.frames[this.live];
+        if (instant) this.root.classList.add('snap');
+        else if (this.zoomed()) this.place(f, this.rectOf(this.step));
+        this.frames.forEach((x) => x.classList.remove('on'));
+        this.root.classList.remove('open');
+        clearTimeout(this.capTimer);
+        this.cap.classList.remove('on');
+        if (instant) { void this.root.offsetWidth; this.root.classList.remove('snap'); }
+    },
+    caption(i) {
+        const c = this.cols[i], win = c.classList.contains('win');
+        const title = c.querySelector('b').textContent.trim().replace(/^[①-⑳]\s*/, '');
+        const p = c.querySelector('p'), extra = c.querySelector('.extra');
+        const desc = win ? '<ul>' + [...c.querySelectorAll('li')].map((li) => `<li>${li.innerHTML}</li>`).join('') + '</ul>'
+            : p ? `<p class="vz-d">${p.innerHTML}</p>` : '';
+        const dots = this.cols.map((_, k) => `<i class="${k === i ? 'on' : k < i ? 'past' : ''}"></i>`).join('');
+        const html = `<span class="vz-tag${win ? ' ok' : ''}">${win ? '✓ la vague du jeu' : '✕ abandonnée'}</span>`
+            + `<span class="vz-n">${i + 1}<small>/${this.cols.length}</small></span><b class="vz-t">${title}</b>`
+            + `<p class="vz-meta"><time>${c.querySelector('time').textContent}</time><span class="m">${c.querySelector('.m').innerHTML}</span></p>`
+            + desc + (extra ? `<p class="vz-x">${extra.innerHTML}</p>` : '') + `<div class="vz-dots">${dots}</div>`;
+        const wasOn = this.cap.classList.contains('on');
+        clearTimeout(this.capTimer);
+        this.cap.classList.remove('on');
+        this.capTimer = setTimeout(() => {
+            this.cap.innerHTML = html;
+            this.cap.classList.toggle('win', win);
+            void this.cap.offsetWidth;
+            this.cap.classList.add('on');
+        }, wasOn ? 220 : 180);
+    },
+    next() {
+        const n = this.cols.length;
+        if (this.step < n - 1) { this.show(this.step + 1); return true; }
+        if (this.step === n - 1) { this.close(); this.step = n; return true; }
+        return false;
+    },
+    prev() {
+        if (this.step === this.cols.length) { this.show(this.cols.length - 1); return true; }
+        if (this.step > 0) { this.show(this.step - 1); return true; }
+        if (this.step === 0) { this.close(); this.step = -1; return true; }
+        return false;
+    },
+    /* entering forward starts before ①; entering backward lands on the overview after ⑥ */
+    reset(forward) {
+        if (!this.slide) return;
+        this.close(true);
+        this.step = forward ? -1 : this.cols.length;
+    },
+};
+
+/* =====================================================================
+   9. SLIDE PRESENTATION CONTROLLER
+   Fixed 1920×1080 stage scaled as a whole; keyboard, wheel, touch, hash.
+   ===================================================================== */
+const ACTS = {
+    0: { label: 'Ouverture', tau: -3 },
+    1: { label: 'I · Préparation', num: 'I', name: 'Préparation', sub: 'Veille, spécification, harnais IA', tau: -1.8 },
+    2: { label: 'II · Construction', num: 'II', name: 'Construction', sub: 'Six versions en trois semaines', tau: 0.55 },
+    3: { label: 'III · Le jeu', num: 'III', name: 'Le jeu', sub: 'La vague, l’architecture, les technologies', tau: 2.3 },
+    4: { label: 'IV · Le bilan', num: 'IV', name: 'Le bilan', sub: 'Limites et leçons', tau: 4.6 },
+    5: { label: 'En direct', num: 'Live', name: 'Démonstration', sub: 'Alexandre prend la manette', tau: 2.0 },
+    6: { label: 'Conclusion', tau: 7.6 },
+};
+const WHO = { Alexandre: 'var(--alexandre)', Maxime: 'var(--maxime)', Louis: 'var(--louis)' };
+const whoColor = (w) => WHO[w] || 'var(--lagoon-soft)';
+
+class SlidePresentation {
+    constructor() {
+        this.stage = document.getElementById('deckStage');
+        this.slides = [...document.querySelectorAll('.slide')];
+        this.current = -1;
+        this.lock = 0;
+        this.timer = { start: 0, slideStart: performance.now() };
+        this.presenter = null;
+        this.slides.forEach((s) => {
+            const c = document.createElement('div');
+            c.className = 'caustics';
+            c.dataset.runtime = '';
+            s.prepend(c);
+        });
+        this.setupStageScale();
+        this.setupKeyboardNav();
+        this.setupTouchNav();
+        this.setupWheelNav();
+        window.addEventListener('message', (e) => this.onMessage(e));
+        window.addEventListener('hashchange', () => this.goTo(this.fromHash(), true));
+        this.goTo(this.fromHash(), true);
+    }
+
+    fromHash() {
+        const n = parseInt(location.hash.slice(1), 10);
+        return Number.isFinite(n) ? Math.min(Math.max(n - 1, 0), this.slides.length - 1) : 0;
+    }
+
+    setupStageScale() {
+        const scale = () => {
+            const f = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+            const x = (window.innerWidth - 1920 * f) / 2, y = (window.innerHeight - 1080 * f) / 2;
+            this.stage.style.transform = `translate(${x}px, ${y}px) scale(${f})`;
+        };
+        scale();
+        window.addEventListener('resize', scale);
+    }
+
+    setupKeyboardNav() {
+        document.addEventListener('keydown', (e) => {
+            if (e.target.isContentEditable || e.metaKey || e.altKey || (e.ctrlKey && e.key !== 's')) return;
+            const k = e.key;
+            if (['ArrowRight', 'ArrowDown', 'PageDown', ' ', 'Enter'].includes(k)) { e.preventDefault(); this.next(); }
+            else if (['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace'].includes(k)) { e.preventDefault(); this.prev(); }
+            else if (k === 'Home') this.goTo(0);
+            else if (k === 'End') this.goTo(this.slides.length - 1);
+            else if (k === 'p' || k === 'P') this.openPresenter();
+            else if (k === 'n' || k === 'N') document.getElementById('notesPanel').classList.toggle('on');
+            else if (k === 'h' || k === 'H' || k === '?') document.getElementById('help').classList.toggle('on');
+            else if (k === 'b' || k === 'B' || k === '.') document.getElementById('blackout').classList.toggle('on');
+            else if (k === 't' || k === 'T') this.resetTimer();
+            else if (k === 'v' || k === 'V') DemoVideo.toggle();
+            else if (k === 'f' || k === 'F') {
+                if (document.fullscreenElement) document.exitFullscreen();
+                else document.documentElement.requestFullscreen?.();
+            }
+        });
+    }
+
+    setupTouchNav() {
+        let x0 = null, y0 = null;
+        document.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+        document.addEventListener('touchend', (e) => {
+            if (x0 === null) return;
+            const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+            if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) (dx < 0 ? this.next() : this.prev());
+            x0 = y0 = null;
+        }, { passive: true });
+    }
+
+    setupWheelNav() {
+        let last = 0;
+        window.addEventListener('wheel', (e) => {
+            if (document.body.classList.contains('editing')) return;
+            const now = performance.now();
+            if (now - last < 850 || Math.abs(e.deltaY) < 24) return;
+            last = now;
+            e.deltaY > 0 ? this.next() : this.prev();
+        }, { passive: true });
+    }
+
+    /* a key press during a part's title card only reveals the slide underneath */
+    next() {
+        if (ActIntro.done) { ActIntro.finish(); return; }
+        if (this.slides[this.current].id === 'path' && VersionZoom.next()) return;
+        this.goTo(this.current + 1);
+    }
+    prev() {
+        if (this.slides[this.current].id === 'path' && VersionZoom.prev()) return;
+        this.goTo(this.current - 1);
+    }
+
+    goTo(index, instant = false) {
+        index = Math.max(0, Math.min(index, this.slides.length - 1));
+        if (index === this.current) return;
+        const prevIndex = this.current;
+        const prev = this.slides[prevIndex];
+        const next = this.slides[index];
+        const forward = index > prevIndex;
+        this.current = index;
+
+        if (prev) {
+            prev.classList.remove('active', 'visible');
+            playMedia(prev, false);
+            const p = prev;
+            setTimeout(() => { if (!p.classList.contains('active')) p.classList.remove('shown'); }, 820);
+        }
+        if (next.id === 'path') VersionZoom.reset(forward);
+        else if (prev && prev.id === 'path') VersionZoom.reset(true);
+        next.classList.remove('shown');
+        next.classList.add('active', 'visible');
+        playMedia(next, true);
+        void next.offsetWidth; /* restart the reveal transitions */
+
+        const act = +next.dataset.act;
+        const actChanged = prev && +prev.dataset.act !== act;
+        const intro = !instant && forward && actChanged && act > 0 && ACTS[act].num;
+        const reveal = () => {
+            next.classList.add('shown');
+            runCounters(next);
+            if (next.id === 'cli') runTerminal(next);
+            if (next.id === 'wave') LiveProfile.restart();
+        };
+        if (intro) { ActIntro.play(act, reveal); }
+        else { ActIntro.cancel(); requestAnimationFrame(reveal); }
+
+        this.updateChrome(next, index);
+        Swell.target(parseFloat(next.dataset.tau), index / (this.slides.length - 1), next.classList.contains('light'));
+        if (instant) { Swell.tau = Swell.to.tau; Swell.x0 = Swell.to.x0; Swell.light = Swell.to.light; Swell.to = null; }
+
+        history.replaceState(null, '', '#' + (index + 1));
+        /* the clock starts by itself when the talk leaves the title slide (T resets it) */
+        if (!this.timer.start && prevIndex === 0 && index === 1) this.timer.start = performance.now() - (+this.slides[0].dataset.target || 0) * 1000;
+        this.timer.slideStart = performance.now();
+        Notes.show(next, index, this.slides.length);
+        this.sendState();
+    }
+
+    updateChrome(slide, index) {
+        const chrome = document.getElementById('chrome');
+        chrome.classList.add('swap');
+        setTimeout(() => {
+            chrome.classList.toggle('bare', slide.dataset.chrome === 'bare');
+            chrome.classList.toggle('light', slide.classList.contains('light'));
+            document.getElementById('chromeAct').textContent = ACTS[+slide.dataset.act].label;
+            const who = document.getElementById('chromeWho');
+            who.querySelector('span').textContent = slide.dataset.who;
+            who.querySelector('.dot').style.setProperty('--c', whoColor(slide.dataset.who));
+            document.getElementById('chromePage').textContent = `${String(index + 1).padStart(2, '0')} / ${this.slides.length}`;
+            chrome.classList.remove('swap');
+        }, 260);
+    }
+
+    /* ---------- presenter view (P): a second window with the script and the clock ---------- */
+    resetTimer() {
+        this.timer.start = performance.now();
+        this.timer.slideStart = performance.now();
+        this.sendState();
+        toast('Minuteur remis à zéro');
+    }
+
+    state() {
+        const i = this.current, s = this.slides[i], n = this.slides[i + 1];
+        let cum = 0;
+        for (let k = 0; k <= i; k++) cum += +this.slides[k].dataset.target || 0;
+        const now = performance.now();
+        return {
+            type: 'wavy-state',
+            i, n: this.slides.length,
+            title: s.dataset.title, act: ACTS[+s.dataset.act].label, who: s.dataset.who,
+            notes: s.querySelector('.notes').innerHTML,
+            next: n ? { i: i + 1, title: n.dataset.title, who: n.dataset.who } : null,
+            target: +s.dataset.target || 0, cum, total: this.slides.reduce((a, x) => a + (+x.dataset.target || 0), 0),
+            elapsed: this.timer.start ? (now - this.timer.start) / 1000 : 0,
+            slideElapsed: (now - this.timer.slideStart) / 1000,
+            running: !!this.timer.start,
+        };
+    }
+
+    sendState() {
+        if (this.presenter && !this.presenter.closed) this.presenter.postMessage(this.state(), '*');
+    }
+
+    onMessage(e) {
+        const m = e.data || {};
+        if (m.type !== 'wavy-cmd') return;
+        if (m.cmd === 'next') this.next();
+        else if (m.cmd === 'prev') this.prev();
+        else if (m.cmd === 'reset') this.resetTimer();
+        else if (m.cmd === 'hello') this.sendState();
+    }
+
+    openPresenter() {
+        if (this.presenter && !this.presenter.closed) { this.presenter.focus(); return; }
+        const w = window.open('', 'wavyboard-presenter', 'width=1180,height=820');
+        if (!w) { toast('Autorisez les fenêtres pop-up pour la vue présentateur'); return; }
+        this.presenter = w;
+        /* the pop-up inherits the deck's fonts and base URL, so it looks the same offline */
+        const fonts = [...document.styleSheets].flatMap((sh) => { try { return [...sh.cssRules]; } catch { return []; } })
+            .filter((r) => r.constructor.name === 'CSSFontFaceRule').map((r) => r.cssText).join('\n');
+        const head = '<head><base href="' + location.href.split('#')[0] + '"><style>' + fonts + '</style>';
+        w.document.open();
+        w.document.write(PRESENTER_HTML.replace('<head>', head));
+        w.document.close();
+        setTimeout(() => this.sendState(), 150);
+        clearInterval(this.tick);
+        this.tick = setInterval(() => this.sendState(), 500);
+    }
+}
+
+/* =====================================================================
+   10. ACT INTRO (forward only, ~3.4 s; the next key press reveals the slide)
+   ===================================================================== */
+const ActIntro = {
+    el: null, timer: 0, raf: 0, done: null,
+    init() { this.el = document.getElementById('actIntro'); },
+    play(act, done) {
+        const a = ACTS[act];
+        this.cancel();
+        this.done = done;
+        document.getElementById('actNum').textContent = a.num;
+        document.getElementById('actName').textContent = a.name;
+        document.getElementById('actSub').textContent = a.sub;
+        const by = document.getElementById('actBy');
+        const who = deck.slides[deck.current].dataset.who;
+        by.querySelector('span').textContent = who;
+        by.querySelector('.dot').style.setProperty('--c', whoColor(who));
+        const t0 = performance.now(), from = a.tau - 0.9;
+        const anim = (now) => {
+            const k = Math.min(1, (now - t0) / 2600);
+            ActWave.draw(from + (a.tau - from) * easeInOut(k));
+            if (k < 1) this.raf = requestAnimationFrame(anim);
+        };
+        this.raf = requestAnimationFrame(anim);
+        this.el.classList.remove('off');
+        this.el.classList.add('on');
+        /* long enough to be read aloud: the new speaker says the part's name */
+        this.timer = setTimeout(() => this.finish(), 3400);
+    },
+    finish() {
+        clearTimeout(this.timer);
+        cancelAnimationFrame(this.raf);
+        if (this.el.classList.contains('on')) { this.el.classList.remove('on'); this.el.classList.add('off'); }
+        const d = this.done;
+        this.done = null;
+        if (d) setTimeout(d, 60);
+    },
+    cancel() { if (this.done) this.finish(); },
+};
+
+/* =====================================================================
+   11. NOTES PANEL (N) under the stage, for rehearsing on one screen
+   ===================================================================== */
+const Notes = {
+    show(slide, i, n) {
+        const p = document.getElementById('notesPanel');
+        p.innerHTML = `<header><span>${String(i + 1).padStart(2, '0')} / ${n} · ${slide.dataset.title}</span><span>${slide.dataset.who} · ~${slide.dataset.target} s</span></header>` + slide.querySelector('.notes').innerHTML;
+    },
+};
+
+function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('on');
+    clearTimeout(toast.t);
+    toast.t = setTimeout(() => t.classList.remove('on'), 1800);
+}
+</script>
+<script>
+/* =====================================================================
+   12. PRESENTER VIEW DOCUMENT
+   Written into a pop-up by P. It talks to the deck with postMessage only,
+   so it works from file:// as well as from a server.
+   ===================================================================== */
+const PRESENTER_HTML = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>WavyBoard · vue présentateur</title>
+<style>
+:root{--abyss:#051f38;--foam:#f0f7ff;--lagoon:#33cce6;--soft:#9be7f2;--sun:#ffc56b;--coral:#ff7a5c;--ok:#3fd19c}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:linear-gradient(180deg,#062a48,#020e1b) fixed;color:var(--foam);font-family:'Anybody',system-ui,sans-serif;min-height:100vh;padding:22px 28px}
+header{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.pg{font-family:'JetBrains Mono',monospace;font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:var(--soft)}
+.who{display:flex;align-items:center;gap:12px;font-size:34px;font-weight:800}
+.who i{width:16px;height:16px;border-radius:50%;background:var(--c)}
+.clock{margin-left:auto;display:flex;gap:18px;align-items:stretch}
+.box{padding:10px 16px;border-radius:14px;background:rgba(240,247,255,.07);border:1px solid rgba(240,247,255,.14);min-width:132px}
+.box small{display:block;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:rgba(240,247,255,.6)}
+.box b{font-size:30px;font-weight:800;font-variant-numeric:tabular-nums}
+.late b{color:var(--coral)}.early b{color:var(--ok)}
+h1{margin-top:18px;font-size:22px;font-weight:700;color:var(--soft)}
+.bar{height:6px;border-radius:6px;background:rgba(240,247,255,.12);margin-top:12px;overflow:hidden}
+.bar div{height:100%;background:linear-gradient(90deg,var(--lagoon),var(--sun));width:0}
+.notes{margin-top:18px;padding:22px 26px;border-radius:18px;background:rgba(2,14,27,.6);border:1px solid rgba(240,247,255,.12);font-family:'Newsreader',Georgia,serif;font-size:27px;line-height:1.5;max-height:calc(100vh - 290px);overflow:auto}
+.notes p{margin-bottom:12px}
+.pz{color:rgba(155,231,242,.5);font-family:'JetBrains Mono',monospace;font-size:.75em;margin:0 .15em}
+.pz2{color:var(--sun)}
+.notes b{color:var(--soft)}
+.notes .who2{display:inline-block;margin-right:8px;font-family:'Anybody',sans-serif;font-weight:800;color:var(--sun)}
+.notes .hand{display:block;margin-top:6px;font-family:'JetBrains Mono',monospace;font-size:.62em;color:var(--coral)}
+footer{display:flex;align-items:center;gap:14px;margin-top:16px}
+footer .next{font-size:19px;color:rgba(240,247,255,.75)}
+footer .next b{color:var(--foam)}
+button{margin-left:auto;font:700 16px 'Anybody',sans-serif;color:var(--foam);background:rgba(240,247,255,.1);border:1px solid rgba(240,247,255,.2);border-radius:12px;padding:10px 16px;cursor:pointer}
+button+button{margin-left:0}
+</style></head><body>
+<header><span class="pg" id="pg">–</span><span class="who" id="who"><i></i><span></span></span>
+<div class="clock"><div class="box" id="bTotal"><small>Temps écoulé</small><b id="total">0:00</b></div><div class="box" id="bPlan"><small>Prévu à cette slide</small><b id="plan">0:00</b></div><div class="box" id="bSlide"><small>Cette slide</small><b id="slide">0 s</b></div></div></header>
+<h1 id="title">–</h1><div class="bar"><div id="prog"></div></div>
+<div class="notes" id="notes"></div>
+<footer><span class="next" id="next"></span><button id="bPrev">◀ Précédente</button><button id="bNext">Suivante ▶</button><button id="bReset">Minuteur à zéro</button></footer>
+<script>
+const send=(cmd)=>window.opener&&window.opener.postMessage({type:'wavy-cmd',cmd},'*');
+const mmss=(s)=>{s=Math.max(0,Math.round(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')};
+const COL={Alexandre:'#ffc56b',Maxime:'#ff8f73',Louis:'#5fd8ec'};
+let lastI=-1;
+window.addEventListener('message',(e)=>{const s=e.data;if(!s||s.type!=='wavy-state')return;
+document.getElementById('pg').textContent=String(s.i+1).padStart(2,'0')+' / '+s.n+' · '+s.act;
+const w=document.getElementById('who');w.querySelector('span').textContent=s.who;w.querySelector('i').style.setProperty('--c',COL[s.who]||'#9be7f2');
+document.getElementById('title').textContent=s.title;
+if(s.i!==lastI){document.getElementById('notes').innerHTML=s.notes;document.getElementById('notes').scrollTop=0;lastI=s.i;}
+document.getElementById('total').textContent=s.running?mmss(s.elapsed):'—';
+document.getElementById('plan').textContent=mmss(s.cum)+' / '+mmss(s.total);
+document.getElementById('slide').textContent=Math.round(s.slideElapsed)+' / '+s.target+' s';
+const late=s.running&&s.elapsed>s.cum+10;const early=s.running&&s.elapsed<s.cum-s.target-10;
+document.getElementById('bTotal').className='box'+(late?' late':early?' early':'');
+document.getElementById('bSlide').className='box'+(s.slideElapsed>s.target+8?' late':'');
+document.getElementById('prog').style.width=(100*(s.i+1)/s.n)+'%';
+document.getElementById('next').innerHTML=s.next?'Suivante : <b>'+String(s.next.i+1).padStart(2,'0')+' · '+s.next.title+'</b> · '+s.next.who:'<b>Fin : questions du jury</b>';});
+document.addEventListener('keydown',(e)=>{if(['ArrowRight','ArrowDown','PageDown',' ','Enter'].includes(e.key)){e.preventDefault();send('next')}else if(['ArrowLeft','ArrowUp','PageUp','Backspace'].includes(e.key)){e.preventDefault();send('prev')}else if(e.key==='t'||e.key==='T')send('reset')});
+document.getElementById('bPrev').onclick=()=>send('prev');document.getElementById('bNext').onclick=()=>send('next');document.getElementById('bReset').onclick=()=>send('reset');
+send('hello');
+<\/script></body></html>`;
+
+/* =====================================================================
+   13. INLINE EDITOR (E, or hover the top-left corner)
+   Text edits are kept in this browser (localStorage) and Ctrl+S saves a
+   copy of the deck with the edits baked in.
+   ===================================================================== */
+const Editor = {
+    isActive: false,
+    KEY: 'wavyboard-deck-edits-v1',
+    SKIP: '.notes, svg, canvas, video, .hero, pre, .bubbles, .caustics, #tauReadout, #stageList, [data-count]',
+    hash(s) { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h.toString(36); },
+    nodes() {
+        /* every element that holds its own text, minus the ones already inside another editable block */
+        if (this._nodes) return this._nodes;
+        const own = [...document.querySelectorAll('.slide *')].filter((el) => !el.closest(this.SKIP)
+            && [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()));
+        const set = new Set(own);
+        this._nodes = own.filter((el) => {
+            for (let p = el.parentElement; p && !p.classList.contains('slide'); p = p.parentElement) if (set.has(p)) return false;
+            return true;
+        });
+        return this._nodes;
+    },
+    init() {
+        const saved = this.load();
+        this.nodes().forEach((el, i) => {
+            el.dataset.ek = i + ':' + this.hash(el.innerHTML);
+            const v = saved[el.dataset.ek];
+            if (v !== undefined) el.innerHTML = v;
+        });
+        const btn = document.getElementById('editToggle'), zone = document.querySelector('.edit-hotzone');
+        let hide = null;
+        const show = () => { clearTimeout(hide); btn.classList.add('show'); };
+        const later = () => { hide = setTimeout(() => { if (!this.isActive) btn.classList.remove('show'); }, 400); };
+        zone.addEventListener('mouseenter', show);
+        zone.addEventListener('mouseleave', later);
+        btn.addEventListener('mouseenter', show);
+        btn.addEventListener('mouseleave', later);
+        zone.addEventListener('click', () => this.toggleEditMode());
+        btn.addEventListener('click', () => this.toggleEditMode());
+        document.addEventListener('keydown', (e) => {
+            if ((e.key === 'e' || e.key === 'E') && !e.target.isContentEditable && !e.metaKey && !e.ctrlKey) this.toggleEditMode();
+            if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) { e.preventDefault(); this.exportFile(); }
+            if (e.key === 'Escape' && this.isActive) this.toggleEditMode();
+        });
+        document.addEventListener('input', (e) => { if (e.target.dataset && e.target.dataset.ek) this.save(); });
+    },
+    load() { try { return JSON.parse(localStorage.getItem(this.KEY) || '{}'); } catch { return {}; } },
+    save() {
+        const data = {};
+        this.nodes().forEach((el) => { if (el.dataset.ek && el.dataset.ek.split(':')[1] !== this.hash(el.innerHTML)) data[el.dataset.ek] = el.innerHTML; });
+        try { localStorage.setItem(this.KEY, JSON.stringify(data)); } catch { /* private mode: edits stay in the page only */ }
+    },
+    toggleEditMode() {
+        this.isActive = !this.isActive;
+        document.body.classList.toggle('editing', this.isActive);
+        document.getElementById('editToggle').classList.toggle('active', this.isActive);
+        document.getElementById('editToggle').classList.toggle('show', this.isActive);
+        this.nodes().forEach((el) => { if (this.isActive) el.setAttribute('contenteditable', 'true'); else el.removeAttribute('contenteditable'); });
+        toast(this.isActive ? 'Édition : cliquez un texte · Ctrl S pour enregistrer une copie · Échap pour sortir' : 'Édition terminée');
+    },
+    exportFile() {
+        const wasActive = this.isActive;
+        if (wasActive) this.toggleEditMode();
+        const clone = document.documentElement.cloneNode(true);
+        clone.querySelectorAll('[data-runtime]').forEach((n) => n.remove());
+        clone.querySelectorAll('[data-ek]').forEach((n) => n.removeAttribute('data-ek'));
+        clone.querySelectorAll('.slide').forEach((n) => n.classList.remove('active', 'visible', 'shown'));
+        clone.querySelectorAll('.hero[data-letters]').forEach((n) => { n.innerHTML = ''; });
+        clone.querySelectorAll('.bubbles').forEach((n) => { n.innerHTML = ''; });
+        const pre = clone.querySelector('#termOut');
+        if (pre) pre.innerHTML = '';
+        const blob = new Blob(['<!DOCTYPE html>\n' + clone.outerHTML], { type: 'text/html' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'WavyBoard-soutenance.html';
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+        toast('Copie enregistrée : placez-la à côté du dossier assets/');
+        if (wasActive) this.toggleEditMode();
+    },
+};
+
+/* =====================================================================
+   14. BOOT + ONE ANIMATION LOOP for every live canvas
+   ===================================================================== */
+buildTitle();
+buildBubbles();
+Swell.init();
+ActWave.init();
+ActIntro.init();
+VersionZoom.init();
+LiveProfile.init();
+Peel.init();
+document.querySelectorAll('canvas.mini').forEach(drawMini);
+const deck = new SlidePresentation();
+Editor.init();
+
+(function loop(now) {
+    if (!document.hidden) {
+        Swell.frame(now);
+        const id = deck.slides[deck.current].id;
+        if (id === 'wave') { LiveProfile.frame(now); Peel.frame(now); }
+    }
+    requestAnimationFrame(loop);
+})(performance.now());
+
+/* fonts drive canvas labels: redraw the static canvases once they are loaded */
+document.fonts && document.fonts.ready.then(() => document.querySelectorAll('canvas.mini').forEach(drawMini));
+</script>
+</body>
+</html>
